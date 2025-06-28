@@ -3,7 +3,7 @@ import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
-import { ChevronDown, Users, Building, Award, BookOpen } from 'lucide-react';
+import { ChevronDown, Users, Building, Award, BookOpen, Briefcase } from 'lucide-react';
 
 const Index = () => {
   return (
