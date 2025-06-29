@@ -71,7 +71,8 @@ export default {
 				}
 			},
 			fontFamily: {
-				'arabic': ['Noto Sans Arabic', 'sans-serif'],
+				'tajawal': ['Tajawal', 'sans-serif'],
+				'arabic': ['Tajawal', 'sans-serif'],
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

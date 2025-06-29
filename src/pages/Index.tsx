@@ -13,9 +13,13 @@ const Index = () => {
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="animate-fade-in">
-            {/* Profile Image Placeholder */}
-            <div className="w-48 h-48 mx-auto mb-8 rounded-full bg-gradient-to-br from-iraqi-red to-iraqi-green shadow-2xl flex items-center justify-center">
-              <span className="text-6xl font-bold text-white">أ.ع</span>
+            {/* Profile Image */}
+            <div className="w-48 h-48 mx-auto mb-8 rounded-full shadow-2xl overflow-hidden">
+              <img 
+                src="https://www.alyaum.com/uploads/imported_images/media/article/AY1MAN21C-3_17.jpg" 
+                alt="الدكتور أحمد العلواني"
+                className="w-full h-full object-cover"
+              />
             </div>
             
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-4 text-shadow">
@@ -114,11 +118,45 @@ const Index = () => {
             </div>
             
             <div className="text-center">
-              <div className="w-96 h-96 mx-auto bg-gradient-to-br from-iraqi-red/20 to-iraqi-green/20 rounded-full flex items-center justify-center">
-                <div className="w-80 h-80 bg-gradient-to-br from-iraqi-red to-iraqi-green rounded-full flex items-center justify-center shadow-2xl">
-                  <span className="text-8xl font-bold text-white">أ</span>
-                </div>
+              <div className="w-96 h-96 mx-auto rounded-full shadow-2xl overflow-hidden">
+                <img 
+                  src="https://static.srpcdigital.com/styles/1037xauto/public/2025-04/1032030.jpeg"
+                  alt="الدكتور أحمد العلواني في البرلمان"
+                  className="w-full h-full object-cover"
+                />
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Photo Gallery Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">صور من المسيرة</h2>
+            <p className="text-xl text-gray-600">
+              لحظات مهمة من مسيرة الدكتور أحمد العلواني
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="relative group">
+              <img 
+                src="https://cdn.964media.com/e69f5484-a0ef-4f36-b255-396861d56100/full169"
+                alt="الدكتور أحمد العلواني"
+                className="w-full h-64 object-cover rounded-lg shadow-lg group-hover:shadow-xl transition-shadow"
+              />
+              <div className="absolute inset-0 bg-black/20 rounded-lg group-hover:bg-black/10 transition-colors"></div>
+            </div>
+            
+            <div className="relative group">
+              <img 
+                src="https://www.aljazeera.net/wp-content/uploads/2014/11/fed58c14-7c52-4dac-be73-cdd58213c0a0.jpeg"
+                alt="الدكتور أحمد العلواني في جلسة برلمانية"
+                className="w-full h-64 object-cover rounded-lg shadow-lg group-hover:shadow-xl transition-shadow"
+              />
+              <div className="absolute inset-0 bg-black/20 rounded-lg group-hover:bg-black/10 transition-colors"></div>
             </div>
           </div>
         </div>
