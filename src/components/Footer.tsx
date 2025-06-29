@@ -81,9 +81,12 @@ const Footer = () => {
                 variant="outline" 
                 size="sm" 
                 className="text-gray-400 border-gray-600 hover:text-white hover:border-white"
+                asChild
               >
-                <Settings className="w-4 h-4 ml-2" />
-                لوحة التحكم
+                <Link to="/admin">
+                  <Settings className="w-4 h-4 ml-2" />
+                  لوحة التحكم
+                </Link>
               </Button>
             </div>
           </div>
