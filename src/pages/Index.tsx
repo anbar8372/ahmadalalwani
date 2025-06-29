@@ -3,19 +3,27 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { ChevronDown, Users, Building, Award, BookOpen, Briefcase } from 'lucide-react';
+
 const Index = () => {
-  return <Layout>
+  return (
+    <Layout>
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="animate-fade-in">
-            {/* Profile Image */}
-            <div className="w-48 h-48 mx-auto mb-8 rounded-full shadow-2xl overflow-hidden bg-white">
-              <img src="https://i.imgur.com/placeholder-profile.jpg" alt="الدكتور أحمد العلواني" className="w-full h-full object-cover" onError={e => {
-              e.currentTarget.style.display = 'none';
-              e.currentTarget.parentElement.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-red-600 to-green-600 flex items-center justify-center"><span class="text-6xl font-bold text-white">أ.ع</span></div>';
-            }} />
+            {/* Distinguished Profile Image */}
+            <div className="w-64 h-64 mx-auto mb-8 rounded-full shadow-2xl overflow-hidden bg-white border-4 border-iraqi-red/20 relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-iraqi-red/10 to-iraqi-green/10 rounded-full"></div>
+              <img 
+                src="https://www.alyaum.com/uploads/imported_images/media/article/AY1MAN21C-3_17.jpg" 
+                alt="الدكتور أحمد العلواني" 
+                className="w-full h-full object-cover relative z-10" 
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-red-600 to-green-600 flex items-center justify-center relative z-10"><span class="text-6xl font-bold text-white">أ.ع</span></div>';
+                }} 
+              />
             </div>
             
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-4 text-shadow">
@@ -188,6 +196,8 @@ const Index = () => {
           </div>
         </div>
       </section>
-    </Layout>;
+    </Layout>
+  );
 };
+
 export default Index;
