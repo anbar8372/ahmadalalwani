@@ -16,7 +16,7 @@ const Index = () => {
             <div className="w-64 h-64 mx-auto mb-8 rounded-full shadow-2xl overflow-hidden bg-white border-4 border-iraqi-red/20 relative">
               <div className="absolute inset-0 bg-gradient-to-br from-iraqi-red/10 to-iraqi-green/10 rounded-full"></div>
               <img 
-                src="https://www.alyaum.com/uploads/imported_images/media/article/AY1MAN21C-3_17.jpg" 
+                src="https://k.top4top.io/p_3466m7gn01.jpg" 
                 alt="الدكتور أحمد العلواني" 
                 className="w-full h-full object-cover relative z-10" 
                 onError={(e) => {
