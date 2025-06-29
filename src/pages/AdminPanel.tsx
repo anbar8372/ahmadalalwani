@@ -11,7 +11,8 @@ import {
   Image, 
   Mail, 
   Home,
-  Globe
+  Globe,
+  Shield
 } from 'lucide-react';
 import HomeContentManager from '@/components/admin/HomeContentManager';
 import BiographyManager from '@/components/admin/BiographyManager';
@@ -21,8 +22,17 @@ import MediaManager from '@/components/admin/MediaManager';
 import ContactManager from '@/components/admin/ContactManager';
 import ImageGalleryManager from '@/components/admin/ImageGalleryManager';
 import SiteSettingsManager from '@/components/admin/SiteSettingsManager';
+import SecurityManager from '@/components/admin/SecurityManager';
+import LoginForm from '@/components/admin/LoginForm';
+import { useAuth } from '@/hooks/useAuth';
 
 const AdminPanel = () => {
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return <LoginForm />;
+  }
+
   return (
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -38,7 +48,7 @@ const AdminPanel = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Tabs defaultValue="home" className="space-y-6" dir="rtl">
-            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 gap-2">
+            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9 gap-2">
               <TabsTrigger value="home" className="flex items-center space-x-2 space-x-reverse">
                 <Home className="w-4 h-4" />
                 <span className="hidden sm:inline">الرئيسية</span>
@@ -70,6 +80,10 @@ const AdminPanel = () => {
               <TabsTrigger value="settings" className="flex items-center space-x-2 space-x-reverse">
                 <Settings className="w-4 h-4" />
                 <span className="hidden sm:inline">الإعدادات</span>
+              </TabsTrigger>
+              <TabsTrigger value="security" className="flex items-center space-x-2 space-x-reverse">
+                <Shield className="w-4 h-4" />
+                <span className="hidden sm:inline">الأمان</span>
               </TabsTrigger>
             </TabsList>
 
@@ -103,6 +117,10 @@ const AdminPanel = () => {
 
             <TabsContent value="settings">
               <SiteSettingsManager />
+            </TabsContent>
+
+            <TabsContent value="security">
+              <SecurityManager />
             </TabsContent>
           </Tabs>
         </div>

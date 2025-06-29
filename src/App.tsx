@@ -4,6 +4,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from '@/hooks/useAuth';
 import Index from './pages/Index';
 
 const Biography = lazy(() => import('./pages/Biography'));
@@ -19,47 +20,49 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/biography" element={
-            <Suspense fallback={<div>جاري التحميل...</div>}>
-              <Biography />
-            </Suspense>
-          } />
-          <Route path="/political-career" element={
-            <Suspense fallback={<div>جاري التحميل...</div>}>
-              <PoliticalCareer />
-            </Suspense>
-          } />
-          <Route path="/achievements" element={
-            <Suspense fallback={<div>جاري التحميل...</div>}>
-              <Achievements />
-            </Suspense>
-          } />
-          <Route path="/media" element={
-            <Suspense fallback={<div>جاري التحميل...</div>}>
-              <Media />
-            </Suspense>
-          } />
-          <Route path="/contact" element={
-            <Suspense fallback={<div>جاري التحميل...</div>}>
-              <Contact />
-            </Suspense>
-          } />
-          <Route path="/admin" element={
-            <Suspense fallback={<div>جاري التحميل...</div>}>
-              <AdminPanel />
-            </Suspense>
-          } />
-          <Route path="*" element={
-            <Suspense fallback={<div>جاري التحميل...</div>}>
-              <NotFound />
-            </Suspense>
-          } />
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <Toaster />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/biography" element={
+              <Suspense fallback={<div>جاري التحميل...</div>}>
+                <Biography />
+              </Suspense>
+            } />
+            <Route path="/political-career" element={
+              <Suspense fallback={<div>جاري التحميل...</div>}>
+                <PoliticalCareer />
+              </Suspense>
+            } />
+            <Route path="/achievements" element={
+              <Suspense fallback={<div>جاري التحميل...</div>}>
+                <Achievements />
+              </Suspense>
+            } />
+            <Route path="/media" element={
+              <Suspense fallback={<div>جاري التحميل...</div>}>
+                <Media />
+              </Suspense>
+            } />
+            <Route path="/contact" element={
+              <Suspense fallback={<div>جاري التحميل...</div>}>
+                <Contact />
+              </Suspense>
+            } />
+            <Route path="/admin" element={
+              <Suspense fallback={<div>جاري التحميل...</div>}>
+                <AdminPanel />
+              </Suspense>
+            } />
+            <Route path="*" element={
+              <Suspense fallback={<div>جاري التحميل...</div>}>
+                <NotFound />
+              </Suspense>
+            } />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
