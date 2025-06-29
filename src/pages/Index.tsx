@@ -3,10 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { ChevronDown, Users, Building, Award, BookOpen, Briefcase } from 'lucide-react';
-
 const Index = () => {
-  return (
-    <Layout>
+  return <Layout>
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="absolute inset-0 bg-black/10"></div>
@@ -15,24 +13,17 @@ const Index = () => {
             {/* Distinguished Profile Image */}
             <div className="w-64 h-64 mx-auto mb-8 rounded-full shadow-2xl overflow-hidden bg-white border-4 border-iraqi-red/20 relative">
               <div className="absolute inset-0 bg-gradient-to-br from-iraqi-red/10 to-iraqi-green/10 rounded-full"></div>
-              <img 
-                src="https://k.top4top.io/p_3466m7gn01.jpg" 
-                alt="الدكتور أحمد العلواني" 
-                className="w-full h-full object-cover relative z-10" 
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-red-600 to-green-600 flex items-center justify-center relative z-10"><span class="text-6xl font-bold text-white">أ.ع</span></div>';
-                }} 
-              />
+              <img src="https://k.top4top.io/p_3466m7gn01.jpg" alt="الدكتور أحمد العلواني" className="w-full h-full object-cover relative z-10" onError={e => {
+              e.currentTarget.style.display = 'none';
+              e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-red-600 to-green-600 flex items-center justify-center relative z-10"><span class="text-6xl font-bold text-white">أ.ع</span></div>';
+            }} />
             </div>
             
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-4 text-shadow">
               الدكتور أحمد العلواني
             </h1>
             <h2 className="text-2xl md:text-3xl text-primary mb-6">نائب سابق في البرلمان العراقي</h2>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-              رئيس اللجنة الاقتصادية في البرلمان العراقي، حاصل على الدكتوراه في علوم الأرض من جامعة بغداد، يعمل من أجل خدمة الشعب العراقي وتحقيق التنمية المستدامة.
-            </p>
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">حاصل على الدكتوراه في علوم الأرض من جامعة بغداد، يعمل من أجل خدمة الشعب العراقي وتحقيق التنمية المستدامة.</p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Button asChild size="lg" className="text-lg px-8 py-3">
@@ -196,8 +187,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default Index;
