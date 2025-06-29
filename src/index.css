@@ -92,10 +92,31 @@
   body {
     @apply bg-background text-foreground font-tajawal;
     direction: rtl;
+    overflow-x: hidden;
   }
 
   html {
     direction: rtl;
+    scroll-behavior: smooth;
+  }
+
+  /* Responsive text scaling */
+  @media (max-width: 640px) {
+    html {
+      font-size: 14px;
+    }
+  }
+
+  @media (min-width: 641px) and (max-width: 768px) {
+    html {
+      font-size: 15px;
+    }
+  }
+
+  @media (min-width: 769px) {
+    html {
+      font-size: 16px;
+    }
   }
 }
 
@@ -110,5 +131,51 @@
   
   .text-shadow {
     text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+  }
+
+  /* Responsive utilities */
+  .responsive-padding {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  
+  .responsive-margin {
+    @apply mx-4 sm:mx-6 lg:mx-8;
+  }
+
+  /* Mobile-first button styling */
+  .btn-responsive {
+    @apply px-4 py-2 text-sm;
+  }
+
+  @media (min-width: 640px) {
+    .btn-responsive {
+      @apply px-6 py-3 text-base;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .btn-responsive {
+      @apply px-8 py-3 text-lg;
+    }
+  }
+}
+
+/* Custom scrollbar for webkit browsers */
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #CE1126;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #a00e1c;
   }
 }
