@@ -1,4 +1,3 @@
-
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, MapPin, GraduationCap, User } from 'lucide-react';
@@ -135,7 +134,8 @@ const Biography = () => {
                 <div className="prose prose-sm md:prose-lg max-w-none text-gray-700 leading-relaxed">
                   <p className="text-sm md:text-base mb-4">
                     يُعرف الدكتور أحمد العلواني بشخصيته القوية ومواقفه الثابتة من القضايا المبدئية. 
-                    نشأ على حب الوطن والدفاع عن قضايا الشعب العراقي، وهو ما انعكس بوضوح في مسيرته السياسية.
+                    نشأ على حب الوطن والدفاع عن قضايا الشعب العراقي، وهو ما انعكس بوضوح في مسيرته السياسية 
+                    خلال فترة عضويته في البرلمان العراقي (2010-2013).
                   </p>
                   <p className="text-sm md:text-base">
                     يتميز بالصراحة والوضوح في طرح آرائه، ولا يتردد في الدفاع عن معتقداته ومبادئه، 

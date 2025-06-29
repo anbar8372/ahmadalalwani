@@ -1,4 +1,3 @@
-
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -31,10 +30,10 @@ const Index = () => {
               الدكتور أحمد العلواني
             </h1>
             <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-primary mb-4 md:mb-6 px-4">
-              نائب سابق في البرلمان العراقي
+              نائب سابق في البرلمان العراقي (2010-2013)
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-6 md:mb-8 max-w-3xl mx-auto leading-relaxed px-4">
-              حاصل على الدكتوراه في علوم الأرض من جامعة بغداد، يعمل من أجل خدمة الشعب العراقي وتحقيق التنمية المستدامة.
+              حاصل على الدكتوراه في علوم الأرض من جامعة بغداد، شغل منصب نائب في البرلمان العراقي ورئيس اللجنة الاقتصادية حتى أواخر عام 2013.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center mb-8 md:mb-12 px-4">
@@ -68,14 +67,14 @@ const Index = () => {
               <div className="w-12 h-12 md:w-16 md:h-16 bg-iraqi-green rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
                 <Building className="w-6 h-6 md:w-8 md:h-8 text-white" />
               </div>
-              <h3 className="text-xl md:text-3xl font-bold text-gray-900 mb-1 md:mb-2">البرلمان</h3>
-              <p className="text-gray-600 text-sm md:text-base">العراقي</p>
+              <h3 className="text-lg md:text-2xl font-bold text-gray-900 mb-1 md:mb-2">2010-2013</h3>
+              <p className="text-gray-600 text-sm md:text-base">البرلمان العراقي</p>
             </div>
             <div className="text-center">
               <div className="w-12 h-12 md:w-16 md:h-16 bg-iraqi-red rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
                 <Award className="w-6 h-6 md:w-8 md:h-8 text-white" />
               </div>
-              <h3 className="text-xl md:text-3xl font-bold text-gray-900 mb-1 md:mb-2">رئيس</h3>
+              <h3 className="text-lg md:text-2xl font-bold text-gray-900 mb-1 md:mb-2">رئيس سابق</h3>
               <p className="text-gray-600 text-sm md:text-base">اللجنة الاقتصادية</p>
             </div>
             <div className="text-center">
@@ -115,8 +114,8 @@ const Index = () => {
                 <CardContent className="p-0">
                   <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4">المسيرة السياسية</h3>
                   <p className="text-sm md:text-base text-gray-600 leading-relaxed">
-                    يشغل حالياً منصب نائب في البرلمان العراقي ورئيس اللجنة الاقتصادية، 
-                    حيث يعمل على تطوير السياسات الاقتصادية وخدمة المواطنين العراقيين.
+                    شغل منصب نائب في البرلمان العراقي ورئيس اللجنة الاقتصادية من عام 2010 حتى أواخر عام 2013، 
+                    حيث عمل على تطوير السياسات الاقتصادية وخدمة المواطنين العراقيين.
                   </p>
                 </CardContent>
               </Card>
