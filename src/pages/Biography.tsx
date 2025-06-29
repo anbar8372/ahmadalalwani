@@ -1,11 +1,8 @@
-
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, MapPin, GraduationCap, User } from 'lucide-react';
-
 const Biography = () => {
-  return (
-    <Layout>
+  return <Layout>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         {/* Header */}
         <section className="py-16 bg-primary text-primary-foreground">
@@ -52,7 +49,7 @@ const Biography = () => {
                     </div>
                     <div>
                       <p className="font-semibold">الديانة</p>
-                      <p className="text-gray-600">إسلام سني</p>
+                      <p className="text-gray-600">مسلم</p>
                     </div>
                     <div>
                       <p className="font-semibold">الجنسية</p>
@@ -148,8 +145,6 @@ const Biography = () => {
           </div>
         </div>
       </div>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default Biography;
