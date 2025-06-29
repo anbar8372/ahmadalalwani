@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +7,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { Mail, Phone, MapPin, Send, Clock, Users } from 'lucide-react';
-
 const Contact = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -17,18 +15,19 @@ const Contact = () => {
     subject: '',
     message: ''
   });
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    const {
+      name,
+      value
+    } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
   };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Basic validation
     if (!formData.name || !formData.email || !formData.message) {
       toast({
@@ -42,7 +41,7 @@ const Contact = () => {
     // Simulate form submission
     toast({
       title: "تم إرسال الرسالة بنجاح",
-      description: "شكراً لتواصلكم. سيتم الرد عليكم في أقرب وقت ممكن.",
+      description: "شكراً لتواصلكم. سيتم الرد عليكم في أقرب وقت ممكن."
     });
 
     // Reset form
@@ -54,9 +53,7 @@ const Contact = () => {
       message: ''
     });
   };
-
-  return (
-    <Layout>
+  return <Layout>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         {/* Header */}
         <section className="py-16 bg-primary text-primary-foreground">
@@ -130,7 +127,7 @@ const Contact = () => {
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                       <span className="text-gray-900">الجمعة</span>
-                      <span className="text-gray-600">9:00 ص - 12:00 م</span>
+                      <span className="text-gray-600">مغلق</span>
                     </div>
                     <div className="flex justify-between items-center py-2">
                       <span className="text-gray-900">السبت</span>
@@ -145,15 +142,11 @@ const Contact = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2 space-x-reverse text-xl">
                     <Users className="w-5 h-5 text-primary" />
-                    <span>للمواطنين الكرام</span>
+                    <span>لأهلي الكرام</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-700 leading-relaxed">
-                    يسعدني أن أستمع إلى آرائكم ومقترحاتكم واستفساراتكم. 
-                    أعتبر التواصل مع المواطنين جزءاً أساسياً من عملي كنائب في البرلمان العراقي. 
-                    لا تترددوا في التواصل معي بخصوص أي موضوع يهمكم.
-                  </p>
+                  <p className="text-gray-700 leading-relaxed">يسعدني أن أستمع إلى آرائكم ومقترحاتكم واستفساراتكم. أعتبر التواصل معكم  جزءاً أساسياً من عملي. لا تترددوا في التواصل معي بخصوص أي موضوع يهمكم.</p>
                 </CardContent>
               </Card>
             </div>
@@ -169,63 +162,28 @@ const Contact = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="name">الاسم الكامل *</Label>
-                        <Input
-                          id="name"
-                          name="name"
-                          value={formData.name}
-                          onChange={handleInputChange}
-                          placeholder="أدخل اسمك الكامل"
-                          required
-                        />
+                        <Input id="name" name="name" value={formData.name} onChange={handleInputChange} placeholder="أدخل اسمك الكامل" required />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="email">البريد الإلكتروني *</Label>
-                        <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          placeholder="أدخل بريدك الإلكتروني"
-                          required
-                        />
+                        <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="أدخل بريدك الإلكتروني" required />
                       </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="phone">رقم الهاتف</Label>
-                        <Input
-                          id="phone"
-                          name="phone"
-                          value={formData.phone}
-                          onChange={handleInputChange}
-                          placeholder="أدخل رقم هاتفك"
-                        />
+                        <Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="أدخل رقم هاتفك" />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="subject">الموضوع</Label>
-                        <Input
-                          id="subject"
-                          name="subject"
-                          value={formData.subject}
-                          onChange={handleInputChange}
-                          placeholder="موضوع الرسالة"
-                        />
+                        <Input id="subject" name="subject" value={formData.subject} onChange={handleInputChange} placeholder="موضوع الرسالة" />
                       </div>
                     </div>
                     
                     <div className="space-y-2">
                       <Label htmlFor="message">الرسالة *</Label>
-                      <Textarea
-                        id="message"
-                        name="message"
-                        value={formData.message}
-                        onChange={handleInputChange}
-                        placeholder="اكتب رسالتك هنا..."
-                        rows={6}
-                        required
-                      />
+                      <Textarea id="message" name="message" value={formData.message} onChange={handleInputChange} placeholder="اكتب رسالتك هنا..." rows={6} required />
                     </div>
                     
                     <Button type="submit" size="lg" className="w-full">
@@ -239,8 +197,6 @@ const Contact = () => {
           </div>
         </div>
       </div>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default Contact;
