@@ -14,11 +14,15 @@ const Index = () => {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="animate-fade-in">
             {/* Profile Image */}
-            <div className="w-48 h-48 mx-auto mb-8 rounded-full shadow-2xl overflow-hidden">
+            <div className="w-48 h-48 mx-auto mb-8 rounded-full shadow-2xl overflow-hidden bg-white">
               <img 
-                src="https://www.alyaum.com/uploads/imported_images/media/article/AY1MAN21C-3_17.jpg" 
+                src="https://i.imgur.com/placeholder-profile.jpg" 
                 alt="الدكتور أحمد العلواني"
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-red-600 to-green-600 flex items-center justify-center"><span class="text-6xl font-bold text-white">أ.ع</span></div>';
+                }}
               />
             </div>
             
@@ -118,11 +122,15 @@ const Index = () => {
             </div>
             
             <div className="text-center">
-              <div className="w-96 h-96 mx-auto rounded-full shadow-2xl overflow-hidden">
+              <div className="w-96 h-96 mx-auto rounded-full shadow-2xl overflow-hidden bg-white">
                 <img 
-                  src="https://static.srpcdigital.com/styles/1037xauto/public/2025-04/1032030.jpeg"
+                  src="https://i.imgur.com/placeholder-parliament.jpg"
                   alt="الدكتور أحمد العلواني في البرلمان"
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.parentElement.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-red-600/20 to-green-600/20 rounded-full flex items-center justify-center"><div class="w-80 h-80 bg-gradient-to-br from-red-600 to-green-600 rounded-full flex items-center justify-center shadow-2xl"><span class="text-8xl font-bold text-white">أ</span></div></div>';
+                  }}
                 />
               </div>
             </div>
@@ -142,21 +150,25 @@ const Index = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="relative group">
-              <img 
-                src="https://cdn.964media.com/e69f5484-a0ef-4f36-b255-396861d56100/full169"
-                alt="الدكتور أحمد العلواني"
-                className="w-full h-64 object-cover rounded-lg shadow-lg group-hover:shadow-xl transition-shadow"
-              />
-              <div className="absolute inset-0 bg-black/20 rounded-lg group-hover:bg-black/10 transition-colors"></div>
+              <div className="w-full h-64 bg-gradient-to-br from-iraqi-red/10 to-iraqi-green/10 rounded-lg shadow-lg group-hover:shadow-xl transition-shadow flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-iraqi-red rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-8 h-8 text-white" />
+                  </div>
+                  <p className="text-gray-600 font-semibold">صورة من المسيرة السياسية</p>
+                </div>
+              </div>
             </div>
             
             <div className="relative group">
-              <img 
-                src="https://www.aljazeera.net/wp-content/uploads/2014/11/fed58c14-7c52-4dac-be73-cdd58213c0a0.jpeg"
-                alt="الدكتور أحمد العلواني في جلسة برلمانية"
-                className="w-full h-64 object-cover rounded-lg shadow-lg group-hover:shadow-xl transition-shadow"
-              />
-              <div className="absolute inset-0 bg-black/20 rounded-lg group-hover:bg-black/10 transition-colors"></div>
+              <div className="w-full h-64 bg-gradient-to-br from-iraqi-green/10 to-iraqi-red/10 rounded-lg shadow-lg group-hover:shadow-xl transition-shadow flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-iraqi-green rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Building className="w-8 h-8 text-white" />
+                  </div>
+                  <p className="text-gray-600 font-semibold">صورة من جلسات البرلمان</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
