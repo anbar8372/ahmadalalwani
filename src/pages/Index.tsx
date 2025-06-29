@@ -1,13 +1,10 @@
-
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { ChevronDown, Users, Building, Award, BookOpen, Briefcase } from 'lucide-react';
-
 const Index = () => {
-  return (
-    <Layout>
+  return <Layout>
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="absolute inset-0 bg-black/10"></div>
@@ -15,23 +12,16 @@ const Index = () => {
           <div className="animate-fade-in">
             {/* Profile Image */}
             <div className="w-48 h-48 mx-auto mb-8 rounded-full shadow-2xl overflow-hidden bg-white">
-              <img 
-                src="https://i.imgur.com/placeholder-profile.jpg" 
-                alt="الدكتور أحمد العلواني"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.parentElement.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-red-600 to-green-600 flex items-center justify-center"><span class="text-6xl font-bold text-white">أ.ع</span></div>';
-                }}
-              />
+              <img src="https://i.imgur.com/placeholder-profile.jpg" alt="الدكتور أحمد العلواني" className="w-full h-full object-cover" onError={e => {
+              e.currentTarget.style.display = 'none';
+              e.currentTarget.parentElement.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-red-600 to-green-600 flex items-center justify-center"><span class="text-6xl font-bold text-white">أ.ع</span></div>';
+            }} />
             </div>
             
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-4 text-shadow">
               الدكتور أحمد العلواني
             </h1>
-            <h2 className="text-2xl md:text-3xl text-primary mb-6">
-              نائب في البرلمان العراقي
-            </h2>
+            <h2 className="text-2xl md:text-3xl text-primary mb-6">نائب سابق في البرلمان العراقي</h2>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
               رئيس اللجنة الاقتصادية في البرلمان العراقي، حاصل على الدكتوراه في علوم الأرض من جامعة بغداد، يعمل من أجل خدمة الشعب العراقي وتحقيق التنمية المستدامة.
             </p>
@@ -123,15 +113,10 @@ const Index = () => {
             
             <div className="text-center">
               <div className="w-96 h-96 mx-auto rounded-full shadow-2xl overflow-hidden bg-white">
-                <img 
-                  src="https://i.imgur.com/placeholder-parliament.jpg"
-                  alt="الدكتور أحمد العلواني في البرلمان"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    e.currentTarget.parentElement.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-red-600/20 to-green-600/20 rounded-full flex items-center justify-center"><div class="w-80 h-80 bg-gradient-to-br from-red-600 to-green-600 rounded-full flex items-center justify-center shadow-2xl"><span class="text-8xl font-bold text-white">أ</span></div></div>';
-                  }}
-                />
+                <img src="https://i.imgur.com/placeholder-parliament.jpg" alt="الدكتور أحمد العلواني في البرلمان" className="w-full h-full object-cover" onError={e => {
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.parentElement.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-red-600/20 to-green-600/20 rounded-full flex items-center justify-center"><div class="w-80 h-80 bg-gradient-to-br from-red-600 to-green-600 rounded-full flex items-center justify-center shadow-2xl"><span class="text-8xl font-bold text-white">أ</span></div></div>';
+              }} />
               </div>
             </div>
           </div>
@@ -203,8 +188,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default Index;
