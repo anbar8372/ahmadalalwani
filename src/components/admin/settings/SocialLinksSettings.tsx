@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Save, Plus, Trash2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Save, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
 
 interface SocialLink {
   id: string;
@@ -12,6 +13,7 @@ interface SocialLink {
   url: string;
   icon: string;
   color: string;
+  visible: boolean;
 }
 
 const SocialLinksSettings = () => {
@@ -21,14 +23,56 @@ const SocialLinksSettings = () => {
       platform: 'فيسبوك',
       url: '',
       icon: 'facebook',
-      color: '#1877F2'
+      color: '#1877F2',
+      visible: true
     },
     {
       id: '2',
-      platform: 'تويتر',
+      platform: 'انستغرام',
+      url: '',
+      icon: 'instagram',
+      color: '#E4405F',
+      visible: true
+    },
+    {
+      id: '3',
+      platform: 'تليغرام',
+      url: '',
+      icon: 'send',
+      color: '#0088CC',
+      visible: true
+    },
+    {
+      id: '4',
+      platform: 'تيكتوك',
+      url: '',
+      icon: 'music',
+      color: '#000000',
+      visible: true
+    },
+    {
+      id: '5',
+      platform: 'يوتيوب',
+      url: '',
+      icon: 'youtube',
+      color: '#FF0000',
+      visible: true
+    },
+    {
+      id: '6',
+      platform: 'منصة X',
       url: '',
       icon: 'twitter',
-      color: '#1DA1F2'
+      color: '#000000',
+      visible: true
+    },
+    {
+      id: '7',
+      platform: 'قناة واتساب',
+      url: '',
+      icon: 'message-circle',
+      color: '#25D366',
+      visible: true
     }
   ]);
 
@@ -38,12 +82,13 @@ const SocialLinksSettings = () => {
       platform: '',
       url: '',
       icon: '',
-      color: '#000000'
+      color: '#000000',
+      visible: true
     };
     setSocialLinks([...socialLinks, newLink]);
   };
 
-  const updateSocialLink = (id: string, field: keyof SocialLink, value: string) => {
+  const updateSocialLink = (id: string, field: keyof SocialLink, value: string | boolean) => {
     setSocialLinks(links => 
       links.map(link => 
         link.id === id ? { ...link, [field]: value } : link
@@ -68,7 +113,18 @@ const SocialLinksSettings = () => {
         {socialLinks.map((link) => (
           <div key={link.id} className="border rounded-lg p-4 space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">رابط #{link.id}</h3>
+              <div className="flex items-center space-x-4 space-x-reverse">
+                <h3 className="text-lg font-semibold">{link.platform || `رابط #${link.id}`}</h3>
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <Switch 
+                    checked={link.visible}
+                    onCheckedChange={(checked) => updateSocialLink(link.id, 'visible', checked)}
+                  />
+                  <Label className="text-sm">
+                    {link.visible ? 'مرئي' : 'مخفي'}
+                  </Label>
+                </div>
+              </div>
               <Button 
                 onClick={() => deleteSocialLink(link.id)}
                 variant="destructive" 

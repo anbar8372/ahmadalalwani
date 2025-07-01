@@ -1,9 +1,20 @@
 
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Settings } from 'lucide-react';
+import { Mail, Phone, MapPin, Settings, Facebook, Instagram, Youtube, Twitter, Send, Music, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Footer = () => {
+  // Sample social media links - in real implementation, these would come from a context or API
+  const socialLinks = [
+    { platform: 'فيسبوك', url: 'https://facebook.com', icon: Facebook, color: '#1877F2', visible: true },
+    { platform: 'انستغرام', url: 'https://instagram.com', icon: Instagram, color: '#E4405F', visible: true },
+    { platform: 'تليغرام', url: 'https://t.me', icon: Send, color: '#0088CC', visible: true },
+    { platform: 'تيكتوك', url: 'https://tiktok.com', icon: Music, color: '#000000', visible: true },
+    { platform: 'يوتيوب', url: 'https://youtube.com', icon: Youtube, color: '#FF0000', visible: true },
+    { platform: 'منصة X', url: 'https://x.com', icon: Twitter, color: '#000000', visible: true },
+    { platform: 'قناة واتساب', url: 'https://whatsapp.com/channel', icon: MessageCircle, color: '#25D366', visible: true }
+  ].filter(link => link.visible && link.url);
+
   return (
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
@@ -64,6 +75,33 @@ const Footer = () => {
                 <Phone className="w-5 h-5 text-iraqi-green" />
                 <span className="text-gray-300 text-sm">+964 XXX XXX XXXX</span>
               </div>
+              {/* Social Media Links */}
+              {socialLinks.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="text-sm font-semibold mb-3">تابعني على</h4>
+                  <div className="flex space-x-3 space-x-reverse">
+                    {socialLinks.map((social, index) => {
+                      const IconComponent = social.icon;
+                      return (
+                        <a
+                          key={index}
+                          href={social.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
+                          style={{ backgroundColor: social.color + '20', border: `1px solid ${social.color}40` }}
+                          title={social.platform}
+                        >
+                          <IconComponent 
+                            className="w-4 h-4" 
+                            style={{ color: social.color }} 
+                          />
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
