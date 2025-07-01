@@ -3,10 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { ChevronDown, Users, Building, Award, BookOpen, Briefcase } from 'lucide-react';
-
 const Index = () => {
-  return (
-    <Layout>
+  return <Layout>
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="absolute inset-0 bg-black/10"></div>
@@ -15,15 +13,10 @@ const Index = () => {
             {/* Distinguished Profile Image */}
             <div className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 mx-auto mb-6 md:mb-8 rounded-full shadow-2xl overflow-hidden bg-white border-4 border-iraqi-red/20 relative">
               <div className="absolute inset-0 bg-gradient-to-br from-iraqi-red/10 to-iraqi-green/10 rounded-full"></div>
-              <img 
-                src="https://k.top4top.io/p_3466m7gn01.jpg" 
-                alt="الدكتور أحمد العلواني" 
-                className="w-full h-full object-cover relative z-10" 
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-red-600 to-green-600 flex items-center justify-center relative z-10"><span class="text-4xl md:text-6xl font-bold text-white">أ.ع</span></div>';
-                }} 
-              />
+              <img src="https://k.top4top.io/p_3466m7gn01.jpg" alt="الدكتور أحمد العلواني" className="w-full h-full object-cover relative z-10" onError={e => {
+              e.currentTarget.style.display = 'none';
+              e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-red-600 to-green-600 flex items-center justify-center relative z-10"><span class="text-4xl md:text-6xl font-bold text-white">أ.ع</span></div>';
+            }} />
             </div>
             
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-3 md:mb-4 text-shadow px-4">
@@ -67,7 +60,7 @@ const Index = () => {
               <div className="w-12 h-12 md:w-16 md:h-16 bg-iraqi-green rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
                 <Building className="w-6 h-6 md:w-8 md:h-8 text-white" />
               </div>
-              <h3 className="text-lg md:text-2xl font-bold text-gray-900 mb-1 md:mb-2">2005-2014</h3>
+              <h3 className="text-lg md:text-2xl font-bold text-gray-900 mb-1 md:mb-2">2014-2005</h3>
               <p className="text-gray-600 text-sm md:text-base">البرلمان العراقي</p>
             </div>
             <div className="text-center">
@@ -123,15 +116,10 @@ const Index = () => {
             
             <div className="text-center order-1 lg:order-2">
               <div className="w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 mx-auto rounded-full shadow-2xl overflow-hidden bg-white">
-                <img 
-                  src="https://i.imgur.com/placeholder-parliament.jpg" 
-                  alt="الدكتور أحمد العلواني في البرلمان" 
-                  className="w-full h-full object-cover" 
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-red-600/20 to-green-600/20 rounded-full flex items-center justify-center"><div class="w-4/5 h-4/5 bg-gradient-to-br from-red-600 to-green-600 rounded-full flex items-center justify-center shadow-2xl"><span class="text-6xl md:text-8xl font-bold text-white">أ</span></div></div>';
-                  }} 
-                />
+                <img src="https://i.imgur.com/placeholder-parliament.jpg" alt="الدكتور أحمد العلواني في البرلمان" className="w-full h-full object-cover" onError={e => {
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-red-600/20 to-green-600/20 rounded-full flex items-center justify-center"><div class="w-4/5 h-4/5 bg-gradient-to-br from-red-600 to-green-600 rounded-full flex items-center justify-center shadow-2xl"><span class="text-6xl md:text-8xl font-bold text-white">أ</span></div></div>';
+              }} />
               </div>
             </div>
           </div>
@@ -203,8 +191,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default Index;
