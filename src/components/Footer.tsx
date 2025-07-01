@@ -120,7 +120,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-3 space-x-reverse">
                 <Phone className="w-5 h-5 text-iraqi-green" />
-                <span className="text-gray-300 text-sm">+964 XXX XXX XXXX</span>
+                <span className="text-gray-300 text-sm">0096477XXXXXX</span>
               </div>
               {/* Social Media Links */}
               {socialLinks.length > 0 && <div className="mt-4">
