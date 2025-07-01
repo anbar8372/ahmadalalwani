@@ -1,12 +1,9 @@
-
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, AlertTriangle, Users, Gavel } from 'lucide-react';
-
 const PoliticalCareer = () => {
-  return (
-    <Layout>
+  return <Layout>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         {/* Header */}
         <section className="py-16 bg-primary text-primary-foreground">
@@ -149,12 +146,7 @@ const PoliticalCareer = () => {
                     <Calendar className="w-5 h-5 text-orange-500" />
                     <span className="font-semibold">28 سبتمبر 2013</span>
                   </div>
-                  <p className="text-gray-700 leading-relaxed">
-                    انتهت فترة الدكتور أحمد العلواني في البرلمان العراقي في أواخر عام 2013. 
-                    وفي 28 سبتمبر 2013، تم اعتقاله من منزله في الرمادي من قبل قوات الأمن العراقية 
-                    بتهم "التحريض على الإرهاب". هذا الاعتقال أثار جدلاً واسعاً وردود فعل متباينة 
-                    في الأوساط السياسية والشعبية.
-                  </p>
+                  <p className="text-gray-700 leading-relaxed">انتهت فترة الدكتور أحمد العلواني في البرلمان العراقي في أواخر عام 2013. وفي 28 سبتمبر 2013، تم اعتقاله من منزله في الرمادي من قبل قوات الأمن العراقية . هذا الاعتقال أثار جدلاً واسعاً وردود فعل متباينة في الأوساط السياسية والشعبية.</p>
                   <div className="bg-yellow-50 p-4 rounded-lg border-r-4 border-yellow-400">
                     <p className="text-gray-700">
                       <strong>ملاحظة:</strong> كان بعض السياسيين قد طالبوا برفع الحصانة عنه قبل انتهاء فترته البرلمانية، 
@@ -167,8 +159,6 @@ const PoliticalCareer = () => {
           </div>
         </div>
       </div>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default PoliticalCareer;
