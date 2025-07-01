@@ -4,16 +4,28 @@ import { Mail, Phone, MapPin, Settings, Facebook, Instagram, Youtube, Twitter, S
 import { Button } from '@/components/ui/button';
 
 const Footer = () => {
-  // Sample social media links - in real implementation, these would come from a context or API
   const socialLinks = [
-    { platform: 'فيسبوك', url: 'https://facebook.com', icon: Facebook, color: '#1877F2', visible: true },
-    { platform: 'انستغرام', url: 'https://instagram.com', icon: Instagram, color: '#E4405F', visible: true },
-    { platform: 'تليغرام', url: 'https://t.me', icon: Send, color: '#0088CC', visible: true },
-    { platform: 'تيكتوك', url: 'https://tiktok.com', icon: Music, color: '#000000', visible: true },
-    { platform: 'يوتيوب', url: 'https://youtube.com', icon: Youtube, color: '#FF0000', visible: true },
-    { platform: 'منصة X', url: 'https://x.com', icon: Twitter, color: '#000000', visible: true },
-    { platform: 'قناة واتساب', url: 'https://whatsapp.com/channel', icon: MessageCircle, color: '#25D366', visible: true }
+    { platform: 'فيسبوك', url: 'https://facebook.com', icon: 'facebook', color: '#1877F2', visible: true },
+    { platform: 'انستغرام', url: 'https://instagram.com', icon: 'instagram', color: '#E4405F', visible: true },
+    { platform: 'تليغرام', url: 'https://t.me', icon: 'send', color: '#0088CC', visible: true },
+    { platform: 'تيكتوك', url: 'https://tiktok.com', icon: 'music', color: '#000000', visible: true },
+    { platform: 'يوتيوب', url: 'https://youtube.com', icon: 'youtube', color: '#FF0000', visible: true },
+    { platform: 'منصة X', url: 'https://x.com', icon: 'twitter', color: '#000000', visible: true },
+    { platform: 'قناة واتساب', url: 'https://whatsapp.com/channel', icon: 'message-circle', color: '#25D366', visible: true }
   ].filter(link => link.visible && link.url);
+
+  const getIcon = (iconName: string) => {
+    switch(iconName) {
+      case 'facebook': return Facebook;
+      case 'instagram': return Instagram;
+      case 'send': return Send;
+      case 'music': return Music;
+      case 'youtube': return Youtube;
+      case 'twitter': return Twitter;
+      case 'message-circle': return MessageCircle;
+      default: return MessageCircle;
+    }
+  };
 
   return (
     <footer className="bg-gray-900 text-white">
@@ -81,7 +93,7 @@ const Footer = () => {
                   <h4 className="text-sm font-semibold mb-3">تابعني على</h4>
                   <div className="flex space-x-3 space-x-reverse">
                     {socialLinks.map((social, index) => {
-                      const IconComponent = social.icon;
+                      const IconComponent = getIcon(social.icon);
                       return (
                         <a
                           key={index}
