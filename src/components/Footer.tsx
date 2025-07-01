@@ -1,34 +1,71 @@
-
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, Settings, Facebook, Instagram, Youtube, Twitter, Send, Music, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
 const Footer = () => {
-  const socialLinks = [
-    { platform: 'فيسبوك', url: 'https://facebook.com', icon: 'facebook', color: '#1877F2', visible: true },
-    { platform: 'انستغرام', url: 'https://instagram.com', icon: 'instagram', color: '#E4405F', visible: true },
-    { platform: 'تليغرام', url: 'https://t.me', icon: 'send', color: '#0088CC', visible: true },
-    { platform: 'تيكتوك', url: 'https://tiktok.com', icon: 'music', color: '#000000', visible: true },
-    { platform: 'يوتيوب', url: 'https://youtube.com', icon: 'youtube', color: '#FF0000', visible: true },
-    { platform: 'منصة X', url: 'https://x.com', icon: 'twitter', color: '#000000', visible: true },
-    { platform: 'قناة واتساب', url: 'https://whatsapp.com/channel', icon: 'message-circle', color: '#25D366', visible: true }
-  ].filter(link => link.visible && link.url);
-
+  const socialLinks = [{
+    platform: 'فيسبوك',
+    url: 'https://facebook.com',
+    icon: 'facebook',
+    color: '#1877F2',
+    visible: true
+  }, {
+    platform: 'انستغرام',
+    url: 'https://instagram.com',
+    icon: 'instagram',
+    color: '#E4405F',
+    visible: true
+  }, {
+    platform: 'تليغرام',
+    url: 'https://t.me',
+    icon: 'send',
+    color: '#0088CC',
+    visible: true
+  }, {
+    platform: 'تيكتوك',
+    url: 'https://tiktok.com',
+    icon: 'music',
+    color: '#000000',
+    visible: true
+  }, {
+    platform: 'يوتيوب',
+    url: 'https://youtube.com',
+    icon: 'youtube',
+    color: '#FF0000',
+    visible: true
+  }, {
+    platform: 'منصة X',
+    url: 'https://x.com',
+    icon: 'twitter',
+    color: '#000000',
+    visible: true
+  }, {
+    platform: 'قناة واتساب',
+    url: 'https://whatsapp.com/channel',
+    icon: 'message-circle',
+    color: '#25D366',
+    visible: true
+  }].filter(link => link.visible && link.url);
   const getIcon = (iconName: string) => {
-    switch(iconName) {
-      case 'facebook': return Facebook;
-      case 'instagram': return Instagram;
-      case 'send': return Send;
-      case 'music': return Music;
-      case 'youtube': return Youtube;
-      case 'twitter': return Twitter;
-      case 'message-circle': return MessageCircle;
-      default: return MessageCircle;
+    switch (iconName) {
+      case 'facebook':
+        return Facebook;
+      case 'instagram':
+        return Instagram;
+      case 'send':
+        return Send;
+      case 'music':
+        return Music;
+      case 'youtube':
+        return Youtube;
+      case 'twitter':
+        return Twitter;
+      case 'message-circle':
+        return MessageCircle;
+      default:
+        return MessageCircle;
     }
   };
-
-  return (
-    <footer className="bg-gray-900 text-white">
+  return <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* About Section */}
@@ -39,9 +76,7 @@ const Footer = () => {
               </div>
               <h3 className="text-lg font-semibold">الدكتور أحمد العلواني</h3>
             </div>
-            <p className="text-gray-300 text-sm leading-relaxed">
-              نائب سابق في البرلمان العراقي (2010-2013) ورئيس اللجنة الاقتصادية، عمل من أجل خدمة الشعب العراقي وتحقيق التنمية والازدهار.
-            </p>
+            <p className="text-gray-300 text-sm leading-relaxed">نائب سابق في البرلمان العراقي (2005-2014) ورئيس اللجنة الاقتصادية، عمل من أجل خدمة الشعب العراقي وتحقيق التنمية والازدهار.</p>
           </div>
 
           {/* Quick Links */}
@@ -88,32 +123,22 @@ const Footer = () => {
                 <span className="text-gray-300 text-sm">+964 XXX XXX XXXX</span>
               </div>
               {/* Social Media Links */}
-              {socialLinks.length > 0 && (
-                <div className="mt-4">
+              {socialLinks.length > 0 && <div className="mt-4">
                   <h4 className="text-sm font-semibold mb-3">تابعني على</h4>
                   <div className="flex space-x-3 space-x-reverse">
                     {socialLinks.map((social, index) => {
-                      const IconComponent = getIcon(social.icon);
-                      return (
-                        <a
-                          key={index}
-                          href={social.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
-                          style={{ backgroundColor: social.color + '20', border: `1px solid ${social.color}40` }}
-                          title={social.platform}
-                        >
-                          <IconComponent 
-                            className="w-4 h-4" 
-                            style={{ color: social.color }} 
-                          />
-                        </a>
-                      );
-                    })}
+                  const IconComponent = getIcon(social.icon);
+                  return <a key={index} href={social.url} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110" style={{
+                    backgroundColor: social.color + '20',
+                    border: `1px solid ${social.color}40`
+                  }} title={social.platform}>
+                          <IconComponent className="w-4 h-4" style={{
+                      color: social.color
+                    }} />
+                        </a>;
+                })}
                   </div>
-                </div>
-              )}
+                </div>}
             </div>
           </div>
         </div>
@@ -127,12 +152,7 @@ const Footer = () => {
               <p className="text-gray-400 text-sm">
                 تم التطوير بواسطة فريق متخصص
               </p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-gray-400 border-gray-600 hover:text-white hover:border-white"
-                asChild
-              >
+              <Button variant="outline" size="sm" className="text-gray-400 border-gray-600 hover:text-white hover:border-white" asChild>
                 <Link to="/admin">
                   <Settings className="w-4 h-4 ml-2" />
                   لوحة التحكم
@@ -142,8 +162,6 @@ const Footer = () => {
           </div>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
-
 export default Footer;
