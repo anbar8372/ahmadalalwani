@@ -145,9 +145,7 @@ const Footer = () => {
 
         <div className="mt-8 pt-8 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-400 text-sm">
-              © 2025 الدكتور أحمد العلواني - ahmedalalwani.com. جميع الحقوق محفوظة.
-            </p>
+            <p className="text-gray-400 text-sm">© 2025 الدكتور أحمد العلواني -جميع الحقوق محفوظة.</p>
             <div className="flex items-center mt-4 md:mt-0 space-x-4 space-x-reverse">
               <p className="text-gray-400 text-sm">
                 تم التطوير بواسطة فريق متخصص
