@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { Mail, Phone, MapPin, Send, Clock, Users, Loader2 } from 'lucide-react';
 import { sendContactEmail, ContactFormData } from '@/services/emailService';
-
 const Contact = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -17,17 +16,17 @@ const Contact = () => {
     subject: '',
     message: ''
   });
-
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    const {
+      name,
+      value
+    } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -51,12 +50,9 @@ const Contact = () => {
       });
       return;
     }
-
     setIsSubmitting(true);
-
     try {
       const result = await sendContactEmail(formData as ContactFormData);
-      
       if (result.success) {
         toast({
           title: "تم إرسال الرسالة بنجاح",
@@ -85,9 +81,7 @@ const Contact = () => {
       setIsSubmitting(false);
     }
   };
-
-  return (
-    <Layout>
+  return <Layout>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <section className="py-16 bg-primary text-primary-foreground">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -126,7 +120,7 @@ const Contact = () => {
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900">البريد الإلكتروني</h3>
-                        <p className="text-gray-600">info@ahmadalwani.com</p>
+                        <p className="text-gray-600">info@ahmedalalwani.com</p>
                       </div>
                     </div>
                     
@@ -191,87 +185,38 @@ const Contact = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="name">الاسم الكامل *</Label>
-                        <Input 
-                          id="name" 
-                          name="name" 
-                          value={formData.name} 
-                          onChange={handleInputChange} 
-                          placeholder="أدخل اسمك الكامل" 
-                          required 
-                          disabled={isSubmitting}
-                        />
+                        <Input id="name" name="name" value={formData.name} onChange={handleInputChange} placeholder="أدخل اسمك الكامل" required disabled={isSubmitting} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="email">البريد الإلكتروني *</Label>
-                        <Input 
-                          id="email" 
-                          name="email" 
-                          type="email" 
-                          value={formData.email} 
-                          onChange={handleInputChange} 
-                          placeholder="أدخل بريدك الإلكتروني" 
-                          required 
-                          disabled={isSubmitting}
-                        />
+                        <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="أدخل بريدك الإلكتروني" required disabled={isSubmitting} />
                       </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="phone">رقم الهاتف</Label>
-                        <Input 
-                          id="phone" 
-                          name="phone" 
-                          value={formData.phone} 
-                          onChange={handleInputChange} 
-                          placeholder="أدخل رقم هاتفك" 
-                          disabled={isSubmitting}
-                        />
+                        <Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="أدخل رقم هاتفك" disabled={isSubmitting} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="subject">الموضوع</Label>
-                        <Input 
-                          id="subject" 
-                          name="subject" 
-                          value={formData.subject} 
-                          onChange={handleInputChange} 
-                          placeholder="موضوع الرسالة" 
-                          disabled={isSubmitting}
-                        />
+                        <Input id="subject" name="subject" value={formData.subject} onChange={handleInputChange} placeholder="موضوع الرسالة" disabled={isSubmitting} />
                       </div>
                     </div>
                     
                     <div className="space-y-2">
                       <Label htmlFor="message">الرسالة *</Label>
-                      <Textarea 
-                        id="message" 
-                        name="message" 
-                        value={formData.message} 
-                        onChange={handleInputChange} 
-                        placeholder="اكتب رسالتك هنا..." 
-                        rows={6} 
-                        required 
-                        disabled={isSubmitting}
-                      />
+                      <Textarea id="message" name="message" value={formData.message} onChange={handleInputChange} placeholder="اكتب رسالتك هنا..." rows={6} required disabled={isSubmitting} />
                     </div>
                     
-                    <Button 
-                      type="submit" 
-                      size="lg" 
-                      className="w-full" 
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <>
+                    <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                      {isSubmitting ? <>
                           <Loader2 className="w-4 h-4 ml-2 animate-spin" />
                           جاري الإرسال...
-                        </>
-                      ) : (
-                        <>
+                        </> : <>
                           <Send className="w-4 h-4 ml-2" />
                           إرسال الرسالة
-                        </>
-                      )}
+                        </>}
                     </Button>
                   </form>
                 </CardContent>
@@ -280,8 +225,6 @@ const Contact = () => {
           </div>
         </div>
       </div>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default Contact;
