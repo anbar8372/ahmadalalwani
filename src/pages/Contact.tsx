@@ -6,7 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { Mail, Phone, MapPin, Send, Clock, Users } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Clock, Users, Loader2 } from 'lucide-react';
+import { sendContactEmail, ContactFormData } from '@/services/emailService';
+
 const Contact = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -15,17 +17,18 @@ const Contact = () => {
     subject: '',
     message: ''
   });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const {
-      name,
-      value
-    } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
   };
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Basic validation
@@ -38,24 +41,54 @@ const Contact = () => {
       return;
     }
 
-    // Simulate form submission
-    toast({
-      title: "تم إرسال الرسالة بنجاح",
-      description: "شكراً لتواصلكم. سيتم الرد عليكم في أقرب وقت ممكن."
-    });
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast({
+        title: "خطأ في البريد الإلكتروني",
+        description: "يرجى إدخال بريد إلكتروني صحيح",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      subject: '',
-      message: ''
-    });
+    setIsSubmitting(true);
+
+    try {
+      const result = await sendContactEmail(formData as ContactFormData);
+      
+      if (result.success) {
+        toast({
+          title: "تم إرسال الرسالة بنجاح",
+          description: "شكراً لتواصلكم. سيتم الرد عليكم في أقرب وقت ممكن."
+        });
+
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          subject: '',
+          message: ''
+        });
+      } else {
+        throw new Error('Failed to send email');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast({
+        title: "خطأ في الإرسال",
+        description: "حدث خطأ أثناء إرسال الرسالة. يرجى المحاولة مرة أخرى.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-  return <Layout>
+
+  return (
+    <Layout>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        {/* Header */}
         <section className="py-16 bg-primary text-primary-foreground">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h1 className="text-5xl font-bold mb-4">اتصل بي</h1>
@@ -67,7 +100,6 @@ const Contact = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Contact Information */}
             <div className="space-y-8">
               <Card className="shadow-lg">
                 <CardHeader>
@@ -111,7 +143,6 @@ const Contact = () => {
                 </CardContent>
               </Card>
 
-              {/* Office Hours */}
               <Card className="shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2 space-x-reverse text-xl">
@@ -137,7 +168,6 @@ const Contact = () => {
                 </CardContent>
               </Card>
 
-              {/* Quick Info */}
               <Card className="shadow-lg border-t-4 border-t-primary">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2 space-x-reverse text-xl">
@@ -146,12 +176,11 @@ const Contact = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-700 leading-relaxed">يسعدني أن أستمع إلى آرائكم ومقترحاتكم واستفساراتكم. أعتبر التواصل معكم  جزءاً أساسياً من عملي. لا تترددوا في التواصل معي بخصوص أي موضوع يهمكم.</p>
+                  <p className="text-gray-700 leading-relaxed">يسعدني أن أستمع إلى آرائكم ومقترحاتكم واستفساراتكم. أعتبر التواصل معكم  جزءاً أساسياً من عملي. لا تترددوا في التواصل معي بخصوص أي موضوع يهمكم.</p>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Contact Form */}
             <div>
               <Card className="shadow-lg">
                 <CardHeader>
@@ -162,33 +191,87 @@ const Contact = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="name">الاسم الكامل *</Label>
-                        <Input id="name" name="name" value={formData.name} onChange={handleInputChange} placeholder="أدخل اسمك الكامل" required />
+                        <Input 
+                          id="name" 
+                          name="name" 
+                          value={formData.name} 
+                          onChange={handleInputChange} 
+                          placeholder="أدخل اسمك الكامل" 
+                          required 
+                          disabled={isSubmitting}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="email">البريد الإلكتروني *</Label>
-                        <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="أدخل بريدك الإلكتروني" required />
+                        <Input 
+                          id="email" 
+                          name="email" 
+                          type="email" 
+                          value={formData.email} 
+                          onChange={handleInputChange} 
+                          placeholder="أدخل بريدك الإلكتروني" 
+                          required 
+                          disabled={isSubmitting}
+                        />
                       </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="phone">رقم الهاتف</Label>
-                        <Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="أدخل رقم هاتفك" />
+                        <Input 
+                          id="phone" 
+                          name="phone" 
+                          value={formData.phone} 
+                          onChange={handleInputChange} 
+                          placeholder="أدخل رقم هاتفك" 
+                          disabled={isSubmitting}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="subject">الموضوع</Label>
-                        <Input id="subject" name="subject" value={formData.subject} onChange={handleInputChange} placeholder="موضوع الرسالة" />
+                        <Input 
+                          id="subject" 
+                          name="subject" 
+                          value={formData.subject} 
+                          onChange={handleInputChange} 
+                          placeholder="موضوع الرسالة" 
+                          disabled={isSubmitting}
+                        />
                       </div>
                     </div>
                     
                     <div className="space-y-2">
                       <Label htmlFor="message">الرسالة *</Label>
-                      <Textarea id="message" name="message" value={formData.message} onChange={handleInputChange} placeholder="اكتب رسالتك هنا..." rows={6} required />
+                      <Textarea 
+                        id="message" 
+                        name="message" 
+                        value={formData.message} 
+                        onChange={handleInputChange} 
+                        placeholder="اكتب رسالتك هنا..." 
+                        rows={6} 
+                        required 
+                        disabled={isSubmitting}
+                      />
                     </div>
                     
-                    <Button type="submit" size="lg" className="w-full">
-                      <Send className="w-4 h-4 ml-2" />
-                      إرسال الرسالة
+                    <Button 
+                      type="submit" 
+                      size="lg" 
+                      className="w-full" 
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                          جاري الإرسال...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4 ml-2" />
+                          إرسال الرسالة
+                        </>
+                      )}
                     </Button>
                   </form>
                 </CardContent>
@@ -197,6 +280,8 @@ const Contact = () => {
           </div>
         </div>
       </div>
-    </Layout>;
+    </Layout>
+  );
 };
+
 export default Contact;
