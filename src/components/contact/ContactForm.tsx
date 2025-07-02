@@ -200,6 +200,8 @@ const ContactForm = () => {
                 required 
                 disabled={isSubmitting}
                 maxLength={50}
+                dir="rtl"
+                className="text-right"
               />
             </div>
             <div className="space-y-2">
@@ -214,6 +216,8 @@ const ContactForm = () => {
                 required 
                 disabled={isSubmitting}
                 maxLength={254}
+                dir="ltr"
+                className="text-left"
               />
             </div>
           </div>
@@ -229,6 +233,8 @@ const ContactForm = () => {
                 placeholder="أدخل رقم هاتفك" 
                 disabled={isSubmitting}
                 maxLength={15}
+                dir="ltr"
+                className="text-left"
               />
             </div>
             <div className="space-y-2">
@@ -241,6 +247,8 @@ const ContactForm = () => {
                 placeholder="موضوع الرسالة" 
                 disabled={isSubmitting}
                 maxLength={100}
+                dir="rtl"
+                className="text-right"
               />
             </div>
           </div>
@@ -257,6 +265,9 @@ const ContactForm = () => {
               required 
               disabled={isSubmitting}
               maxLength={1000}
+              dir="rtl"
+              className="text-right resize-none"
+              style={{ whiteSpace: 'pre-wrap' }}
             />
             <p className="text-xs text-gray-500">
               {formData.message.length}/1000 حرف

@@ -78,8 +78,8 @@ export const sendContactEmail = async (formData: ContactFormData) => {
 
     // Send email using Resend
     const { data, error } = await resend.emails.send({
-      from: 'موقع الدكتور أحمد العلواني <noreply@resend.dev>',
-      to: [import.meta.env.VITE_CONTACT_EMAIL],
+      from: 'موقع الدكتور أحمد العلواني <send@ahmedalalwani.com>',
+      to: [import.meta.env.VITE_CONTACT_EMAIL || 'anbar8372@gmail.com'],
       subject: emailSubject,
       html: emailHtml,
       reply_to: formData.email,
