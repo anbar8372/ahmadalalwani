@@ -1,58 +1,12 @@
-# Welcome to your Lovable project
+# موقع الدكتور أحمد العلواني
 
-## Project info
+## نبذة عن المشروع
 
-**URL**: https://lovable.dev/projects/0a36be1e-ff13-4e99-9f05-db205e1e07e8
+موقع شخصي للدكتور أحمد سليمان العلواني، النائب السابق في البرلمان العراقي (2005-2014) ورئيس اللجنة الاقتصادية.
 
-## How can I edit this code?
+## التقنيات المستخدمة
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/0a36be1e-ff13-4e99-9f05-db205e1e07e8) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
+هذا المشروع تم بناؤه باستخدام:
 
 - Vite
 - TypeScript
@@ -60,14 +14,62 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
+## كيفية تشغيل المشروع
 
-Simply open [Lovable](https://lovable.dev/projects/0a36be1e-ff13-4e99-9f05-db205e1e07e8) and click on Share -> Publish.
+### المتطلبات
 
-## Can I connect a custom domain to my Lovable project?
+- Node.js & npm - [تثبيت باستخدام nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
-Yes, you can!
+### خطوات التشغيل
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```sh
+# الخطوة 1: استنساخ المستودع
+git clone <YOUR_GIT_URL>
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+# الخطوة 2: الانتقال إلى مجلد المشروع
+cd <YOUR_PROJECT_NAME>
+
+# الخطوة 3: تثبيت التبعيات
+npm i
+
+# الخطوة 4: تشغيل خادم التطوير
+npm run dev
+```
+
+## البناء للإنتاج
+
+```sh
+npm run build
+```
+
+## الميزات
+
+- موقع شخصي متكامل باللغة العربية
+- تصميم متجاوب يعمل على جميع الأجهزة
+- لوحة تحكم إدارية لإدارة المحتوى
+- نظام أمان متقدم
+- نظام إدارة الأخبار
+- معرض صور
+- نموذج اتصال آمن
+
+## الصفحات الرئيسية
+
+- الصفحة الرئيسية
+- السيرة الذاتية
+- المسيرة السياسية
+- الإنجازات
+- وسائل الإعلام
+- اتصل بي
+- لوحة التحكم الإدارية
+
+## الأمان
+
+- نظام مصادقة آمن للوحة التحكم
+- حماية من هجمات XSS
+- تشفير كلمات المرور
+- تحديد معدل الطلبات
+- تنظيف المدخلات
+
+## الدعم
+
+للحصول على الدعم أو الإبلاغ عن مشاكل، يرجى التواصل مع فريق التطوير.
