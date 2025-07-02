@@ -1,10 +1,13 @@
 import Layout from '@/components/Layout';
+import NewsSection from '@/components/NewsSection';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { ChevronDown, Users, Building, Award, BookOpen, Briefcase } from 'lucide-react';
+
 const Index = () => {
-  return <Layout>
+  return (
+    <Layout>
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="absolute inset-0 bg-black/10"></div>
@@ -162,6 +165,9 @@ const Index = () => {
         </div>
       </section>
 
+      {/* News Section - Added after Photo Gallery */}
+      <NewsSection />
+
       {/* Call to Action */}
       <section className="py-12 md:py-16 bg-primary text-primary-foreground">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -182,7 +188,7 @@ const Index = () => {
                 <span className="text-sm md:text-base">الإنجازات</span>
               </Link>
             </Button>
-            <Button variant="secondary" size="lg" asChild className="h-auto py-3 md:py-4">
+            <Button variant="secondary" size="lg" asChild className="h-auto py-3 md:gap-4">
               <Link to="/media" className="flex flex-col items-center space-y-1 md:space-y-2">
                 <Users className="w-5 h-5 md:w-6 md:h-6" />
                 <span className="text-sm md:text-base">وسائل الإعلام</span>
@@ -191,6 +197,8 @@ const Index = () => {
           </div>
         </div>
       </section>
-    </Layout>;
+    </Layout>
+  );
 };
+
 export default Index;
