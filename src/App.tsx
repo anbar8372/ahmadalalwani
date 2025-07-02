@@ -13,6 +13,7 @@ const Achievements = lazy(() => import('./pages/Achievements'));
 const Media = lazy(() => import('./pages/Media'));
 const Contact = lazy(() => import('./pages/Contact'));
 const AdminPanel = lazy(() => import('./pages/AdminPanel'));
+const News = lazy(() => import('./pages/News'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 const queryClient = new QueryClient();
@@ -48,6 +49,11 @@ const App = () => (
             <Route path="/contact" element={
               <Suspense fallback={<div>جاري التحميل...</div>}>
                 <Contact />
+              </Suspense>
+            } />
+            <Route path="/news/:id" element={
+              <Suspense fallback={<div>جاري التحميل...</div>}>
+                <News />
               </Suspense>
             } />
             <Route path="/admin" element={

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, User, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface NewsItem {
   id: string;
@@ -23,7 +24,7 @@ const NewsSection = () => {
         // Show only the latest 3 news items
         setNews(parsedNews.slice(0, 3));
       } catch (error) {
-        console.error('Error loading news:', error);
+        console.error('خطأ في تحميل الأخبار:', error);
       }
     }
   }, []);
@@ -48,7 +49,7 @@ const NewsSection = () => {
               <CardContent className="p-6">
                 <div className="flex items-center text-sm text-gray-500 mb-3">
                   <Calendar className="w-4 h-4 ml-2" />
-                  <span>{new Date(newsItem.date).toLocaleDateString('ar-SA')}</span>
+                  <span>{new Date(newsItem.date).toLocaleDateString('ar-IQ')}</span>
                   <span className="mx-2">•</span>
                   <User className="w-4 h-4 ml-1" />
                   <span>{newsItem.author}</span>
@@ -62,9 +63,11 @@ const NewsSection = () => {
                   {newsItem.content}
                 </p>
                 
-                <Button variant="ghost" size="sm" className="text-primary hover:text-primary-foreground hover:bg-primary p-0 h-auto font-normal">
-                  <span>اقرأ المزيد</span>
-                  <ChevronRight className="w-4 h-4 mr-1" />
+                <Button variant="ghost" size="sm" className="text-primary hover:text-primary-foreground hover:bg-primary p-0 h-auto font-normal" asChild>
+                  <Link to={`/news/${newsItem.id}`}>
+                    <span>اقرأ المزيد</span>
+                    <ChevronRight className="w-4 h-4 mr-1" />
+                  </Link>
                 </Button>
               </CardContent>
             </Card>

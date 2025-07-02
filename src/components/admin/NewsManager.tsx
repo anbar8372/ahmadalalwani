@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Save, Plus, Trash2, Edit, Calendar } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Save, Plus, Trash2, Edit, Calendar, Image, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface NewsItem {
@@ -14,6 +15,8 @@ interface NewsItem {
   content: string;
   date: string;
   author: string;
+  image?: string;
+  imageCaption?: string;
 }
 
 const NewsManager = () => {
@@ -21,6 +24,7 @@ const NewsManager = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [editingNews, setEditingNews] = useState<NewsItem | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [imageSource, setImageSource] = useState<'upload' | 'url'>('url');
 
   // Load news from localStorage on component mount
   useEffect(() => {
@@ -29,7 +33,7 @@ const NewsManager = () => {
       try {
         setNews(JSON.parse(savedNews));
       } catch (error) {
-        console.error('Error loading news:', error);
+        console.error('خطأ في تحميل الأخبار:', error);
       }
     }
   }, []);
@@ -45,7 +49,9 @@ const NewsManager = () => {
       title: '',
       content: '',
       date: new Date().toISOString().split('T')[0],
-      author: 'الدكتور أحمد العلواني'
+      author: 'الدكتور أحمد العلواني',
+      image: '',
+      imageCaption: ''
     };
     setEditingNews(newNews);
     setIsEditing(true);
@@ -54,6 +60,22 @@ const NewsManager = () => {
   const editNews = (newsItem: NewsItem) => {
     setEditingNews({ ...newsItem });
     setIsEditing(true);
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && editingNews) {
+      // Convert file to base64 for local storage
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64String = e.target?.result as string;
+        setEditingNews({
+          ...editingNews,
+          image: base64String
+        });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const saveNews = () => {
@@ -143,6 +165,7 @@ const NewsManager = () => {
                     />
                   </div>
                 </div>
+                
                 <div className="space-y-2">
                   <Label htmlFor="news-author">الكاتب</Label>
                   <Input
@@ -153,6 +176,74 @@ const NewsManager = () => {
                     placeholder="اسم الكاتب"
                   />
                 </div>
+
+                {/* Image Upload Section */}
+                <div className="space-y-4">
+                  <Label>صورة الخبر</Label>
+                  <Tabs value={imageSource} onValueChange={(value) => setImageSource(value as 'upload' | 'url')}>
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="url" className="flex items-center gap-2">
+                        <LinkIcon className="w-4 h-4" />
+                        رابط خارجي
+                      </TabsTrigger>
+                      <TabsTrigger value="upload" className="flex items-center gap-2">
+                        <Image className="w-4 h-4" />
+                        رفع مباشر
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="url" className="space-y-2">
+                      <Input
+                        placeholder="أدخل رابط الصورة"
+                        value={editingNews.image || ''}
+                        onChange={(e) => setEditingNews({...editingNews, image: e.target.value})}
+                        className="text-right"
+                      />
+                    </TabsContent>
+                    
+                    <TabsContent value="upload" className="space-y-2">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="text-right"
+                      />
+                    </TabsContent>
+                  </Tabs>
+                  
+                  {editingNews.image && (
+                    <div className="mt-2">
+                      <img 
+                        src={editingNews.image} 
+                        alt="معاينة الصورة"
+                        className="w-32 h-32 object-cover rounded border"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-2"
+                        onClick={() => setEditingNews({...editingNews, image: ''})}
+                      >
+                        إزالة الصورة
+                      </Button>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="image-caption">وصف الصورة (اختياري)</Label>
+                    <Input
+                      id="image-caption"
+                      value={editingNews.imageCaption || ''}
+                      onChange={(e) => setEditingNews({...editingNews, imageCaption: e.target.value})}
+                      className="text-right"
+                      placeholder="أدخل وصف الصورة"
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="news-content">محتوى الخبر *</Label>
                   <Textarea
@@ -160,10 +251,11 @@ const NewsManager = () => {
                     value={editingNews.content}
                     onChange={(e) => setEditingNews({...editingNews, content: e.target.value})}
                     className="text-right"
-                    rows={4}
+                    rows={6}
                     placeholder="أدخل محتوى الخبر"
                   />
                 </div>
+                
                 <div className="flex gap-2">
                   <Button onClick={saveNews}>
                     <Save className="w-4 h-4 ml-2" />
@@ -207,8 +299,20 @@ const NewsManager = () => {
                     <div className="text-right flex-1">
                       <h4 className="font-semibold text-lg">{newsItem.title}</h4>
                       <p className="text-sm text-gray-500 mb-2">
-                        {newsItem.author} - {new Date(newsItem.date).toLocaleDateString('ar-SA')}
+                        {newsItem.author} - {new Date(newsItem.date).toLocaleDateString('ar-IQ')}
                       </p>
+                      {newsItem.image && (
+                        <div className="mb-2">
+                          <img 
+                            src={newsItem.image} 
+                            alt={newsItem.title}
+                            className="w-20 h-20 object-cover rounded border"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                   <p className="text-right text-gray-700 line-clamp-3">{newsItem.content}</p>
