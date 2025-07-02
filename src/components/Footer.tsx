@@ -41,7 +41,7 @@ const Footer = () => {
     visible: true
   }, {
     platform: 'قناة واتساب',
-    url: 'https://whatsapp.com/channel/0029VaKvmzSKPbHtTJJJJJ',
+    url: 'https://whatsapp.com/channel/0029VbB1kbuFCCoYtMnmHH1z',
     icon: 'message-circle',
     color: '#25D366',
     visible: true
