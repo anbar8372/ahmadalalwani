@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { Send, Loader2, Shield } from 'lucide-react';
+import { Send, Loader2, Shield, CheckCircle } from 'lucide-react';
 import { sendContactEmail, ContactFormData } from '@/services/emailService';
 import { 
   sanitizeInput, 
@@ -27,6 +26,7 @@ const ContactForm = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const [isSuccess, setIsSuccess] = useState(false);
   const maxAttempts = 3;
 
   // Security: Clear form data on component unmount
@@ -113,9 +113,11 @@ const ContactForm = () => {
     setIsSubmitting(true);
     try {
       const result = await sendContactEmail(formData as ContactFormData);
+      
       if (result.success) {
+        setIsSuccess(true);
         toast({
-          title: "تم تسجيل الرسالة بنجاح",
+          title: "تم إرسال الرسالة بنجاح",
           description: result.message || "شكراً لتواصلكم. سيتم الرد عليكم في أقرب وقت ممكن.",
         });
 
@@ -129,20 +131,49 @@ const ContactForm = () => {
         });
         setAttempts(0);
       } else {
-        throw new Error('فشل في إرسال الرسالة');
+        throw new Error(result.message || 'فشل في إرسال الرسالة');
       }
     } catch (error) {
       console.error('Error submitting form:', error);
       setAttempts(prev => prev + 1);
       toast({
         title: "خطأ في الإرسال",
-        description: "حدث خطأ أثناء معالجة الرسالة. يرجى المحاولة مرة أخرى.",
+        description: error instanceof Error ? error.message : "حدث خطأ أثناء إرسال الرسالة. يرجى المحاولة مرة أخرى.",
         variant: "destructive"
       });
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const resetForm = () => {
+    setIsSuccess(false);
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      subject: '',
+      message: ''
+    });
+    setAttempts(0);
+  };
+
+  if (isSuccess) {
+    return (
+      <Card className="shadow-lg border-t-4 border-t-green-500">
+        <CardContent className="p-8 text-center">
+          <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-green-800 mb-4">تم إرسال الرسالة بنجاح!</h3>
+          <p className="text-gray-700 mb-6 leading-relaxed">
+            شكراً لتواصلكم معنا. تم استلام رسالتكم وسيتم الرد عليكم في أقرب وقت ممكن.
+          </p>
+          <Button onClick={resetForm} variant="outline">
+            إرسال رسالة أخرى
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="shadow-lg border-t-4 border-t-green-500">
@@ -247,12 +278,12 @@ const ContactForm = () => {
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-                جاري المعالجة الآمنة...
+                جاري الإرسال...
               </>
             ) : (
               <>
                 <Send className="w-4 h-4 ml-2" />
-                إرسال الرسالة بأمان
+                إرسال الرسالة
               </>
             )}
           </Button>
