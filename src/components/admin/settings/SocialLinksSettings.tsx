@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,7 +20,7 @@ const SocialLinksSettings = () => {
     {
       id: '1',
       platform: 'فيسبوك',
-      url: '',
+      url: 'https://facebook.com/ahmedalalwanicom',
       icon: 'facebook',
       color: '#1877F2',
       visible: true
@@ -29,7 +28,7 @@ const SocialLinksSettings = () => {
     {
       id: '2',
       platform: 'انستغرام',
-      url: '',
+      url: 'https://instagram.com/ahmedalalwanicom',
       icon: 'instagram',
       color: '#E4405F',
       visible: true
@@ -37,7 +36,7 @@ const SocialLinksSettings = () => {
     {
       id: '3',
       platform: 'تليغرام',
-      url: '',
+      url: 'https://t.me/ahmedalalwanicom',
       icon: 'send',
       color: '#0088CC',
       visible: true
@@ -45,7 +44,7 @@ const SocialLinksSettings = () => {
     {
       id: '4',
       platform: 'تيكتوك',
-      url: '',
+      url: 'https://tiktok.com/@ahmedalalwanicom',
       icon: 'music',
       color: '#000000',
       visible: true
@@ -53,7 +52,7 @@ const SocialLinksSettings = () => {
     {
       id: '5',
       platform: 'يوتيوب',
-      url: '',
+      url: 'https://youtube.com/@ahmedalalwanicom',
       icon: 'youtube',
       color: '#FF0000',
       visible: true
@@ -61,7 +60,7 @@ const SocialLinksSettings = () => {
     {
       id: '6',
       platform: 'منصة X',
-      url: '',
+      url: 'https://x.com/ahmedalalwanicom',
       icon: 'twitter',
       color: '#000000',
       visible: true
@@ -69,7 +68,7 @@ const SocialLinksSettings = () => {
     {
       id: '7',
       platform: 'قناة واتساب',
-      url: '',
+      url: 'https://whatsapp.com/channel/0029VaKvmzSKPbHtTJJJJJ',
       icon: 'message-circle',
       color: '#25D366',
       visible: true

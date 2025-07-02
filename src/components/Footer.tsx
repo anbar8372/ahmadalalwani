@@ -1,50 +1,52 @@
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, Settings, Facebook, Instagram, Youtube, Twitter, Send, Music, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+
 const Footer = () => {
   const socialLinks = [{
     platform: 'فيسبوك',
-    url: 'https://facebook.com',
+    url: 'https://facebook.com/ahmedalalwanicom',
     icon: 'facebook',
     color: '#1877F2',
     visible: true
   }, {
     platform: 'انستغرام',
-    url: 'https://instagram.com',
+    url: 'https://instagram.com/ahmedalalwanicom',
     icon: 'instagram',
     color: '#E4405F',
     visible: true
   }, {
     platform: 'تليغرام',
-    url: 'https://t.me',
+    url: 'https://t.me/ahmedalalwanicom',
     icon: 'send',
     color: '#0088CC',
     visible: true
   }, {
     platform: 'تيكتوك',
-    url: 'https://tiktok.com',
+    url: 'https://tiktok.com/@ahmedalalwanicom',
     icon: 'music',
     color: '#000000',
     visible: true
   }, {
     platform: 'يوتيوب',
-    url: 'https://youtube.com',
+    url: 'https://youtube.com/@ahmedalalwanicom',
     icon: 'youtube',
     color: '#FF0000',
     visible: true
   }, {
     platform: 'منصة X',
-    url: 'https://x.com',
+    url: 'https://x.com/ahmedalalwanicom',
     icon: 'twitter',
     color: '#000000',
     visible: true
   }, {
     platform: 'قناة واتساب',
-    url: 'https://whatsapp.com/channel',
+    url: 'https://whatsapp.com/channel/0029VaKvmzSKPbHtTJJJJJ',
     icon: 'message-circle',
     color: '#25D366',
     visible: true
   }].filter(link => link.visible && link.url);
+
   const getIcon = (iconName: string) => {
     switch (iconName) {
       case 'facebook':
@@ -65,7 +67,9 @@ const Footer = () => {
         return MessageCircle;
     }
   };
-  return <footer className="bg-gray-900 text-white">
+
+  return (
+    <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* About Section */}
@@ -76,7 +80,7 @@ const Footer = () => {
               </div>
               <h3 className="text-lg font-semibold">الدكتور أحمد العلواني</h3>
             </div>
-            <p className="text-gray-300 text-sm leading-relaxed">نائب سابق في البرلمان العراقي (2005-2014) ورئيس اللجنة الاقتصادية، عمل من أجل خدمة الشعب العراقي وتحقيق التنمية والازدهار.</p>
+            <p className="text-gray-300 text-sm leading-relaxed">نائب سابق في البرلمان العراقي (2005-2014) ورئيس سابق للجنة الاقتصادية في البرلمان، عمل من أجل خدمة الشعب العراقي وتحقيق التنمية والازدهار.</p>
           </div>
 
           {/* Quick Links */}
@@ -116,29 +120,44 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-3 space-x-reverse">
                 <Mail className="w-5 h-5 text-iraqi-green" />
-                <span className="text-gray-300 text-sm">info@ahmedalalwani.com</span>
+                <span className="text-gray-300 text-sm">anbar8372@gmail.com</span>
               </div>
               <div className="flex items-center space-x-3 space-x-reverse">
                 <Phone className="w-5 h-5 text-iraqi-green" />
                 <span className="text-gray-300 text-sm">0096477XXXXXX</span>
               </div>
               {/* Social Media Links */}
-              {socialLinks.length > 0 && <div className="mt-4">
+              {socialLinks.length > 0 && (
+                <div className="mt-4">
                   <h4 className="text-sm font-semibold mb-3">تابعني على</h4>
                   <div className="flex space-x-3 space-x-reverse">
                     {socialLinks.map((social, index) => {
-                  const IconComponent = getIcon(social.icon);
-                  return <a key={index} href={social.url} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110" style={{
-                    backgroundColor: social.color + '20',
-                    border: `1px solid ${social.color}40`
-                  }} title={social.platform}>
-                          <IconComponent className="w-4 h-4" style={{
-                      color: social.color
-                    }} />
-                        </a>;
-                })}
+                      const IconComponent = getIcon(social.icon);
+                      return (
+                        <a
+                          key={index}
+                          href={social.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110"
+                          style={{
+                            backgroundColor: social.color + '20',
+                            border: `1px solid ${social.color}40`
+                          }}
+                          title={social.platform}
+                        >
+                          <IconComponent
+                            className="w-4 h-4"
+                            style={{
+                              color: social.color
+                            }}
+                          />
+                        </a>
+                      );
+                    })}
                   </div>
-                </div>}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -160,6 +179,8 @@ const Footer = () => {
           </div>
         </div>
       </div>
-    </footer>;
+    </footer>
+  );
 };
+
 export default Footer;

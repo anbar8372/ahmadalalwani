@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,12 +22,12 @@ const BasicSiteSettings = () => {
   
   const [siteSettings, setSiteSettings] = useState<SiteSettings>({
     siteName: 'الدكتور أحمد العلواني',
-    siteDescription: 'نائب سابق في البرلمان العراقي ورئيس اللجنة الاقتصادية',
+    siteDescription: 'نائب سابق في البرلمان العراقي ورئيس سابق للجنة الاقتصادية في البرلمان',
     siteKeywords: 'أحمد العلواني، البرلمان العراقي، اللجنة الاقتصادية، العراق، الأنبار',
     logoUrl: '',
     faviconUrl: '',
     headerTitle: 'الدكتور أحمد العلواني',
-    headerSubtitle: 'نائب سابق في البرلمان العراقي (2010-2013)'
+    headerSubtitle: 'نائب سابق في البرلمان العراقي (2005-2014)'
   });
 
   const handleSaveSiteSettings = () => {
