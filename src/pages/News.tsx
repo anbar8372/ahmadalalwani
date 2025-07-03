@@ -1,42 +1,71 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, User, ArrowRight, Image as ImageIcon } from 'lucide-react';
-
-interface NewsItem {
-  id: string;
-  title: string;
-  content: string;
-  date: string;
-  author: string;
-  image?: string;
-  imageCaption?: string;
-}
+import { Calendar, User, ArrowRight, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { newsService, NewsItem } from '@/lib/supabaseClient';
 
 const News = () => {
   const { id } = useParams();
   const [newsItem, setNewsItem] = useState<NewsItem | null>(null);
   const [relatedNews, setRelatedNews] = useState<NewsItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const savedNews = localStorage.getItem('website-news');
-    if (savedNews) {
-      try {
-        const allNews = JSON.parse(savedNews);
-        const currentNews = allNews.find((item: NewsItem) => item.id === id);
-        setNewsItem(currentNews);
-        
-        // Get related news (exclude current news)
-        const related = allNews.filter((item: NewsItem) => item.id !== id).slice(0, 3);
-        setRelatedNews(related);
-      } catch (error) {
-        console.error('خطأ في تحميل الخبر:', error);
-      }
+    if (id) {
+      loadNewsData(id);
     }
   }, [id]);
+
+  const loadNewsData = async (newsId: string) => {
+    try {
+      setIsLoading(true);
+      
+      // Load current news item
+      const currentNews = await newsService.getNewsById(newsId);
+      setNewsItem(currentNews);
+      
+      // Load related news if current news exists
+      if (currentNews) {
+        const related = await newsService.getRelatedNews(newsId, 3);
+        setRelatedNews(related);
+      }
+    } catch (error) {
+      console.error('خطأ في تحميل الخبر:', error);
+      
+      // Fallback to localStorage if Supabase fails
+      const savedNews = localStorage.getItem('website-news');
+      if (savedNews) {
+        try {
+          const allNews = JSON.parse(savedNews);
+          const currentNews = allNews.find((item: NewsItem) => item.id === newsId);
+          setNewsItem(currentNews);
+          
+          // Get related news (exclude current news)
+          const related = allNews.filter((item: NewsItem) => item.id !== newsId).slice(0, 3);
+          setRelatedNews(related);
+        } catch (localError) {
+          console.error('خطأ في تحميل الخبر من التخزين المحلي:', localError);
+        }
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+            <p className="text-lg">جاري تحميل الخبر...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   if (!newsItem) {
     return (
@@ -92,14 +121,14 @@ const News = () => {
                   </div>
                 </header>
 
-                {/* Article Image */}
+                {/* Article Image - Full Display */}
                 {newsItem.image && (
                   <div className="mb-8">
                     <div className="rounded-lg overflow-hidden shadow-lg">
                       <img 
                         src={newsItem.image} 
                         alt={newsItem.title}
-                        className="w-full h-64 md:h-96 object-cover"
+                        className="w-full max-h-[600px] object-contain bg-gray-100"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
                           if (e.currentTarget.nextElementSibling) {
@@ -112,7 +141,7 @@ const News = () => {
                       </div>
                     </div>
                     {newsItem.imageCaption && (
-                      <p className="text-sm text-gray-600 mt-2 text-center italic">
+                      <p className="text-sm text-gray-600 mt-3 text-center italic bg-gray-50 p-2 rounded">
                         {newsItem.imageCaption}
                       </p>
                     )}
@@ -121,10 +150,20 @@ const News = () => {
 
                 {/* Article Content */}
                 <div className="prose prose-lg max-w-none text-right">
-                  <div className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                  <div className="text-gray-800 leading-relaxed whitespace-pre-wrap text-lg">
                     {newsItem.content}
                   </div>
                 </div>
+
+                {/* Article Footer */}
+                <footer className="mt-8 pt-6 border-t border-gray-200">
+                  <div className="flex items-center justify-between text-sm text-gray-500">
+                    <span>تم النشر في: {new Date(newsItem.date).toLocaleDateString('ar-IQ')}</span>
+                    {newsItem.created_at && (
+                      <span>تم الإنشاء: {new Date(newsItem.created_at).toLocaleDateString('ar-IQ')}</span>
+                    )}
+                  </div>
+                </footer>
               </CardContent>
             </Card>
 
@@ -136,6 +175,20 @@ const News = () => {
                   {relatedNews.map((item) => (
                     <Card key={item.id} className="hover:shadow-lg transition-shadow">
                       <CardContent className="p-6">
+                        {/* Related News Image */}
+                        {item.image && (
+                          <div className="mb-4 overflow-hidden rounded-lg">
+                            <img 
+                              src={item.image} 
+                              alt={item.title}
+                              className="w-full h-32 object-cover hover:scale-105 transition-transform duration-300"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
+                        
                         <div className="flex items-center text-sm text-gray-500 mb-3">
                           <Calendar className="w-4 h-4 ml-2" />
                           <span>{new Date(item.date).toLocaleDateString('ar-IQ')}</span>

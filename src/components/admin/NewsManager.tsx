@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,18 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Save, Plus, Trash2, Edit, Calendar, Image, Link as LinkIcon } from 'lucide-react';
+import { Save, Plus, Trash2, Edit, Calendar, Image, Link as LinkIcon, Upload, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-interface NewsItem {
-  id: string;
-  title: string;
-  content: string;
-  date: string;
-  author: string;
-  image?: string;
-  imageCaption?: string;
-}
+import { newsService, NewsItem } from '@/lib/supabaseClient';
 
 const NewsManager = () => {
   const { toast } = useToast();
@@ -25,27 +15,34 @@ const NewsManager = () => {
   const [editingNews, setEditingNews] = useState<NewsItem | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [imageSource, setImageSource] = useState<'upload' | 'url'>('url');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
-  // Load news from localStorage on component mount
+  // Load news from Supabase on component mount
   useEffect(() => {
-    const savedNews = localStorage.getItem('website-news');
-    if (savedNews) {
-      try {
-        setNews(JSON.parse(savedNews));
-      } catch (error) {
-        console.error('خطأ في تحميل الأخبار:', error);
-      }
-    }
+    loadNews();
   }, []);
 
-  // Save news to localStorage
-  const saveNewsToStorage = (newsData: NewsItem[]) => {
-    localStorage.setItem('website-news', JSON.stringify(newsData));
+  const loadNews = async () => {
+    try {
+      setIsLoading(true);
+      const newsData = await newsService.getAllNews();
+      setNews(newsData);
+    } catch (error) {
+      console.error('خطأ في تحميل الأخبار:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في تحميل الأخبار من قاعدة البيانات",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const addNews = () => {
     const newNews: NewsItem = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       title: '',
       content: '',
       date: new Date().toISOString().split('T')[0],
@@ -62,23 +59,42 @@ const NewsManager = () => {
     setIsEditing(true);
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && editingNews) {
-      // Convert file to base64 for local storage
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64String = e.target?.result as string;
+      try {
+        setIsUploading(true);
+        
+        // Generate unique filename
+        const fileExtension = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${crypto.randomUUID()}.${fileExtension}`;
+        
+        // Upload to Supabase Storage
+        const imageUrl = await newsService.uploadImage(file, fileName);
+        
         setEditingNews({
           ...editingNews,
-          image: base64String
+          image: imageUrl
         });
-      };
-      reader.readAsDataURL(file);
+
+        toast({
+          title: "تم رفع الصورة",
+          description: "تم رفع الصورة بنجاح",
+        });
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        toast({
+          title: "خطأ في رفع الصورة",
+          description: "فشل في رفع الصورة. يرجى المحاولة مرة أخرى.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
-  const saveNews = () => {
+  const saveNews = async () => {
     if (!editingNews || !editingNews.title.trim() || !editingNews.content.trim()) {
       toast({
         title: "خطأ",
@@ -88,37 +104,58 @@ const NewsManager = () => {
       return;
     }
 
-    let updatedNews;
-    if (news.find(item => item.id === editingNews.id)) {
-      // Update existing news
-      updatedNews = news.map(item => 
-        item.id === editingNews.id ? editingNews : item
-      );
-    } else {
-      // Add new news
-      updatedNews = [editingNews, ...news];
+    try {
+      setIsLoading(true);
+      
+      // Save to Supabase
+      await newsService.upsertNews(editingNews);
+      
+      // Reload news from database
+      await loadNews();
+      
+      setEditingNews(null);
+      setIsEditing(false);
+
+      toast({
+        title: "تم الحفظ بنجاح",
+        description: "تم حفظ الخبر بنجاح في قاعدة البيانات",
+      });
+    } catch (error) {
+      console.error('Error saving news:', error);
+      toast({
+        title: "خطأ في الحفظ",
+        description: "فشل في حفظ الخبر. يرجى المحاولة مرة أخرى.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-
-    setNews(updatedNews);
-    saveNewsToStorage(updatedNews);
-    setEditingNews(null);
-    setIsEditing(false);
-
-    toast({
-      title: "تم الحفظ بنجاح",
-      description: "تم حفظ الخبر بنجاح",
-    });
   };
 
-  const deleteNews = (id: string) => {
-    const updatedNews = news.filter(item => item.id !== id);
-    setNews(updatedNews);
-    saveNewsToStorage(updatedNews);
+  const deleteNews = async (id: string) => {
+    try {
+      setIsLoading(true);
+      
+      // Delete from Supabase
+      await newsService.deleteNews(id);
+      
+      // Reload news from database
+      await loadNews();
 
-    toast({
-      title: "تم الحذف",
-      description: "تم حذف الخبر بنجاح",
-    });
+      toast({
+        title: "تم الحذف",
+        description: "تم حذف الخبر بنجاح من قاعدة البيانات",
+      });
+    } catch (error) {
+      console.error('Error deleting news:', error);
+      toast({
+        title: "خطأ في الحذف",
+        description: "فشل في حذف الخبر. يرجى المحاولة مرة أخرى.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const cancelEdit = () => {
@@ -126,12 +163,21 @@ const NewsManager = () => {
     setIsEditing(false);
   };
 
+  if (isLoading && news.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin" />
+        <span className="mr-2">جاري تحميل الأخبار...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-right">إدارة الأخبار</CardTitle>
-          <Button onClick={addNews} size="sm">
+          <Button onClick={addNews} size="sm" disabled={isLoading}>
             <Plus className="w-4 h-4 ml-2" />
             إضافة خبر جديد
           </Button>
@@ -152,6 +198,7 @@ const NewsManager = () => {
                       onChange={(e) => setEditingNews({...editingNews, title: e.target.value})}
                       className="text-right"
                       placeholder="أدخل عنوان الخبر"
+                      disabled={isLoading}
                     />
                   </div>
                   <div className="space-y-2">
@@ -162,6 +209,7 @@ const NewsManager = () => {
                       value={editingNews.date}
                       onChange={(e) => setEditingNews({...editingNews, date: e.target.value})}
                       className="text-right"
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
@@ -174,6 +222,7 @@ const NewsManager = () => {
                     onChange={(e) => setEditingNews({...editingNews, author: e.target.value})}
                     className="text-right"
                     placeholder="اسم الكاتب"
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -187,7 +236,7 @@ const NewsManager = () => {
                         رابط خارجي
                       </TabsTrigger>
                       <TabsTrigger value="upload" className="flex items-center gap-2">
-                        <Image className="w-4 h-4" />
+                        <Upload className="w-4 h-4" />
                         رفع مباشر
                       </TabsTrigger>
                     </TabsList>
@@ -198,6 +247,7 @@ const NewsManager = () => {
                         value={editingNews.image || ''}
                         onChange={(e) => setEditingNews({...editingNews, image: e.target.value})}
                         className="text-right"
+                        disabled={isLoading}
                       />
                     </TabsContent>
                     
@@ -207,7 +257,14 @@ const NewsManager = () => {
                         accept="image/*"
                         onChange={handleImageUpload}
                         className="text-right"
+                        disabled={isLoading || isUploading}
                       />
+                      {isUploading && (
+                        <div className="flex items-center text-sm text-blue-600">
+                          <Loader2 className="w-4 h-4 animate-spin ml-2" />
+                          جاري رفع الصورة...
+                        </div>
+                      )}
                     </TabsContent>
                   </Tabs>
                   
@@ -226,6 +283,7 @@ const NewsManager = () => {
                         size="sm" 
                         className="mt-2"
                         onClick={() => setEditingNews({...editingNews, image: ''})}
+                        disabled={isLoading}
                       >
                         إزالة الصورة
                       </Button>
@@ -240,6 +298,7 @@ const NewsManager = () => {
                       onChange={(e) => setEditingNews({...editingNews, imageCaption: e.target.value})}
                       className="text-right"
                       placeholder="أدخل وصف الصورة"
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
@@ -253,15 +312,25 @@ const NewsManager = () => {
                     className="text-right"
                     rows={6}
                     placeholder="أدخل محتوى الخبر"
+                    disabled={isLoading}
                   />
                 </div>
                 
                 <div className="flex gap-2">
-                  <Button onClick={saveNews}>
-                    <Save className="w-4 h-4 ml-2" />
-                    حفظ الخبر
+                  <Button onClick={saveNews} disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                        جاري الحفظ...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 ml-2" />
+                        حفظ الخبر
+                      </>
+                    )}
                   </Button>
-                  <Button variant="outline" onClick={cancelEdit}>
+                  <Button variant="outline" onClick={cancelEdit} disabled={isLoading}>
                     إلغاء
                   </Button>
                 </div>
@@ -269,7 +338,7 @@ const NewsManager = () => {
             </div>
           )}
 
-          {news.length === 0 ? (
+          {news.length === 0 && !isLoading ? (
             <div className="text-center py-8 text-gray-500">
               <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>لا توجد أخبار حالياً</p>
@@ -285,6 +354,7 @@ const NewsManager = () => {
                         onClick={() => editNews(newsItem)}
                         size="sm"
                         variant="outline"
+                        disabled={isLoading}
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -292,6 +362,7 @@ const NewsManager = () => {
                         onClick={() => deleteNews(newsItem.id)}
                         variant="destructive" 
                         size="sm"
+                        disabled={isLoading}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
