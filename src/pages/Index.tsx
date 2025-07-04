@@ -129,6 +129,9 @@ const Index = () => {
         </div>
       </section>
 
+      {/* News Section - Moved after Brief Overview */}
+      <NewsSection />
+
       {/* Photo Gallery Section */}
       <section className="py-12 md:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -164,9 +167,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-
-      {/* News Section - Added after Photo Gallery */}
-      <NewsSection />
 
       {/* Call to Action */}
       <section className="py-12 md:py-16 bg-primary text-primary-foreground">

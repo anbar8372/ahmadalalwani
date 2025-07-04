@@ -5,9 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Save, Plus, Trash2, Edit, Calendar, Image, Link as LinkIcon, Upload, Loader2 } from 'lucide-react';
+import { Save, Plus, Trash2, Edit, Calendar, Image, Link as LinkIcon, Upload, Loader2, Database } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { newsService, NewsItem } from '@/lib/supabaseClient';
+import { newsService, NewsItem, sampleNewsData } from '@/lib/supabaseClient';
 
 const NewsManager = () => {
   const { toast } = useToast();
@@ -33,6 +33,27 @@ const NewsManager = () => {
       toast({
         title: "خطأ",
         description: "فشل في تحميل الأخبار من قاعدة البيانات",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const initializeSampleData = async () => {
+    try {
+      setIsLoading(true);
+      await newsService.initializeSampleData();
+      await loadNews();
+      toast({
+        title: "تم بنجاح",
+        description: "تم إضافة الأخبار النموذجية بنجاح",
+      });
+    } catch (error) {
+      console.error('خطأ في إضافة البيانات النموذجية:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في إضافة البيانات النموذجية",
         variant: "destructive"
       });
     } finally {
@@ -177,10 +198,18 @@ const NewsManager = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-right">إدارة الأخبار</CardTitle>
-          <Button onClick={addNews} size="sm" disabled={isLoading}>
-            <Plus className="w-4 h-4 ml-2" />
-            إضافة خبر جديد
-          </Button>
+          <div className="flex gap-2">
+            {news.length === 0 && (
+              <Button onClick={initializeSampleData} size="sm" variant="outline" disabled={isLoading}>
+                <Database className="w-4 h-4 ml-2" />
+                إضافة أخبار نموذجية
+              </Button>
+            )}
+            <Button onClick={addNews} size="sm" disabled={isLoading}>
+              <Plus className="w-4 h-4 ml-2" />
+              إضافة خبر جديد
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {isEditing && editingNews && (
@@ -342,7 +371,7 @@ const NewsManager = () => {
             <div className="text-center py-8 text-gray-500">
               <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>لا توجد أخبار حالياً</p>
-              <p className="text-sm">اضغط على "إضافة خبر جديد" لإضافة أول خبر</p>
+              <p className="text-sm">اضغط على "إضافة أخبار نموذجية" لإضافة أخبار تجريبية أو "إضافة خبر جديد" لإضافة خبر مخصص</p>
             </div>
           ) : (
             <div className="space-y-4">
