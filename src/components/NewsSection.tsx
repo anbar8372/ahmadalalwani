@@ -98,47 +98,6 @@ const NewsSection = () => {
     return null;
   }
 
-  return (
-    <section className="py-16 bg-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Main Container */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* Left Side - Profile Section */}
-          <div className="lg:col-span-4 bg-white rounded-lg p-8 text-center shadow-lg">
-            {/* Profile Image */}
-            <div className="relative mb-6">
-              <div className="w-48 h-48 mx-auto rounded-full overflow-hidden border-4 border-red-200 shadow-lg">
-                <img 
-                  src="https://k.top4top.io/p_3466m7gn01.jpg" 
-                  alt="الدكتور أحمد العلواني" 
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-red-600 to-green-600 flex items-center justify-center"><span class="text-4xl font-bold text-white">أ.ع</span></div>';
-                  }}
-                />
-              </div>
-            </div>
-            
-            {/* Profile Info */}
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">الدكتور أحمد العلواني</h2>
-            <p className="text-red-600 font-semibold mb-4">(2014-2005) نائب سابق في البرلمان العراقي</p>
-            <p className="text-gray-600 text-sm leading-relaxed mb-6">
-              حاصل على الدكتوراه في علوم الأرض من جامعة بغداد. شغل منصب نائب في البرلمان 
-              العراقي لدورتين متتاليتين من عام 2005 إلى عام 2014.
-            </p>
-            
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/contact">تواصل معي</Link>
-              </Button>
-              <Button size="sm" className="bg-red-600 hover:bg-red-700" asChild>
-                <Link to="/biography">تعرف على سيرتي الذاتية</Link>
-              </Button>
-            </div>
-          </div>
 
           {/* Right Side - News Grid */}
           <div className="lg:col-span-8">
