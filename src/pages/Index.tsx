@@ -84,6 +84,9 @@ const Index = () => {
         </div>
       </section>
 
+      {/* News Section - Now matches the image exactly */}
+      <NewsSection />
+
       {/* Brief Overview */}
       <section className="py-12 md:py-16 section-gradient">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -128,9 +131,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-
-      {/* News Section - Moved after Brief Overview */}
-      <NewsSection />
 
       {/* Photo Gallery Section */}
       <section className="py-12 md:py-16 bg-white">
