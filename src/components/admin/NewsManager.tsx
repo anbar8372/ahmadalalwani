@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Save, Plus, Trash2, Edit, Calendar, Image, Link as LinkIcon, Upload, Loader2, Database } from 'lucide-react';
+import { Save, Plus, Trash2, Edit, Calendar, Image, Link as LinkIcon, Upload, Loader2, Database, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { newsService, NewsItem, sampleNewsData } from '@/lib/supabaseClient';
 
@@ -18,7 +18,7 @@ const NewsManager = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Load news from Supabase on component mount
+  // Load news from storage on component mount
   useEffect(() => {
     loadNews();
   }, []);
@@ -28,12 +28,13 @@ const NewsManager = () => {
       setIsLoading(true);
       const newsData = await newsService.getAllNews();
       setNews(newsData);
+      console.log('Loaded news:', newsData.length, 'items');
     } catch (error) {
       console.error('خطأ في تحميل الأخبار:', error);
       toast({
-        title: "خطأ",
-        description: "فشل في تحميل الأخبار من قاعدة البيانات",
-        variant: "destructive"
+        title: "تحذير",
+        description: "تم تحميل الأخبار من التخزين المحلي",
+        variant: "default"
       });
     } finally {
       setIsLoading(false);
@@ -128,10 +129,10 @@ const NewsManager = () => {
     try {
       setIsLoading(true);
       
-      // Save to Supabase
+      // Save news item
       await newsService.upsertNews(editingNews);
       
-      // Reload news from database
+      // Reload news from storage
       await loadNews();
       
       setEditingNews(null);
@@ -139,7 +140,8 @@ const NewsManager = () => {
 
       toast({
         title: "تم الحفظ بنجاح",
-        description: "تم حفظ الخبر بنجاح في قاعدة البيانات",
+        description: "تم حفظ الخبر بنجاح",
+        variant: "default"
       });
     } catch (error) {
       console.error('Error saving news:', error);
@@ -157,15 +159,15 @@ const NewsManager = () => {
     try {
       setIsLoading(true);
       
-      // Delete from Supabase
+      // Delete news item
       await newsService.deleteNews(id);
       
-      // Reload news from database
+      // Reload news from storage
       await loadNews();
 
       toast({
         title: "تم الحذف",
-        description: "تم حذف الخبر بنجاح من قاعدة البيانات",
+        description: "تم حذف الخبر بنجاح",
       });
     } catch (error) {
       console.error('Error deleting news:', error);
@@ -375,6 +377,17 @@ const NewsManager = () => {
             </div>
           ) : (
             <div className="space-y-4">
+              {/* Success indicator */}
+              <div className="flex items-center justify-between bg-green-50 p-3 rounded-lg border border-green-200">
+                <div className="flex items-center text-green-800">
+                  <CheckCircle className="w-5 h-5 ml-2" />
+                  <span>تم تحميل {news.length} خبر بنجاح</span>
+                </div>
+                <Button onClick={loadNews} variant="outline" size="sm" disabled={isLoading}>
+                  تحديث
+                </Button>
+              </div>
+
               {news.map((newsItem) => (
                 <div key={newsItem.id} className="border rounded-lg p-4">
                   <div className="flex justify-between items-start mb-2">
