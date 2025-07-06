@@ -16,7 +16,7 @@ const NewsSection = () => {
   const loadLatestNews = async () => {
     try {
       setIsLoading(true);
-      
+
       // Try to load from localStorage first
       const savedNews = localStorage.getItem('website-news');
       if (savedNews) {
@@ -31,48 +31,32 @@ const NewsSection = () => {
       setNews(latestNews);
     } catch (error) {
       console.error('خطأ في تحميل الأخبار:', error);
-      
+
       // If both fail, create sample news
       const sampleNews = [
         {
           id: '1',
-          title: 'فيديوهات حماس في أول ظهور منذ انتهاء الحرب في إسرائيل',
-          content: 'محتوى الخبر الأول...',
-          date: '2024-12-15',
-          author: 'الدكتور أحمد العلواني',
-          image: 'https://images.pexels.com/photos/6801648/pexels-photo-6801648.jpeg'
+          title: 'الشيخ الدكتور أحمد العلواني يستقبل عضو مجلس محافظة الأنبار حميد دحام العلواني',
+          content: 'استقبل الشيخ الدكتور أحمد العلواني، وفد المظلة العراقية الجامعة، في مقر إقامته بمدينة الرمادي. وناقش الجانبان عدد من الملفات التي تخص الشأن العراقي، في ظل ما تشهده المنطقة من متغيرات، كما تم التأكيد على حفظ أمن واستقرار العراق، وتعزيز التماسك الاجتماعي بين أبناء الشعب الواحد.',
+          date: '2025-06-14',
+          author: 'المكتب الإعلامي',
+          image: 'https://scontent-sof1-1.xx.fbcdn.net/v/t39.30808-6/505787034_122120178950851058_7790142878532884553_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=833d8c&_nc_ohc=uTbyxBh-MG0Q7kNvwFuGxEm&_nc_oc=AdnwNvpZ-SwrTGUWcAOp66mD-_VTh8o7i3l4rVENVE6YbbtJw-hCycO2VgwefQSc6Yc&_nc_zt=23&_nc_ht=scontent-sof1-1.xx&_nc_gid=iV4ovw2Q_Qbutd0HKaMYhw&oh=00_AfTQyIhE-OiCrY82Y85cjwMJtUBBewyqIwmIJfNqNF6MaQ&oe=686F9FD7'
         },
         {
           id: '2',
-          title: 'نتنياهو يعلن رفض إسرائيل "تعديلات حماس" على مقترح غزة',
-          content: 'محتوى الخبر الثاني...',
-          date: '2024-12-14',
-          author: 'الدكتور أحمد العلواني',
-          image: 'https://images.pexels.com/photos/207692/pexels-photo-207692.jpeg'
+          title: 'الدكتور أحمد العلواني يستقبل وفد المظلة العراقية الجامعة',
+          content: 'استقبل الشيخ الدكتور أحمد العلواني، وفد المظلة العراقية الجامعة، في مقر إقامته بمدينة الرمادي. وناقش الجانبان عدد من الملفات التي تخص الشأن العراقي، في ظل ما تشهده المنطقة من متغيرات، كما تم التأكيد على حفظ أمن واستقرار العراق، وتعزيز التماسك الاجتماعي بين أبناء الشعب الواحد.',
+          date: '2025-06-12',
+          author: 'المكتب الإعلامي',
+          image: 'https://scontent-sof1-2.xx.fbcdn.net/v/t39.30808-6/505893615_122119700126851058_8234419387102767012_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=833d8c&_nc_ohc=QJOM_BN2cE0Q7kNvwH_3SPN&_nc_oc=AdmL95M7_ws5cNsmkTJAc7bb298Ff9gGvWbNDM1wGKySFnibNUJvCcyv5VyyyPjlxWo&_nc_zt=23&_nc_ht=scontent-sof1-2.xx&_nc_gid=ofZuuoZUXhq5ZSse1Z0m_A&oh=00_AfTXgJkQmbjrv4BkHFXc2uOijPR3SftUZiRaaGUcY3Fspg&oe=686F84D5'
         },
         {
           id: '3',
-          title: '"كلمات قاسية" من مهدي تشلسي للجمهور.. ماذا قال؟',
+          title: 'لقاء الدكتور أحمد العلواني مع الشيخ رعد عبد الجبار العلي سليمان',
           content: 'محتوى الخبر الثالث...',
           date: '2024-12-13',
           author: 'الدكتور أحمد العلواني',
           image: 'https://images.pexels.com/photos/8112199/pexels-photo-8112199.jpeg'
-        },
-        {
-          id: '4',
-          title: 'رئيس أميركي يهتم لمواطنيه من حزبين قتل نهما ريد مليون شخص',
-          content: 'محتوى الخبر الرابع...',
-          date: '2024-12-12',
-          author: 'الدكتور أحمد العلواني',
-          image: 'https://images.pexels.com/photos/6801648/pexels-photo-6801648.jpeg'
-        },
-        {
-          id: '5',
-          title: 'هدنة غزة.. تحرك إسرائيلي مرتقب وبيان من حماس',
-          content: 'محتوى الخبر الخامس...',
-          date: '2024-12-11',
-          author: 'الدكتور أحمد العلواني',
-          image: 'https://images.pexels.com/photos/207692/pexels-photo-207692.jpeg'
         }
       ];
       setNews(sampleNews);
@@ -98,92 +82,91 @@ const NewsSection = () => {
     return null;
   }
 
+  return (
+    <section className="py-16 bg-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Centered News Grid */}
+        <div className="w-full">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+            آخر الأخبار الخاصة بالدكتور أحمد العلواني
+          </h2>
 
-          {/* Right Side - News Grid */}
-          <div className="lg:col-span-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-8 text-right">
-              آخر الأخبار الخاصة بالدكتور أحمد العلواني
-            </h2>
-            
-            {/* News Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {news.map((newsItem, index) => (
-                <Card 
-                  key={newsItem.id} 
-                  className={`group hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden ${
-                    index === 0 ? 'md:col-span-2 md:row-span-1' : ''
-                  }`}
-                  style={{ height: index === 0 ? '300px' : '250px' }}
-                >
-                  <Link to={`/news/${newsItem.id}`} className="block h-full">
-                    <div className="relative h-full">
-                      {/* News Image */}
-                      <div className="absolute inset-0">
-                        <img 
-                          src={newsItem.image || 'https://images.pexels.com/photos/6801648/pexels-photo-6801648.jpeg'} 
-                          alt={newsItem.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={(e) => {
-                            e.currentTarget.src = 'https://images.pexels.com/photos/6801648/pexels-photo-6801648.jpeg';
-                          }}
-                        />
-                        {/* Dark Overlay */}
-                        <div className="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300"></div>
+          {/* News Grid - Centered */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mx-auto">
+            {news.map((newsItem, index) => (
+              <Card
+                key={newsItem.id}
+                className={`group hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden mx-auto`}
+                style={{ width: '100%', maxWidth: '400px', height: index === 0 ? '300px' : '250px' }}
+              >
+                <Link to={`/news/${newsItem.id}`} className="block h-full">
+                  <div className="relative h-full">
+                    {/* News Image */}
+                    <div className="absolute inset-0">
+                      <img
+                        src={newsItem.image || 'https://images.pexels.com/photos/6801648/pexels-photo-6801648.jpeg'}
+                        alt={newsItem.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://images.pexels.com/photos/6801648/pexels-photo-6801648.jpeg';
+                        }}
+                      />
+                      {/* Dark Overlay */}
+                      <div className="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300"></div>
+                    </div>
+
+                    {/* Content Overlay */}
+                    <div className="absolute inset-0 p-4 flex flex-col justify-between text-white">
+                      {/* Category Badge */}
+                      <div className="flex justify-end">
+                        <span className={`px-3 py-1 text-xs font-bold rounded ${
+                          index === 0 ? 'bg-red-600' :
+                          index === 1 ? 'bg-red-600' :
+                          index === 2 ? 'bg-green-600' :
+                          index === 3 ? 'bg-red-600' :
+                          'bg-red-600'
+                        }`}>
+                          {index === 0 ? 'لقاءات خاصة' :
+                           index === 1 ? 'لقاءات خاصة' :
+                           index === 2 ? 'لقاءات خاصة' :
+                           index === 3 ? 'لقاءات خاصة' :
+                           'خبر أساسي'}
+                        </span>
                       </div>
-                      
-                      {/* Content Overlay */}
-                      <div className="absolute inset-0 p-4 flex flex-col justify-between text-white">
-                        {/* Category Badge */}
-                        <div className="flex justify-end">
-                          <span className={`px-3 py-1 text-xs font-bold rounded ${
-                            index === 0 ? 'bg-red-600' : 
-                            index === 1 ? 'bg-red-600' : 
-                            index === 2 ? 'bg-green-600' :
-                            index === 3 ? 'bg-red-600' :
-                            'bg-red-600'
-                          }`}>
-                            {index === 0 ? 'لقاءات  خاصة' : 
-                             index === 1 ? 'لقاءات خاصة' : 
-                             index === 2 ? 'لقاءات  خاصة' :
-                             index === 3 ? 'لقاءات  خاصة' :
-                             'خبر أساسي'}
-                          </span>
-                        </div>
-                        
-                        {/* News Title */}
-                        <div>
-                          <h3 className={`font-bold text-right leading-tight mb-2 ${
-                            index === 0 ? 'text-xl md:text-2xl' : 'text-lg'
-                          }`}>
-                            {newsItem.title}
-                          </h3>
-                          
-                          {/* Date */}
-                          <div className="flex items-center justify-end text-sm opacity-90">
-                            <span>{new Date(newsItem.date).toLocaleDateString('ar-IQ')}</span>
-                            <Calendar className="w-4 h-4 mr-2" />
-                          </div>
+
+                      {/* News Title */}
+                      <div>
+                        <h3 className={`font-bold text-right leading-tight mb-2 ${
+                          index === 0 ? 'text-xl md:text-2xl' : 'text-lg'
+                        }`}>
+                          {newsItem.title}
+                        </h3>
+
+                        {/* Date */}
+                        <div className="flex items-center justify-end text-sm opacity-90">
+                          <span>{new Date(newsItem.date).toLocaleDateString('ar-IQ')}</span>
+                          <Calendar className="w-4 h-4 mr-2" />
                         </div>
                       </div>
                     </div>
-                  </Link>
-                </Card>
-              ))}
-            </div>
-            
-            {/* View More Button */}
-            <div className="text-center mt-8">
-              <Button variant="outline" size="lg" asChild>
-                <Link to="/news" className="flex items-center space-x-2 space-x-reverse">
-                  <span>عرض جميع الأخبار</span>
-                  <ChevronRight className="w-4 h-4" />
+                  </div>
                 </Link>
-              </Button>
-            </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* View More Button - Centered */}
+          <div className="text-center mt-8">
+            <Button variant="outline" size="lg" asChild>
+              <Link to="/news" className="flex items-center space-x-2 space-x-reverse justify-center mx-auto">
+                <span>عرض جميع الأخبار</span>
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            </Button>
           </div>
         </div>
-        
-        {/* Bottom Arrow */}
+
+        {/* Bottom Arrow - Centered */}
         <div className="text-center mt-12">
           <ChevronDown className="w-8 h-8 text-gray-400 mx-auto animate-bounce" />
         </div>
