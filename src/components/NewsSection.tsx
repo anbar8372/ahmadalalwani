@@ -5,16 +5,6 @@ import { Calendar, User, ChevronRight, Loader2, ChevronDown } from 'lucide-react
 import { Link } from 'react-router-dom';
 import { newsService, NewsItem } from '@/lib/supabaseClient';
 
-// News categories
-const NEWS_CATEGORIES = [
-  { id: 'political', name: 'سياسي', color: 'bg-red-600' },
-  { id: 'economic', name: 'اقتصادي', color: 'bg-blue-600' },
-  { id: 'social', name: 'اجتماعي', color: 'bg-green-600' },
-  { id: 'cultural', name: 'ثقافي', color: 'bg-purple-600' },
-  { id: 'educational', name: 'تعليمي', color: 'bg-yellow-600' },
-  { id: 'general', name: 'عام', color: 'bg-gray-600' }
-];
-
 interface EnhancedNewsItem extends NewsItem {
   category?: string;
 }
@@ -22,6 +12,20 @@ interface EnhancedNewsItem extends NewsItem {
 const NewsSection = () => {
   const [news, setNews] = useState<EnhancedNewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Load categories from localStorage
+  const [categories, setCategories] = useState(() => {
+    const saved = localStorage.getItem('news-categories');
+    const defaultCategories = [
+      { id: 'political', name: 'سياسي', color: 'bg-red-600' },
+      { id: 'economic', name: 'اقتصادي', color: 'bg-blue-600' },
+      { id: 'social', name: 'اجتماعي', color: 'bg-green-600' },
+      { id: 'cultural', name: 'ثقافي', color: 'bg-purple-600' },
+      { id: 'educational', name: 'تعليمي', color: 'bg-yellow-600' },
+      { id: 'general', name: 'عام', color: 'bg-gray-600' }
+    ];
+    return saved ? JSON.parse(saved) : defaultCategories;
+  });
 
   useEffect(() => {
     loadLatestNews();
@@ -32,6 +36,10 @@ const NewsSection = () => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'news-update-trigger') {
         loadLatestNews();
+      }
+      if (e.key === 'news-categories') {
+        const newCategories = e.newValue ? JSON.parse(e.newValue) : [];
+        setCategories(newCategories);
       }
     };
 
@@ -106,7 +114,7 @@ const NewsSection = () => {
   };
 
   const getCategoryInfo = (categoryId?: string) => {
-    return NEWS_CATEGORIES.find(cat => cat.id === categoryId) || { name: 'عام', color: 'bg-gray-600' };
+    return categories.find(cat => cat.id === categoryId) || { name: 'عام', color: 'bg-gray-600' };
   };
 
   if (isLoading) {

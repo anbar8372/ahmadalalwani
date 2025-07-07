@@ -6,7 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Save, Plus, Trash2, Edit, Calendar, Image, Link as LinkIcon, Upload, Loader2, Database, CheckCircle, Video, Type, Hash, ExternalLink, Crop, Eye } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Save, Plus, Trash2, Edit, Calendar, Image, Link as LinkIcon, Upload, Loader2, Database, CheckCircle, Video, Type, Hash, ExternalLink, Crop, Eye, Settings, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { newsService, NewsItem, sampleNewsData } from '@/lib/supabaseClient';
 
@@ -18,8 +19,8 @@ interface EnhancedNewsItem extends NewsItem {
   content_html?: string;
 }
 
-// News categories
-const NEWS_CATEGORIES = [
+// Default categories and authors
+const DEFAULT_CATEGORIES = [
   { id: 'political', name: 'سياسي', color: 'bg-red-100 text-red-800' },
   { id: 'economic', name: 'اقتصادي', color: 'bg-blue-100 text-blue-800' },
   { id: 'social', name: 'اجتماعي', color: 'bg-green-100 text-green-800' },
@@ -27,6 +28,19 @@ const NEWS_CATEGORIES = [
   { id: 'educational', name: 'تعليمي', color: 'bg-yellow-100 text-yellow-800' },
   { id: 'general', name: 'عام', color: 'bg-gray-100 text-gray-800' }
 ];
+
+const DEFAULT_AUTHORS = [
+  'الدكتور أحمد العلواني',
+  'المكتب الإعلامي للدكتور أحمد العلواني',
+  'المكتب الصحفي',
+  'فريق التحرير'
+];
+
+interface Category {
+  id: string;
+  name: string;
+  color: string;
+}
 
 const NewsManager = () => {
   const { toast } = useToast();
@@ -39,6 +53,44 @@ const NewsManager = () => {
   const [imagePreview, setImagePreview] = useState<string>('');
   const [cropArea, setCropArea] = useState({ x: 0, y: 0, width: 100, height: 100 });
   const [showImageCrop, setShowImageCrop] = useState(false);
+
+  // Categories and Authors management
+  const [categories, setCategories] = useState<Category[]>(() => {
+    const saved = localStorage.getItem('news-categories');
+    return saved ? JSON.parse(saved) : DEFAULT_CATEGORIES;
+  });
+  
+  const [authors, setAuthors] = useState<string[]>(() => {
+    const saved = localStorage.getItem('news-authors');
+    return saved ? JSON.parse(saved) : DEFAULT_AUTHORS;
+  });
+
+  const [showCategoryDialog, setShowCategoryDialog] = useState(false);
+  const [showAuthorDialog, setShowAuthorDialog] = useState(false);
+  const [newCategory, setNewCategory] = useState({ name: '', color: 'bg-gray-100 text-gray-800' });
+  const [newAuthor, setNewAuthor] = useState('');
+
+  // Color options for categories
+  const colorOptions = [
+    { value: 'bg-red-100 text-red-800', label: 'أحمر', preview: 'bg-red-100' },
+    { value: 'bg-blue-100 text-blue-800', label: 'أزرق', preview: 'bg-blue-100' },
+    { value: 'bg-green-100 text-green-800', label: 'أخضر', preview: 'bg-green-100' },
+    { value: 'bg-yellow-100 text-yellow-800', label: 'أصفر', preview: 'bg-yellow-100' },
+    { value: 'bg-purple-100 text-purple-800', label: 'بنفسجي', preview: 'bg-purple-100' },
+    { value: 'bg-pink-100 text-pink-800', label: 'وردي', preview: 'bg-pink-100' },
+    { value: 'bg-indigo-100 text-indigo-800', label: 'نيلي', preview: 'bg-indigo-100' },
+    { value: 'bg-orange-100 text-orange-800', label: 'برتقالي', preview: 'bg-orange-100' },
+    { value: 'bg-gray-100 text-gray-800', label: 'رمادي', preview: 'bg-gray-100' }
+  ];
+
+  // Save categories and authors to localStorage
+  useEffect(() => {
+    localStorage.setItem('news-categories', JSON.stringify(categories));
+  }, [categories]);
+
+  useEffect(() => {
+    localStorage.setItem('news-authors', JSON.stringify(authors));
+  }, [authors]);
 
   // Load news from storage on component mount
   useEffect(() => {
@@ -90,10 +142,10 @@ const NewsManager = () => {
       title: '',
       content: '',
       date: new Date().toISOString().split('T')[0],
-      author: 'الدكتور أحمد العلواني',
+      author: authors[0] || 'الدكتور أحمد العلواني',
       image: '',
       imageCaption: '',
-      category: 'general',
+      category: categories[0]?.id || 'general',
       youtubeUrl: '',
       images: [],
       content_html: ''
@@ -108,6 +160,59 @@ const NewsManager = () => {
     if (newsItem.image) {
       setImagePreview(newsItem.image);
     }
+  };
+
+  // Category management functions
+  const addCategory = () => {
+    if (newCategory.name.trim()) {
+      const category: Category = {
+        id: crypto.randomUUID(),
+        name: newCategory.name.trim(),
+        color: newCategory.color
+      };
+      setCategories([...categories, category]);
+      setNewCategory({ name: '', color: 'bg-gray-100 text-gray-800' });
+      setShowCategoryDialog(false);
+      toast({
+        title: "تم إضافة التصنيف",
+        description: `تم إضافة تصنيف "${category.name}" بنجاح`,
+      });
+    }
+  };
+
+  const deleteCategory = (categoryId: string) => {
+    setCategories(categories.filter(cat => cat.id !== categoryId));
+    toast({
+      title: "تم حذف التصنيف",
+      description: "تم حذف التصنيف بنجاح",
+    });
+  };
+
+  const updateCategory = (categoryId: string, updates: Partial<Category>) => {
+    setCategories(categories.map(cat => 
+      cat.id === categoryId ? { ...cat, ...updates } : cat
+    ));
+  };
+
+  // Author management functions
+  const addAuthor = () => {
+    if (newAuthor.trim() && !authors.includes(newAuthor.trim())) {
+      setAuthors([...authors, newAuthor.trim()]);
+      setNewAuthor('');
+      setShowAuthorDialog(false);
+      toast({
+        title: "تم إضافة الكاتب",
+        description: `تم إضافة "${newAuthor.trim()}" إلى قائمة الكتّاب`,
+      });
+    }
+  };
+
+  const deleteAuthor = (author: string) => {
+    setAuthors(authors.filter(a => a !== author));
+    toast({
+      title: "تم حذف الكاتب",
+      description: "تم حذف الكاتب من القائمة",
+    });
   };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -354,6 +459,141 @@ const NewsManager = () => {
           </div>
         </CardHeader>
         <CardContent>
+          {/* Categories and Authors Management */}
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+            <h4 className="text-lg font-semibold mb-4 text-right">إدارة التصنيفات والكتّاب</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Categories Management */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h5 className="font-medium">التصنيفات</h5>
+                  <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline">
+                        <Plus className="w-4 h-4 ml-2" />
+                        إضافة تصنيف
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="text-right">
+                      <DialogHeader>
+                        <DialogTitle>إضافة تصنيف جديد</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>اسم التصنيف</Label>
+                          <Input
+                            value={newCategory.name}
+                            onChange={(e) => setNewCategory({...newCategory, name: e.target.value})}
+                            placeholder="أدخل اسم التصنيف"
+                            className="text-right"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>لون التصنيف</Label>
+                          <div className="grid grid-cols-3 gap-2">
+                            {colorOptions.map((color) => (
+                              <button
+                                key={color.value}
+                                onClick={() => setNewCategory({...newCategory, color: color.value})}
+                                className={`p-2 rounded border text-xs ${color.value} ${
+                                  newCategory.color === color.value ? 'ring-2 ring-blue-500' : ''
+                                }`}
+                              >
+                                {color.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button onClick={addCategory} className="flex-1">
+                            إضافة
+                          </Button>
+                          <Button variant="outline" onClick={() => setShowCategoryDialog(false)}>
+                            إلغاء
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {categories.map((category) => (
+                    <div key={category.id} className="flex items-center justify-between p-2 border rounded">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => deleteCategory(category.id)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                      <span className={`px-2 py-1 rounded text-xs ${category.color}`}>
+                        {category.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Authors Management */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h5 className="font-medium">الكتّاب</h5>
+                  <Dialog open={showAuthorDialog} onOpenChange={setShowAuthorDialog}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline">
+                        <Plus className="w-4 h-4 ml-2" />
+                        إضافة كاتب
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="text-right">
+                      <DialogHeader>
+                        <DialogTitle>إضافة كاتب جديد</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>اسم الكاتب</Label>
+                          <Input
+                            value={newAuthor}
+                            onChange={(e) => setNewAuthor(e.target.value)}
+                            placeholder="أدخل اسم الكاتب"
+                            className="text-right"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button onClick={addAuthor} className="flex-1">
+                            إضافة
+                          </Button>
+                          <Button variant="outline" onClick={() => setShowAuthorDialog(false)}>
+                            إلغاء
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {authors.map((author, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 border rounded">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => deleteAuthor(author)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                      <span className="text-sm">{author}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {isEditing && editingNews && (
             <div className="border rounded-lg p-4 mb-6 bg-gray-50">
               <h3 className="text-lg font-semibold mb-4 text-right">
@@ -397,14 +637,21 @@ const NewsManager = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="news-author">الكاتب</Label>
-                      <Input
-                        id="news-author"
+                      <Select
                         value={editingNews.author}
-                        onChange={(e) => setEditingNews({...editingNews, author: e.target.value})}
-                        className="text-right"
-                        placeholder="اسم الكاتب"
-                        disabled={isLoading}
-                      />
+                        onValueChange={(value) => setEditingNews({...editingNews, author: value})}
+                      >
+                        <SelectTrigger className="text-right">
+                          <SelectValue placeholder="اختر الكاتب" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {authors.map((author, index) => (
+                            <SelectItem key={index} value={author}>
+                              {author}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="news-category">التصنيف</Label>
@@ -416,7 +663,7 @@ const NewsManager = () => {
                           <SelectValue placeholder="اختر التصنيف" />
                         </SelectTrigger>
                         <SelectContent>
-                          {NEWS_CATEGORIES.map((category) => (
+                          {categories.map((category) => (
                             <SelectItem key={category.id} value={category.id}>
                               <span className={`px-2 py-1 rounded text-xs ${category.color}`}>
                                 {category.name}
@@ -677,8 +924,8 @@ const NewsManager = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         {editingNews.category && (
-                          <span className={`px-2 py-1 rounded text-xs ${NEWS_CATEGORIES.find(c => c.id === editingNews.category)?.color}`}>
-                            {NEWS_CATEGORIES.find(c => c.id === editingNews.category)?.name}
+                          <span className={`px-2 py-1 rounded text-xs ${categories.find(c => c.id === editingNews.category)?.color}`}>
+                            {categories.find(c => c.id === editingNews.category)?.name}
                           </span>
                         )}
                         <span>{editingNews.author}</span>
@@ -775,8 +1022,8 @@ const NewsManager = () => {
                       <div className="flex items-center gap-2 mb-2">
                         <h4 className="font-semibold text-lg">{newsItem.title}</h4>
                         {newsItem.category && (
-                          <span className={`px-2 py-1 rounded text-xs ${NEWS_CATEGORIES.find(c => c.id === newsItem.category)?.color}`}>
-                            {NEWS_CATEGORIES.find(c => c.id === newsItem.category)?.name}
+                          <span className={`px-2 py-1 rounded text-xs ${categories.find(c => c.id === newsItem.category)?.color}`}>
+                            {categories.find(c => c.id === newsItem.category)?.name}
                           </span>
                         )}
                       </div>

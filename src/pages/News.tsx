@@ -6,16 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Calendar, User, ArrowRight, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { newsService, NewsItem } from '@/lib/supabaseClient';
 
-// News categories
-const NEWS_CATEGORIES = [
-  { id: 'political', name: 'سياسي', color: 'bg-red-100 text-red-800' },
-  { id: 'economic', name: 'اقتصادي', color: 'bg-blue-100 text-blue-800' },
-  { id: 'social', name: 'اجتماعي', color: 'bg-green-100 text-green-800' },
-  { id: 'cultural', name: 'ثقافي', color: 'bg-purple-100 text-purple-800' },
-  { id: 'educational', name: 'تعليمي', color: 'bg-yellow-100 text-yellow-800' },
-  { id: 'general', name: 'عام', color: 'bg-gray-100 text-gray-800' }
-];
-
 interface EnhancedNewsItem extends NewsItem {
   category?: string;
   youtubeUrl?: string;
@@ -28,6 +18,20 @@ const News = () => {
   const [newsItem, setNewsItem] = useState<EnhancedNewsItem | null>(null);
   const [relatedNews, setRelatedNews] = useState<EnhancedNewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Load categories from localStorage
+  const [categories, setCategories] = useState(() => {
+    const saved = localStorage.getItem('news-categories');
+    const defaultCategories = [
+      { id: 'political', name: 'سياسي', color: 'bg-red-100 text-red-800' },
+      { id: 'economic', name: 'اقتصادي', color: 'bg-blue-100 text-blue-800' },
+      { id: 'social', name: 'اجتماعي', color: 'bg-green-100 text-green-800' },
+      { id: 'cultural', name: 'ثقافي', color: 'bg-purple-100 text-purple-800' },
+      { id: 'educational', name: 'تعليمي', color: 'bg-yellow-100 text-yellow-800' },
+      { id: 'general', name: 'عام', color: 'bg-gray-100 text-gray-800' }
+    ];
+    return saved ? JSON.parse(saved) : defaultCategories;
+  });
 
   useEffect(() => {
     if (id) {
@@ -72,7 +76,7 @@ const News = () => {
   };
 
   const getCategoryInfo = (categoryId?: string) => {
-    return NEWS_CATEGORIES.find(cat => cat.id === categoryId) || NEWS_CATEGORIES[5];
+    return categories.find(cat => cat.id === categoryId) || { name: 'عام', color: 'bg-gray-100 text-gray-800' };
   };
 
   if (isLoading) {

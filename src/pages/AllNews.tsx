@@ -8,17 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar, User, Search, Filter, Loader2, ArrowRight } from 'lucide-react';
 import { newsService, NewsItem } from '@/lib/supabaseClient';
 
-// News categories
-const NEWS_CATEGORIES = [
-  { id: 'all', name: 'جميع الأخبار', color: 'bg-gray-100 text-gray-800' },
-  { id: 'political', name: 'سياسي', color: 'bg-red-100 text-red-800' },
-  { id: 'economic', name: 'اقتصادي', color: 'bg-blue-100 text-blue-800' },
-  { id: 'social', name: 'اجتماعي', color: 'bg-green-100 text-green-800' },
-  { id: 'cultural', name: 'ثقافي', color: 'bg-purple-100 text-purple-800' },
-  { id: 'educational', name: 'تعليمي', color: 'bg-yellow-100 text-yellow-800' },
-  { id: 'general', name: 'عام', color: 'bg-gray-100 text-gray-800' }
-];
-
 interface EnhancedNewsItem extends NewsItem {
   category?: string;
 }
@@ -33,6 +22,26 @@ const AllNews = () => {
   const [sortBy, setSortBy] = useState<'date' | 'title'>('date');
   const newsPerPage = 9;
 
+  // Load categories from localStorage
+  const [categories, setCategories] = useState(() => {
+    const saved = localStorage.getItem('news-categories');
+    const defaultCategories = [
+      { id: 'political', name: 'سياسي', color: 'bg-red-100 text-red-800' },
+      { id: 'economic', name: 'اقتصادي', color: 'bg-blue-100 text-blue-800' },
+      { id: 'social', name: 'اجتماعي', color: 'bg-green-100 text-green-800' },
+      { id: 'cultural', name: 'ثقافي', color: 'bg-purple-100 text-purple-800' },
+      { id: 'educational', name: 'تعليمي', color: 'bg-yellow-100 text-yellow-800' },
+      { id: 'general', name: 'عام', color: 'bg-gray-100 text-gray-800' }
+    ];
+    return saved ? JSON.parse(saved) : defaultCategories;
+  });
+
+  // Add "all" option to categories for filtering
+  const filterCategories = [
+    { id: 'all', name: 'جميع الأخبار', color: 'bg-gray-100 text-gray-800' },
+    ...categories
+  ];
+
   useEffect(() => {
     loadNews();
   }, []);
@@ -40,6 +49,33 @@ const AllNews = () => {
   useEffect(() => {
     filterNews();
   }, [news, searchTerm, selectedCategory, sortBy]);
+
+  // Listen for real-time updates
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'news-update-trigger') {
+        loadNews();
+      }
+      if (e.key === 'news-categories') {
+        const newCategories = e.newValue ? JSON.parse(e.newValue) : [];
+        setCategories(newCategories);
+      }
+    };
+
+    const channel = new BroadcastChannel('news-updates');
+    channel.onmessage = (event) => {
+      if (event.data.type === 'NEWS_UPDATED') {
+        loadNews();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      channel.close();
+    };
+  }, []);
 
   const loadNews = async () => {
     try {
@@ -90,7 +126,7 @@ const AllNews = () => {
   const currentNews = filteredNews.slice(startIndex, endIndex);
 
   const getCategoryInfo = (categoryId?: string) => {
-    return NEWS_CATEGORIES.find(cat => cat.id === categoryId) || NEWS_CATEGORIES[0];
+    return categories.find(cat => cat.id === categoryId) || { name: 'عام', color: 'bg-gray-100 text-gray-800' };
   };
 
   if (isLoading) {
@@ -150,7 +186,7 @@ const AllNews = () => {
                     <SelectValue placeholder="اختر التصنيف" />
                   </SelectTrigger>
                   <SelectContent>
-                    {NEWS_CATEGORIES.map((category) => (
+                    {filterCategories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         <span className={`px-2 py-1 rounded text-xs ${category.color}`}>
                           {category.name}
