@@ -5,18 +5,40 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Save, Plus, Trash2, Edit, Calendar, Image, Link as LinkIcon, Upload, Loader2, Database, CheckCircle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Save, Plus, Trash2, Edit, Calendar, Image, Link as LinkIcon, Upload, Loader2, Database, CheckCircle, Video, Type, Hash, ExternalLink, Crop, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { newsService, NewsItem, sampleNewsData } from '@/lib/supabaseClient';
 
+// Enhanced NewsItem interface with new fields
+interface EnhancedNewsItem extends NewsItem {
+  category?: string;
+  youtubeUrl?: string;
+  images?: string[];
+  content_html?: string;
+}
+
+// News categories
+const NEWS_CATEGORIES = [
+  { id: 'political', name: 'سياسي', color: 'bg-red-100 text-red-800' },
+  { id: 'economic', name: 'اقتصادي', color: 'bg-blue-100 text-blue-800' },
+  { id: 'social', name: 'اجتماعي', color: 'bg-green-100 text-green-800' },
+  { id: 'cultural', name: 'ثقافي', color: 'bg-purple-100 text-purple-800' },
+  { id: 'educational', name: 'تعليمي', color: 'bg-yellow-100 text-yellow-800' },
+  { id: 'general', name: 'عام', color: 'bg-gray-100 text-gray-800' }
+];
+
 const NewsManager = () => {
   const { toast } = useToast();
-  const [news, setNews] = useState<NewsItem[]>([]);
-  const [editingNews, setEditingNews] = useState<NewsItem | null>(null);
+  const [news, setNews] = useState<EnhancedNewsItem[]>([]);
+  const [editingNews, setEditingNews] = useState<EnhancedNewsItem | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [imageSource, setImageSource] = useState<'upload' | 'url'>('url');
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [cropArea, setCropArea] = useState({ x: 0, y: 0, width: 100, height: 100 });
+  const [showImageCrop, setShowImageCrop] = useState(false);
 
   // Load news from storage on component mount
   useEffect(() => {
@@ -63,22 +85,29 @@ const NewsManager = () => {
   };
 
   const addNews = () => {
-    const newNews: NewsItem = {
+    const newNews: EnhancedNewsItem = {
       id: crypto.randomUUID(),
       title: '',
       content: '',
       date: new Date().toISOString().split('T')[0],
       author: 'الدكتور أحمد العلواني',
       image: '',
-      imageCaption: ''
+      imageCaption: '',
+      category: 'general',
+      youtubeUrl: '',
+      images: [],
+      content_html: ''
     };
     setEditingNews(newNews);
     setIsEditing(true);
   };
 
-  const editNews = (newsItem: NewsItem) => {
+  const editNews = (newsItem: EnhancedNewsItem) => {
     setEditingNews({ ...newsItem });
     setIsEditing(true);
+    if (newsItem.image) {
+      setImagePreview(newsItem.image);
+    }
   };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,6 +115,15 @@ const NewsManager = () => {
     if (file && editingNews) {
       try {
         setIsUploading(true);
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target?.result as string;
+          setImagePreview(result);
+          setShowImageCrop(true);
+        };
+        reader.readAsDataURL(file);
         
         // Generate unique filename
         const fileExtension = file.name.split('.').pop();
@@ -116,6 +154,62 @@ const NewsManager = () => {
     }
   };
 
+  const handleImageUrlChange = (url: string) => {
+    if (editingNews) {
+      setEditingNews({ ...editingNews, image: url });
+      setImagePreview(url);
+    }
+  };
+
+  const addImageToContent = () => {
+    if (editingNews && imagePreview) {
+      const imageHtml = `<img src="${imagePreview}" alt="صورة في الخبر" class="w-full max-w-md mx-auto my-4 rounded-lg shadow-md" />`;
+      setEditingNews({
+        ...editingNews,
+        content_html: (editingNews.content_html || '') + imageHtml
+      });
+    }
+  };
+
+  const addYouTubeVideo = () => {
+    if (editingNews && editingNews.youtubeUrl) {
+      const videoId = extractYouTubeId(editingNews.youtubeUrl);
+      if (videoId) {
+        const videoHtml = `<div class="my-6"><iframe width="100%" height="315" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen class="rounded-lg shadow-md"></iframe></div>`;
+        setEditingNews({
+          ...editingNews,
+          content_html: (editingNews.content_html || '') + videoHtml
+        });
+      }
+    }
+  };
+
+  const extractYouTubeId = (url: string): string | null => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
+  const addLink = (text: string, url: string) => {
+    if (editingNews && text && url) {
+      const linkHtml = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${text}</a>`;
+      setEditingNews({
+        ...editingNews,
+        content_html: (editingNews.content_html || '') + linkHtml
+      });
+    }
+  };
+
+  const addHeading = (text: string, level: number = 2) => {
+    if (editingNews && text) {
+      const headingHtml = `<h${level} class="text-xl font-bold my-4 text-gray-900">${text}</h${level}>`;
+      setEditingNews({
+        ...editingNews,
+        content_html: (editingNews.content_html || '') + headingHtml
+      });
+    }
+  };
+
   const saveNews = async () => {
     if (!editingNews || !editingNews.title.trim() || !editingNews.content.trim()) {
       toast({
@@ -129,18 +223,27 @@ const NewsManager = () => {
     try {
       setIsLoading(true);
       
+      // Combine regular content with HTML content
+      const finalContent = editingNews.content + (editingNews.content_html || '');
+      const newsToSave = { ...editingNews, content: finalContent };
+      
       // Save news item
-      await newsService.upsertNews(editingNews);
+      await newsService.upsertNews(newsToSave);
+      
+      // Broadcast update to other tabs/devices
+      broadcastNewsUpdate();
       
       // Reload news from storage
       await loadNews();
       
       setEditingNews(null);
       setIsEditing(false);
+      setImagePreview('');
+      setShowImageCrop(false);
 
       toast({
         title: "تم الحفظ بنجاح",
-        description: "تم حفظ الخبر بنجاح",
+        description: "تم حفظ الخبر ومزامنته عبر جميع الأجهزة",
         variant: "default"
       });
     } catch (error) {
@@ -162,6 +265,9 @@ const NewsManager = () => {
       // Delete news item
       await newsService.deleteNews(id);
       
+      // Broadcast update to other tabs/devices
+      broadcastNewsUpdate();
+      
       // Reload news from storage
       await loadNews();
 
@@ -181,9 +287,43 @@ const NewsManager = () => {
     }
   };
 
+  const broadcastNewsUpdate = () => {
+    // Broadcast to other tabs
+    const channel = new BroadcastChannel('news-updates');
+    channel.postMessage({ type: 'NEWS_UPDATED', timestamp: Date.now() });
+    
+    // Trigger storage event for cross-tab communication
+    localStorage.setItem('news-update-trigger', Date.now().toString());
+  };
+
+  // Listen for updates from other tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'news-update-trigger') {
+        loadNews();
+      }
+    };
+
+    const channel = new BroadcastChannel('news-updates');
+    channel.onmessage = (event) => {
+      if (event.data.type === 'NEWS_UPDATED') {
+        loadNews();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      channel.close();
+    };
+  }, []);
+
   const cancelEdit = () => {
     setEditingNews(null);
     setIsEditing(false);
+    setImagePreview('');
+    setShowImageCrop(false);
   };
 
   if (isLoading && news.length === 0) {
@@ -199,7 +339,7 @@ const NewsManager = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-right">إدارة الأخبار</CardTitle>
+          <CardTitle className="text-right">إدارة الأخبار المتقدمة</CardTitle>
           <div className="flex gap-2">
             {news.length === 0 && (
               <Button onClick={initializeSampleData} size="sm" variant="outline" disabled={isLoading}>
@@ -219,152 +359,374 @@ const NewsManager = () => {
               <h3 className="text-lg font-semibold mb-4 text-right">
                 {news.find(item => item.id === editingNews.id) ? 'تعديل الخبر' : 'إضافة خبر جديد'}
               </h3>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="news-title">عنوان الخبر *</Label>
-                    <Input
-                      id="news-title"
-                      value={editingNews.title}
-                      onChange={(e) => setEditingNews({...editingNews, title: e.target.value})}
-                      className="text-right"
-                      placeholder="أدخل عنوان الخبر"
-                      disabled={isLoading}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="news-date">تاريخ الخبر</Label>
-                    <Input
-                      id="news-date"
-                      type="date"
-                      value={editingNews.date}
-                      onChange={(e) => setEditingNews({...editingNews, date: e.target.value})}
-                      className="text-right"
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
+              
+              <Tabs defaultValue="basic" className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="basic">المعلومات الأساسية</TabsTrigger>
+                  <TabsTrigger value="media">الوسائط</TabsTrigger>
+                  <TabsTrigger value="content">المحتوى المتقدم</TabsTrigger>
+                  <TabsTrigger value="preview">معاينة</TabsTrigger>
+                </TabsList>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="news-author">الكاتب</Label>
-                  <Input
-                    id="news-author"
-                    value={editingNews.author}
-                    onChange={(e) => setEditingNews({...editingNews, author: e.target.value})}
-                    className="text-right"
-                    placeholder="اسم الكاتب"
-                    disabled={isLoading}
-                  />
-                </div>
-
-                {/* Image Upload Section */}
-                <div className="space-y-4">
-                  <Label>صورة الخبر</Label>
-                  <Tabs value={imageSource} onValueChange={(value) => setImageSource(value as 'upload' | 'url')}>
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="url" className="flex items-center gap-2">
-                        <LinkIcon className="w-4 h-4" />
-                        رابط خارجي
-                      </TabsTrigger>
-                      <TabsTrigger value="upload" className="flex items-center gap-2">
-                        <Upload className="w-4 h-4" />
-                        رفع مباشر
-                      </TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="url" className="space-y-2">
+                <TabsContent value="basic" className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="news-title">عنوان الخبر *</Label>
                       <Input
-                        placeholder="أدخل رابط الصورة"
-                        value={editingNews.image || ''}
-                        onChange={(e) => setEditingNews({...editingNews, image: e.target.value})}
+                        id="news-title"
+                        value={editingNews.title}
+                        onChange={(e) => setEditingNews({...editingNews, title: e.target.value})}
+                        className="text-right"
+                        placeholder="أدخل عنوان الخبر"
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="news-date">تاريخ الخبر</Label>
+                      <Input
+                        id="news-date"
+                        type="date"
+                        value={editingNews.date}
+                        onChange={(e) => setEditingNews({...editingNews, date: e.target.value})}
                         className="text-right"
                         disabled={isLoading}
                       />
-                    </TabsContent>
-                    
-                    <TabsContent value="upload" className="space-y-2">
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="text-right"
-                        disabled={isLoading || isUploading}
-                      />
-                      {isUploading && (
-                        <div className="flex items-center text-sm text-blue-600">
-                          <Loader2 className="w-4 h-4 animate-spin ml-2" />
-                          جاري رفع الصورة...
-                        </div>
-                      )}
-                    </TabsContent>
-                  </Tabs>
+                    </div>
+                  </div>
                   
-                  {editingNews.image && (
-                    <div className="mt-2">
-                      <img 
-                        src={editingNews.image} 
-                        alt="معاينة الصورة"
-                        className="w-32 h-32 object-cover rounded border"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="mt-2"
-                        onClick={() => setEditingNews({...editingNews, image: ''})}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="news-author">الكاتب</Label>
+                      <Input
+                        id="news-author"
+                        value={editingNews.author}
+                        onChange={(e) => setEditingNews({...editingNews, author: e.target.value})}
+                        className="text-right"
+                        placeholder="اسم الكاتب"
                         disabled={isLoading}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="news-category">التصنيف</Label>
+                      <Select
+                        value={editingNews.category}
+                        onValueChange={(value) => setEditingNews({...editingNews, category: value})}
                       >
-                        إزالة الصورة
+                        <SelectTrigger className="text-right">
+                          <SelectValue placeholder="اختر التصنيف" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {NEWS_CATEGORIES.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              <span className={`px-2 py-1 rounded text-xs ${category.color}`}>
+                                {category.name}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="news-content">محتوى الخبر الأساسي *</Label>
+                    <Textarea
+                      id="news-content"
+                      value={editingNews.content}
+                      onChange={(e) => setEditingNews({...editingNews, content: e.target.value})}
+                      className="text-right"
+                      rows={6}
+                      placeholder="أدخل محتوى الخبر"
+                      disabled={isLoading}
+                    />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="media" className="space-y-4">
+                  {/* Main Image Section */}
+                  <div className="space-y-4">
+                    <Label>الصورة الرئيسية</Label>
+                    <Tabs value={imageSource} onValueChange={(value) => setImageSource(value as 'upload' | 'url')}>
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="url" className="flex items-center gap-2">
+                          <LinkIcon className="w-4 h-4" />
+                          رابط خارجي
+                        </TabsTrigger>
+                        <TabsTrigger value="upload" className="flex items-center gap-2">
+                          <Upload className="w-4 h-4" />
+                          رفع مباشر
+                        </TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="url" className="space-y-2">
+                        <Input
+                          placeholder="أدخل رابط الصورة"
+                          value={editingNews.image || ''}
+                          onChange={(e) => handleImageUrlChange(e.target.value)}
+                          className="text-right"
+                          disabled={isLoading}
+                        />
+                      </TabsContent>
+                      
+                      <TabsContent value="upload" className="space-y-2">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="text-right"
+                          disabled={isLoading || isUploading}
+                        />
+                        {isUploading && (
+                          <div className="flex items-center text-sm text-blue-600">
+                            <Loader2 className="w-4 h-4 animate-spin ml-2" />
+                            جاري رفع الصورة...
+                          </div>
+                        )}
+                      </TabsContent>
+                    </Tabs>
+                    
+                    {/* Image Preview and Crop */}
+                    {imagePreview && (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <Eye className="w-4 h-4" />
+                          <Label>معاينة الصورة</Label>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowImageCrop(!showImageCrop)}
+                          >
+                            <Crop className="w-4 h-4 ml-2" />
+                            {showImageCrop ? 'إخفاء التحكم' : 'تحديد منطقة العرض'}
+                          </Button>
+                        </div>
+                        
+                        <div className="relative max-w-md">
+                          <img 
+                            src={imagePreview} 
+                            alt="معاينة الصورة"
+                            className="w-full h-auto rounded border"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                          
+                          {showImageCrop && (
+                            <div className="absolute inset-0 border-2 border-dashed border-red-500 bg-red-500 bg-opacity-20 rounded">
+                              <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs">
+                                منطقة العرض
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={addImageToContent}
+                          >
+                            <Plus className="w-4 h-4 ml-2" />
+                            إضافة للمحتوى
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => {
+                              setEditingNews({...editingNews, image: ''});
+                              setImagePreview('');
+                              setShowImageCrop(false);
+                            }}
+                            disabled={isLoading}
+                          >
+                            إزالة الصورة
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="image-caption">وصف الصورة (اختياري)</Label>
+                      <Input
+                        id="image-caption"
+                        value={editingNews.imageCaption || ''}
+                        onChange={(e) => setEditingNews({...editingNews, imageCaption: e.target.value})}
+                        className="text-right"
+                        placeholder="أدخل وصف الصورة"
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+
+                  {/* YouTube Video Section */}
+                  <div className="space-y-4 border-t pt-4">
+                    <Label className="flex items-center gap-2">
+                      <Video className="w-4 h-4" />
+                      فيديو يوتيوب
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="رابط فيديو يوتيوب"
+                        value={editingNews.youtubeUrl || ''}
+                        onChange={(e) => setEditingNews({...editingNews, youtubeUrl: e.target.value})}
+                        className="text-right flex-1"
+                        disabled={isLoading}
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={addYouTubeVideo}
+                        disabled={!editingNews.youtubeUrl}
+                      >
+                        <Plus className="w-4 h-4 ml-2" />
+                        إضافة للمحتوى
                       </Button>
                     </div>
-                  )}
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="image-caption">وصف الصورة (اختياري)</Label>
-                    <Input
-                      id="image-caption"
-                      value={editingNews.imageCaption || ''}
-                      onChange={(e) => setEditingNews({...editingNews, imageCaption: e.target.value})}
-                      className="text-right"
-                      placeholder="أدخل وصف الصورة"
-                      disabled={isLoading}
-                    />
                   </div>
-                </div>
+                </TabsContent>
 
-                <div className="space-y-2">
-                  <Label htmlFor="news-content">محتوى الخبر *</Label>
-                  <Textarea
-                    id="news-content"
-                    value={editingNews.content}
-                    onChange={(e) => setEditingNews({...editingNews, content: e.target.value})}
-                    className="text-right"
-                    rows={6}
-                    placeholder="أدخل محتوى الخبر"
-                    disabled={isLoading}
-                  />
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button onClick={saveNews} disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-                        جاري الحفظ...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4 ml-2" />
-                        حفظ الخبر
-                      </>
+                <TabsContent value="content" className="space-y-4">
+                  {/* Rich Content Tools */}
+                  <div className="space-y-4">
+                    <Label>أدوات المحتوى المتقدم</Label>
+                    
+                    {/* Add Heading */}
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="نص العنوان"
+                        className="text-right flex-1"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            addHeading(e.currentTarget.value);
+                            e.currentTarget.value = '';
+                          }
+                        }}
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={(e) => {
+                          const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                          addHeading(input.value);
+                          input.value = '';
+                        }}
+                      >
+                        <Type className="w-4 h-4 ml-2" />
+                        إضافة عنوان
+                      </Button>
+                    </div>
+
+                    {/* Add Link */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        placeholder="نص الرابط"
+                        className="text-right"
+                        id="link-text"
+                      />
+                      <Input
+                        placeholder="عنوان الرابط (URL)"
+                        className="text-right"
+                        id="link-url"
+                      />
+                      <Button
+                        variant="outline"
+                        className="col-span-2"
+                        onClick={() => {
+                          const textInput = document.getElementById('link-text') as HTMLInputElement;
+                          const urlInput = document.getElementById('link-url') as HTMLInputElement;
+                          addLink(textInput.value, urlInput.value);
+                          textInput.value = '';
+                          urlInput.value = '';
+                        }}
+                      >
+                        <ExternalLink className="w-4 h-4 ml-2" />
+                        إضافة رابط
+                      </Button>
+                    </div>
+
+                    {/* Content HTML Preview */}
+                    <div className="space-y-2">
+                      <Label>المحتوى المتقدم المضاف</Label>
+                      <div className="border rounded p-4 bg-white min-h-[100px] max-h-[300px] overflow-y-auto">
+                        {editingNews.content_html ? (
+                          <div dangerouslySetInnerHTML={{ __html: editingNews.content_html }} />
+                        ) : (
+                          <p className="text-gray-500 text-center">لم يتم إضافة محتوى متقدم بعد</p>
+                        )}
+                      </div>
+                      {editingNews.content_html && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingNews({...editingNews, content_html: ''})}
+                        >
+                          <Trash2 className="w-4 h-4 ml-2" />
+                          مسح المحتوى المتقدم
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="preview" className="space-y-4">
+                  <div className="border rounded-lg p-6 bg-white">
+                    <h3 className="text-2xl font-bold mb-4 text-right">{editingNews.title || 'عنوان الخبر'}</h3>
+                    
+                    <div className="flex items-center justify-between mb-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>{new Date(editingNews.date).toLocaleDateString('ar-IQ')}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {editingNews.category && (
+                          <span className={`px-2 py-1 rounded text-xs ${NEWS_CATEGORIES.find(c => c.id === editingNews.category)?.color}`}>
+                            {NEWS_CATEGORIES.find(c => c.id === editingNews.category)?.name}
+                          </span>
+                        )}
+                        <span>{editingNews.author}</span>
+                      </div>
+                    </div>
+
+                    {editingNews.image && (
+                      <div className="mb-4">
+                        <img 
+                          src={editingNews.image} 
+                          alt={editingNews.title}
+                          className="w-full max-h-96 object-cover rounded-lg"
+                        />
+                        {editingNews.imageCaption && (
+                          <p className="text-sm text-gray-600 mt-2 text-center italic">
+                            {editingNews.imageCaption}
+                          </p>
+                        )}
+                      </div>
                     )}
-                  </Button>
-                  <Button variant="outline" onClick={cancelEdit} disabled={isLoading}>
-                    إلغاء
-                  </Button>
-                </div>
+
+                    <div className="prose max-w-none text-right">
+                      <div className="whitespace-pre-wrap mb-4">{editingNews.content}</div>
+                      {editingNews.content_html && (
+                        <div dangerouslySetInnerHTML={{ __html: editingNews.content_html }} />
+                      )}
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+              
+              <div className="flex gap-2 mt-6">
+                <Button onClick={saveNews} disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                      جاري الحفظ...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 ml-2" />
+                      حفظ الخبر
+                    </>
+                  )}
+                </Button>
+                <Button variant="outline" onClick={cancelEdit} disabled={isLoading}>
+                  إلغاء
+                </Button>
               </div>
             </div>
           )}
@@ -410,7 +772,14 @@ const NewsManager = () => {
                       </Button>
                     </div>
                     <div className="text-right flex-1">
-                      <h4 className="font-semibold text-lg">{newsItem.title}</h4>
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="font-semibold text-lg">{newsItem.title}</h4>
+                        {newsItem.category && (
+                          <span className={`px-2 py-1 rounded text-xs ${NEWS_CATEGORIES.find(c => c.id === newsItem.category)?.color}`}>
+                            {NEWS_CATEGORIES.find(c => c.id === newsItem.category)?.name}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-gray-500 mb-2">
                         {newsItem.author} - {new Date(newsItem.date).toLocaleDateString('ar-IQ')}
                       </p>

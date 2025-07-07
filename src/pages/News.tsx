@@ -6,10 +6,27 @@ import { Button } from '@/components/ui/button';
 import { Calendar, User, ArrowRight, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { newsService, NewsItem } from '@/lib/supabaseClient';
 
+// News categories
+const NEWS_CATEGORIES = [
+  { id: 'political', name: 'سياسي', color: 'bg-red-100 text-red-800' },
+  { id: 'economic', name: 'اقتصادي', color: 'bg-blue-100 text-blue-800' },
+  { id: 'social', name: 'اجتماعي', color: 'bg-green-100 text-green-800' },
+  { id: 'cultural', name: 'ثقافي', color: 'bg-purple-100 text-purple-800' },
+  { id: 'educational', name: 'تعليمي', color: 'bg-yellow-100 text-yellow-800' },
+  { id: 'general', name: 'عام', color: 'bg-gray-100 text-gray-800' }
+];
+
+interface EnhancedNewsItem extends NewsItem {
+  category?: string;
+  youtubeUrl?: string;
+  images?: string[];
+  content_html?: string;
+}
+
 const News = () => {
   const { id } = useParams();
-  const [newsItem, setNewsItem] = useState<NewsItem | null>(null);
-  const [relatedNews, setRelatedNews] = useState<NewsItem[]>([]);
+  const [newsItem, setNewsItem] = useState<EnhancedNewsItem | null>(null);
+  const [relatedNews, setRelatedNews] = useState<EnhancedNewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -39,11 +56,11 @@ const News = () => {
       if (savedNews) {
         try {
           const allNews = JSON.parse(savedNews);
-          const currentNews = allNews.find((item: NewsItem) => item.id === newsId);
+          const currentNews = allNews.find((item: EnhancedNewsItem) => item.id === newsId);
           setNewsItem(currentNews);
           
           // Get related news (exclude current news)
-          const related = allNews.filter((item: NewsItem) => item.id !== newsId).slice(0, 3);
+          const related = allNews.filter((item: EnhancedNewsItem) => item.id !== newsId).slice(0, 3);
           setRelatedNews(related);
         } catch (localError) {
           console.error('خطأ في تحميل الخبر من التخزين المحلي:', localError);
@@ -52,6 +69,10 @@ const News = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getCategoryInfo = (categoryId?: string) => {
+    return NEWS_CATEGORIES.find(cat => cat.id === categoryId) || NEWS_CATEGORIES[5];
   };
 
   if (isLoading) {
@@ -82,6 +103,8 @@ const News = () => {
     );
   }
 
+  const categoryInfo = getCategoryInfo(newsItem.category);
+
   return (
     <Layout>
       <div className="min-h-screen bg-gray-50">
@@ -91,7 +114,7 @@ const News = () => {
             <nav className="flex items-center space-x-2 space-x-reverse text-sm text-gray-600">
               <Link to="/" className="hover:text-primary">الرئيسية</Link>
               <ArrowRight className="w-4 h-4" />
-              <span>الأخبار</span>
+              <Link to="/all-news" className="hover:text-primary">الأخبار</Link>
               <ArrowRight className="w-4 h-4" />
               <span className="text-gray-900 truncate">{newsItem.title}</span>
             </nav>
@@ -114,9 +137,16 @@ const News = () => {
                       <Calendar className="w-5 h-5 ml-2" />
                       <span>{new Date(newsItem.date).toLocaleDateString('ar-IQ')}</span>
                     </div>
-                    <div className="flex items-center text-gray-600 space-x-2 space-x-reverse">
-                      <User className="w-5 h-5 ml-2" />
-                      <span>{newsItem.author}</span>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center text-gray-600 space-x-2 space-x-reverse">
+                        <User className="w-5 h-5 ml-2" />
+                        <span>{newsItem.author}</span>
+                      </div>
+                      {newsItem.category && (
+                        <span className={`px-3 py-1 rounded text-sm font-medium ${categoryInfo.color}`}>
+                          {categoryInfo.name}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </header>
@@ -150,9 +180,17 @@ const News = () => {
 
                 {/* Article Content */}
                 <div className="prose prose-lg max-w-none text-right">
-                  <div className="text-gray-800 leading-relaxed whitespace-pre-wrap text-lg">
+                  <div className="text-gray-800 leading-relaxed whitespace-pre-wrap text-lg mb-6">
                     {newsItem.content}
                   </div>
+                  
+                  {/* Enhanced HTML Content */}
+                  {newsItem.content_html && (
+                    <div 
+                      className="enhanced-content text-gray-800 leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: newsItem.content_html }}
+                    />
+                  )}
                 </div>
 
                 {/* Article Footer */}
@@ -172,41 +210,52 @@ const News = () => {
               <section className="mt-12">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6 text-right">أخبار ذات صلة</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {relatedNews.map((item) => (
-                    <Card key={item.id} className="hover:shadow-lg transition-shadow">
-                      <CardContent className="p-6">
-                        {/* Related News Image */}
-                        {item.image && (
-                          <div className="mb-4 overflow-hidden rounded-lg">
-                            <img 
-                              src={item.image} 
-                              alt={item.title}
-                              className="w-full h-32 object-cover hover:scale-105 transition-transform duration-300"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                              }}
-                            />
+                  {relatedNews.map((item) => {
+                    const relatedCategoryInfo = getCategoryInfo(item.category);
+                    
+                    return (
+                      <Card key={item.id} className="hover:shadow-lg transition-shadow">
+                        <CardContent className="p-6">
+                          {/* Related News Image */}
+                          {item.image && (
+                            <div className="mb-4 overflow-hidden rounded-lg">
+                              <img 
+                                src={item.image} 
+                                alt={item.title}
+                                className="w-full h-32 object-cover hover:scale-105 transition-transform duration-300"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
+                            <div className="flex items-center">
+                              <Calendar className="w-4 h-4 ml-2" />
+                              <span>{new Date(item.date).toLocaleDateString('ar-IQ')}</span>
+                            </div>
+                            {item.category && (
+                              <span className={`px-2 py-1 rounded text-xs ${relatedCategoryInfo.color}`}>
+                                {relatedCategoryInfo.name}
+                              </span>
+                            )}
                           </div>
-                        )}
-                        
-                        <div className="flex items-center text-sm text-gray-500 mb-3">
-                          <Calendar className="w-4 h-4 ml-2" />
-                          <span>{new Date(item.date).toLocaleDateString('ar-IQ')}</span>
-                        </div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-3 text-right line-clamp-2">
-                          {item.title}
-                        </h3>
-                        <p className="text-gray-600 text-right line-clamp-3 mb-4">
-                          {item.content}
-                        </p>
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link to={`/news/${item.id}`}>
-                            اقرأ المزيد
-                          </Link>
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
+                          <h3 className="text-lg font-bold text-gray-900 mb-3 text-right line-clamp-2">
+                            {item.title}
+                          </h3>
+                          <p className="text-gray-600 text-right line-clamp-3 mb-4">
+                            {item.content}
+                          </p>
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link to={`/news/${item.id}`}>
+                              اقرأ المزيد
+                            </Link>
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               </section>
             )}

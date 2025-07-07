@@ -1,4 +1,3 @@
-
 import { Suspense, lazy } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -14,6 +13,7 @@ const Media = lazy(() => import('./pages/Media'));
 const Contact = lazy(() => import('./pages/Contact'));
 const AdminPanel = lazy(() => import('./pages/AdminPanel'));
 const News = lazy(() => import('./pages/News'));
+const AllNews = lazy(() => import('./pages/AllNews'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 const queryClient = new QueryClient();
@@ -54,6 +54,11 @@ const App = () => (
             <Route path="/news/:id" element={
               <Suspense fallback={<div>جاري التحميل...</div>}>
                 <News />
+              </Suspense>
+            } />
+            <Route path="/all-news" element={
+              <Suspense fallback={<div>جاري التحميل...</div>}>
+                <AllNews />
               </Suspense>
             } />
             <Route path="/admin" element={

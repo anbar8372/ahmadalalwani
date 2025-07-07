@@ -18,11 +18,15 @@ export interface NewsItem {
   author: string;
   image?: string;
   imageCaption?: string;
+  category?: string;
+  youtubeUrl?: string;
+  images?: string[];
+  content_html?: string;
   created_at?: string;
   updated_at?: string;
 }
 
-// Enhanced sample news data with 6 news items
+// Enhanced sample news data with categories
 export const sampleNewsData: Omit<NewsItem, 'created_at' | 'updated_at'>[] = [
   {
     id: '1',
@@ -36,6 +40,7 @@ export const sampleNewsData: Omit<NewsItem, 'created_at' | 'updated_at'>[] = [
 15 حزيران 2025`,
     date: '2025-06-15',
     author: 'المكتب الإعلامي',
+    category: 'political',
     image: 'https://d.top4top.io/p_3473n86931.jpg',
     imageCaption: 'لقاء الدكتور أحمد عبد الجبار العلواني مع الشيخ رعد عبد الجبار العلي سليمان في مقر إقامته بالرمادي'
   },
@@ -51,6 +56,7 @@ export const sampleNewsData: Omit<NewsItem, 'created_at' | 'updated_at'>[] = [
 10 حزيران 2025`,
     date: '2025-06-10',
     author: 'المكتب الإعلامي',
+    category: 'economic',
     image: 'https://example.com/image2.jpg',
     imageCaption: 'توقيع العقد الجديد بين مجموعة العلواني والشركة العالمية'
   },
@@ -66,6 +72,7 @@ export const sampleNewsData: Omit<NewsItem, 'created_at' | 'updated_at'>[] = [
 5 حزيران 2025`,
     date: '2025-06-05',
     author: 'المكتب الإعلامي',
+    category: 'social',
     image: 'https://example.com/image3.jpg',
     imageCaption: 'إطلاق المشروع التنموي الجديد في الأنبار'
   },
@@ -81,6 +88,7 @@ export const sampleNewsData: Omit<NewsItem, 'created_at' | 'updated_at'>[] = [
 1 حزيران 2025`,
     date: '2025-06-01',
     author: 'المكتب الإعلامي',
+    category: 'economic',
     image: 'https://example.com/image4.jpg',
     imageCaption: 'استلام جائزة أفضل شركة مساهمة في التنمية المستدامة'
   },
@@ -96,6 +104,7 @@ export const sampleNewsData: Omit<NewsItem, 'created_at' | 'updated_at'>[] = [
 25 أيار 2025`,
     date: '2025-05-25',
     author: 'المكتب الإعلامي',
+    category: 'economic',
     image: 'https://example.com/image5.jpg',
     imageCaption: 'إعلان مجموعة العلواني عن توسيع أعمالها في مجال الطاقة المتجددة'
   },
@@ -111,6 +120,7 @@ export const sampleNewsData: Omit<NewsItem, 'created_at' | 'updated_at'>[] = [
 20 أيار 2025`,
     date: '2025-05-20',
     author: 'المكتب الإعلامي',
+    category: 'educational',
     image: 'https://example.com/image6.jpg',
     imageCaption: 'دعم مجموعة العلواني لمبادرات التعليم في الأنبار'
   }

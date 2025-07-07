@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -157,6 +156,63 @@
     .btn-responsive {
       @apply px-8 py-3 text-lg;
     }
+  }
+
+  /* Enhanced content styling for news */
+  .enhanced-content {
+    @apply text-right;
+  }
+
+  .enhanced-content img {
+    @apply rounded-lg shadow-md my-4 mx-auto;
+  }
+
+  .enhanced-content iframe {
+    @apply rounded-lg shadow-md my-6;
+  }
+
+  .enhanced-content h1,
+  .enhanced-content h2,
+  .enhanced-content h3,
+  .enhanced-content h4,
+  .enhanced-content h5,
+  .enhanced-content h6 {
+    @apply font-bold text-gray-900 my-4;
+  }
+
+  .enhanced-content h1 {
+    @apply text-3xl;
+  }
+
+  .enhanced-content h2 {
+    @apply text-2xl;
+  }
+
+  .enhanced-content h3 {
+    @apply text-xl;
+  }
+
+  .enhanced-content a {
+    @apply text-blue-600 hover:text-blue-800 underline;
+  }
+
+  .enhanced-content p {
+    @apply my-3 leading-relaxed;
+  }
+
+  /* Line clamp utilities */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }
 

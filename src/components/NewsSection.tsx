@@ -5,12 +5,49 @@ import { Calendar, User, ChevronRight, Loader2, ChevronDown } from 'lucide-react
 import { Link } from 'react-router-dom';
 import { newsService, NewsItem } from '@/lib/supabaseClient';
 
+// News categories
+const NEWS_CATEGORIES = [
+  { id: 'political', name: 'سياسي', color: 'bg-red-600' },
+  { id: 'economic', name: 'اقتصادي', color: 'bg-blue-600' },
+  { id: 'social', name: 'اجتماعي', color: 'bg-green-600' },
+  { id: 'cultural', name: 'ثقافي', color: 'bg-purple-600' },
+  { id: 'educational', name: 'تعليمي', color: 'bg-yellow-600' },
+  { id: 'general', name: 'عام', color: 'bg-gray-600' }
+];
+
+interface EnhancedNewsItem extends NewsItem {
+  category?: string;
+}
+
 const NewsSection = () => {
-  const [news, setNews] = useState<NewsItem[]>([]);
+  const [news, setNews] = useState<EnhancedNewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadLatestNews();
+  }, []);
+
+  // Listen for real-time updates
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'news-update-trigger') {
+        loadLatestNews();
+      }
+    };
+
+    const channel = new BroadcastChannel('news-updates');
+    channel.onmessage = (event) => {
+      if (event.data.type === 'NEWS_UPDATED') {
+        loadLatestNews();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      channel.close();
+    };
   }, []);
 
   const loadLatestNews = async () => {
@@ -40,7 +77,8 @@ const NewsSection = () => {
           content: 'استقبل الشيخ الدكتور أحمد العلواني، وفد المظلة العراقية الجامعة، في مقر إقامته بمدينة الرمادي. وناقش الجانبان عدد من الملفات التي تخص الشأن العراقي، في ظل ما تشهده المنطقة من متغيرات، كما تم التأكيد على حفظ أمن واستقرار العراق، وتعزيز التماسك الاجتماعي بين أبناء الشعب الواحد.',
           date: '2025-06-14',
           author: 'المكتب الإعلامي',
-          image: 'https://scontent-sof1-1.xx.fbcdn.net/v/t39.30808-6/505787034_122120178950851058_7790142878532884553_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=833d8c&_nc_ohc=uTbyxBh-MG0Q7kNvwFuGxEm&_nc_oc=AdnwNvpZ-SwrTGUWcAOp66mD-_VTh8o7i3l4rVENVE6YbbtJw-hCycO2VgwefQSc6Yc&_nc_zt=23&_nc_ht=scontent-sof1-1.xx&_nc_gid=iV4ovw2Q_Qbutd0HKaMYhw&oh=00_AfTQyIhE-OiCrY82Y85cjwMJtUBBewyqIwmIJfNqNF6MaQ&oe=686F9FD7'
+          image: 'https://scontent-sof1-1.xx.fbcdn.net/v/t39.30808-6/505787034_122120178950851058_7790142878532884553_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=833d8c&_nc_ohc=uTbyxBh-MG0Q7kNvwFuGxEm&_nc_oc=AdnwNvpZ-SwrTGUWcAOp66mD-_VTh8o7i3l4rVENVE6YbbtJw-hCycO2VgwefQSc6Yc&_nc_zt=23&_nc_ht=scontent-sof1-1.xx&_nc_gid=iV4ovw2Q_Qbutd0HKaMYhw&oh=00_AfTQyIhE-OiCrY82Y85cjwMJtUBBewyqIwmIJfNqNF6MaQ&oe=686F9FD7',
+          category: 'political'
         },
         {
           id: '2',
@@ -48,7 +86,8 @@ const NewsSection = () => {
           content: 'استقبل الشيخ الدكتور أحمد العلواني، وفد المظلة العراقية الجامعة، في مقر إقامته بمدينة الرمادي. وناقش الجانبان عدد من الملفات التي تخص الشأن العراقي، في ظل ما تشهده المنطقة من متغيرات، كما تم التأكيد على حفظ أمن واستقرار العراق، وتعزيز التماسك الاجتماعي بين أبناء الشعب الواحد.',
           date: '2025-06-12',
           author: 'المكتب الإعلامي',
-          image: 'https://scontent-sof1-2.xx.fbcdn.net/v/t39.30808-6/505893615_122119700126851058_8234419387102767012_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=833d8c&_nc_ohc=QJOM_BN2cE0Q7kNvwH_3SPN&_nc_oc=AdmL95M7_ws5cNsmkTJAc7bb298Ff9gGvWbNDM1wGKySFnibNUJvCcyv5VyyyPjlxWo&_nc_zt=23&_nc_ht=scontent-sof1-2.xx&_nc_gid=ofZuuoZUXhq5ZSse1Z0m_A&oh=00_AfTXgJkQmbjrv4BkHFXc2uOijPR3SftUZiRaaGUcY3Fspg&oe=686F84D5'
+          image: 'https://scontent-sof1-2.xx.fbcdn.net/v/t39.30808-6/505893615_122119700126851058_8234419387102767012_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=833d8c&_nc_ohc=QJOM_BN2cE0Q7kNvwH_3SPN&_nc_oc=AdmL95M7_ws5cNsmkTJAc7bb298Ff9gGvWbNDM1wGKySFnibNUJvCcyv5VyyyPjlxWo&_nc_zt=23&_nc_ht=scontent-sof1-2.xx&_nc_gid=ofZuuoZUXhq5ZSse1Z0m_A&oh=00_AfTXgJkQmbjrv4BkHFXc2uOijPR3SftUZiRaaGUcY3Fspg&oe=686F84D5',
+          category: 'political'
         },
         {
           id: '3',
@@ -56,13 +95,18 @@ const NewsSection = () => {
           content: 'محتوى الخبر الثالث...',
           date: '2024-12-13',
           author: 'الدكتور أحمد العلواني',
-          image: 'https://images.pexels.com/photos/8112199/pexels-photo-8112199.jpeg'
+          image: 'https://images.pexels.com/photos/8112199/pexels-photo-8112199.jpeg',
+          category: 'social'
         }
       ];
       setNews(sampleNews);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getCategoryInfo = (categoryId?: string) => {
+    return NEWS_CATEGORIES.find(cat => cat.id === categoryId) || { name: 'عام', color: 'bg-gray-600' };
   };
 
   if (isLoading) {
@@ -93,72 +137,66 @@ const NewsSection = () => {
 
           {/* News Grid - Centered */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mx-auto">
-            {news.map((newsItem, index) => (
-              <Card
-                key={newsItem.id}
-                className={`group hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden mx-auto`}
-                style={{ width: '100%', maxWidth: '400px', height: index === 0 ? '300px' : '250px' }}
-              >
-                <Link to={`/news/${newsItem.id}`} className="block h-full">
-                  <div className="relative h-full">
-                    {/* News Image */}
-                    <div className="absolute inset-0">
-                      <img
-                        src={newsItem.image || 'https://images.pexels.com/photos/6801648/pexels-photo-6801648.jpeg'}
-                        alt={newsItem.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          e.currentTarget.src = 'https://images.pexels.com/photos/6801648/pexels-photo-6801648.jpeg';
-                        }}
-                      />
-                      {/* Dark Overlay */}
-                      <div className="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300"></div>
-                    </div>
-
-                    {/* Content Overlay */}
-                    <div className="absolute inset-0 p-4 flex flex-col justify-between text-white">
-                      {/* Category Badge */}
-                      <div className="flex justify-end">
-                        <span className={`px-3 py-1 text-xs font-bold rounded ${
-                          index === 0 ? 'bg-red-600' :
-                          index === 1 ? 'bg-red-600' :
-                          index === 2 ? 'bg-green-600' :
-                          index === 3 ? 'bg-red-600' :
-                          'bg-red-600'
-                        }`}>
-                          {index === 0 ? 'لقاءات خاصة' :
-                           index === 1 ? 'لقاءات خاصة' :
-                           index === 2 ? 'لقاءات خاصة' :
-                           index === 3 ? 'لقاءات خاصة' :
-                           'خبر أساسي'}
-                        </span>
+            {news.map((newsItem, index) => {
+              const categoryInfo = getCategoryInfo(newsItem.category);
+              
+              return (
+                <Card
+                  key={newsItem.id}
+                  className={`group hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden mx-auto`}
+                  style={{ width: '100%', maxWidth: '400px', height: index === 0 ? '300px' : '250px' }}
+                >
+                  <Link to={`/news/${newsItem.id}`} className="block h-full">
+                    <div className="relative h-full">
+                      {/* News Image */}
+                      <div className="absolute inset-0">
+                        <img
+                          src={newsItem.image || 'https://images.pexels.com/photos/6801648/pexels-photo-6801648.jpeg'}
+                          alt={newsItem.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            e.currentTarget.src = 'https://images.pexels.com/photos/6801648/pexels-photo-6801648.jpeg';
+                          }}
+                        />
+                        {/* Dark Overlay */}
+                        <div className="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-50 transition-all duration-300"></div>
                       </div>
 
-                      {/* News Title */}
-                      <div>
-                        <h3 className={`font-bold text-right leading-tight mb-2 ${
-                          index === 0 ? 'text-xl md:text-2xl' : 'text-lg'
-                        }`}>
-                          {newsItem.title}
-                        </h3>
+                      {/* Content Overlay */}
+                      <div className="absolute inset-0 p-4 flex flex-col justify-between text-white">
+                        {/* Category Badge */}
+                        <div className="flex justify-end">
+                          <span className={`px-3 py-1 text-xs font-bold rounded text-white ${categoryInfo.color}`}>
+                            {categoryInfo.name}
+                          </span>
+                        </div>
 
-                        {/* Date */}
-                        <div className="flex items-center justify-end text-sm opacity-90">
-                          <span>{new Date(newsItem.date).toLocaleDateString('ar-IQ')}</span>
-                          <Calendar className="w-4 h-4 mr-2" />
+                        {/* News Title */}
+                        <div>
+                          <h3 className={`font-bold text-right leading-tight mb-2 ${
+                            index === 0 ? 'text-xl md:text-2xl' : 'text-lg'
+                          }`}>
+                            {newsItem.title}
+                          </h3>
+
+                          {/* Date */}
+                          <div className="flex items-center justify-end text-sm opacity-90">
+                            <span>{new Date(newsItem.date).toLocaleDateString('ar-IQ')}</span>
+                            <Calendar className="w-4 h-4 mr-2" />
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
-              </Card>
-            ))}
+                  </Link>
+                </Card>
+              );
+            })}
           </div>
 
           {/* View More Button - Centered */}
           <div className="text-center mt-8">
             <Button variant="outline" size="lg" asChild>
-              <Link to="/news" className="flex items-center space-x-2 space-x-reverse justify-center mx-auto">
+              <Link to="/all-news" className="flex items-center space-x-2 space-x-reverse justify-center mx-auto">
                 <span>عرض جميع الأخبار</span>
                 <ChevronRight className="w-4 h-4" />
               </Link>
