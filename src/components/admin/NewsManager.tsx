@@ -1003,7 +1003,8 @@ const NewsManager = () => {
               <p className="text-sm">اضغط على "إضافة أخبار نموذجية" لإضافة أخبار تجريبية أو "إضافة خبر جديد" لإضافة خبر مخصص</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <>
+              <div className="space-y-4">
               {/* Success indicator */}
               <div className="flex items-center justify-between bg-green-50 p-3 rounded-lg border border-green-200">
                 <div className="flex items-center text-green-800">
@@ -1078,6 +1079,7 @@ const NewsManager = () => {
                 </Button>
               </div>
             )}
+            </>
           )}
         </CardContent>
       </Card>
