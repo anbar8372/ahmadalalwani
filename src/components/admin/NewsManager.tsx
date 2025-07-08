@@ -336,7 +336,7 @@ const NewsManager = () => {
       await newsService.upsertNews(newsToSave);
       
       // Broadcast update to other tabs/devices
-      broadcastNewsUpdate();
+      newsService.broadcastNewsUpdate();
       
       // Reload news from storage
       await loadNews();
@@ -371,7 +371,7 @@ const NewsManager = () => {
       await newsService.deleteNews(id);
       
       // Broadcast update to other tabs/devices
-      broadcastNewsUpdate();
+      newsService.broadcastNewsUpdate();
       
       // Reload news from storage
       await loadNews();
@@ -392,15 +392,6 @@ const NewsManager = () => {
     }
   };
 
-  const broadcastNewsUpdate = () => {
-    // Broadcast to other tabs
-    const channel = new BroadcastChannel('news-updates');
-    channel.postMessage({ type: 'NEWS_UPDATED', timestamp: Date.now() });
-    
-    // Trigger storage event for cross-tab communication
-    localStorage.setItem('news-update-trigger', Date.now().toString());
-  };
-
   // Listen for updates from other tabs
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
@@ -416,10 +407,17 @@ const NewsManager = () => {
       }
     };
 
+    // Listen for custom events for immediate updates
+    const handleNewsUpdated = () => {
+      loadNews();
+    };
+
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('newsUpdated', handleNewsUpdated);
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('newsUpdated', handleNewsUpdated);
       channel.close();
     };
   }, []);
