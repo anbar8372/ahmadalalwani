@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zamxmcm5uYnV6YmZ5ZXBqc3ZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE2NzA0NDUsImV4cCI6MjA2NzI0NjQ0NX0.eKXbbuZWlSjd8Drp0aDTMDR3oxpXRPZHFpt1yyU274k';
 
 // Configurar URL de Supabase si no está definida
