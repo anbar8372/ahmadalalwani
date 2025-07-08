@@ -75,25 +75,19 @@ export function useSyncStatus() {
         return;
       }
 
-      // Check Supabase connection with a simple query and timeout
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Connection timeout')), 10000);
-      });
-
-      const queryPromise = supabase
+      // Check Supabase connection with a simple query
+      const { data, error } = await supabase
         .from('news')
         .select('id')
         .limit(1);
-
-      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
       
       if (error) {
-        console.warn('Supabase connection error:', error);
+        console.warn('Supabase connection error:', error.message);
         setSyncStatus({
           connected: false,
           lastSynced: null,
           status: 'error',
-          error: `Connection error: Using offline mode`
+          error: `Database error: ${error.message} - Using offline mode`
         });
         
         // Update localStorage to indicate offline mode
@@ -101,7 +95,7 @@ export function useSyncStatus() {
           connected: false,
           lastSynced: null,
           status: 'error',
-          error: 'Offline mode - using local data',
+          error: `Database error: ${error.message}`,
           timestamp: Date.now()
         }));
         return;
@@ -122,20 +116,21 @@ export function useSyncStatus() {
         timestamp: Date.now()
       }));
     } catch (error) {
-      console.warn('Network error checking sync status - switching to offline mode:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.warn('Network error checking sync status - switching to offline mode:', errorMessage);
       
       setSyncStatus({
         connected: false,
         lastSynced: null,
         status: 'error',
-        error: 'Offline mode - using local data'
+        error: `Network error: ${errorMessage} - Using offline mode`
       });
       
       localStorage.setItem('realtime-sync-status', JSON.stringify({
         connected: false,
         lastSynced: null,
         status: 'error',
-        error: 'Offline mode - using local data',
+        error: `Network error: ${errorMessage}`,
         timestamp: Date.now()
       }));
     }
@@ -163,17 +158,11 @@ export function useSyncStatus() {
         detail: { type: 'sync_started', timestamp: Date.now() }
       }));
       
-      // Get all news from Supabase with timeout
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Sync timeout')), 15000);
-      });
-
-      const queryPromise = supabase
+      // Get all news from Supabase
+      const { data, error } = await supabase
         .from('news')
         .select('*')
         .order('date', { ascending: false });
-
-      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
         
       if (error) throw error;
       
@@ -202,18 +191,19 @@ export function useSyncStatus() {
       
       return { success: true };
     } catch (error) {
-      console.warn('Network error during sync - continuing in offline mode:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.warn('Network error during sync - continuing in offline mode:', errorMessage);
       
       setSyncStatus({
         connected: false,
         lastSynced: null,
         status: 'error',
-        error: 'Offline mode - using local data'
+        error: `Sync error: ${errorMessage} - Using offline mode`
       });
       
       return { 
         success: false, 
-        error: 'Network error - continuing in offline mode'
+        error: `Sync error: ${errorMessage} - continuing in offline mode`
       };
     } finally {
       setIsSyncing(false);

@@ -20,9 +20,19 @@ export const supabase = (isValidSupabaseUrl && isValidAnonKey)
       },
       global: {
         fetch: (url, options = {}) => {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+          
           return fetch(url, {
             ...options,
-            signal: AbortSignal.timeout(10000) // 10 second timeout
+            signal: controller.signal
+          }).finally(() => {
+            clearTimeout(timeoutId);
+          }).catch(error => {
+            if (error.name === 'AbortError') {
+              throw new Error('Request timeout - check your internet connection');
+            }
+            throw error;
           });
         }
       }
