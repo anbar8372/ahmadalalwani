@@ -95,3 +95,5 @@ const ConnectionErrorHandler = ({
 };
 
 export default ConnectionErrorHandler;
+  )
+}
