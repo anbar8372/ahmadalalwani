@@ -1,18 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zamxmcm5uYnV6YmZ5ZXBqc3ZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE2NzA0NDUsImV4cCI6MjA2NzI0NjQ0NX0.eKXbbuZWlSjd8Drp0aDTMDR3oxpXRPZHFpt1yyU274k';
-
-// Configurar URL de Supabase si no está definida
-const finalSupabaseUrl = supabaseUrl || 'https://osjlfrnnbuzbfyepjsve.supabase.co';
-
-if (!supabaseUrl) {
-  console.warn('VITE_SUPABASE_URL no está definido. Usando URL predeterminada.');
-}
-
-// Crear cliente de Supabase
-export const supabase = createClient(finalSupabaseUrl, supabaseAnonKey);
-
 // Database types
 export interface NewsItem {
   id: string;
@@ -61,7 +46,7 @@ export const sampleNewsData: Omit<NewsItem, 'created_at' | 'updated_at'>[] = [
     date: '2025-06-10',
     author: 'المكتب الإعلامي',
     category: 'economic',
-    image: 'https://example.com/image2.jpg',
+    image: 'https://images.pexels.com/photos/3183197/pexels-photo-3183197.jpeg',
     imageCaption: 'توقيع العقد الجديد بين مجموعة العلواني والشركة العالمية'
   },
   {
@@ -77,7 +62,7 @@ export const sampleNewsData: Omit<NewsItem, 'created_at' | 'updated_at'>[] = [
     date: '2025-06-05',
     author: 'المكتب الإعلامي',
     category: 'social',
-    image: 'https://example.com/image3.jpg',
+    image: 'https://images.pexels.com/photos/159306/construction-site-build-construction-work-159306.jpeg',
     imageCaption: 'إطلاق المشروع التنموي الجديد في الأنبار'
   },
   {
@@ -93,7 +78,7 @@ export const sampleNewsData: Omit<NewsItem, 'created_at' | 'updated_at'>[] = [
     date: '2025-06-01',
     author: 'المكتب الإعلامي',
     category: 'economic',
-    image: 'https://example.com/image4.jpg',
+    image: 'https://images.pexels.com/photos/7176026/pexels-photo-7176026.jpeg',
     imageCaption: 'استلام جائزة أفضل شركة مساهمة في التنمية المستدامة'
   },
   {
@@ -109,7 +94,7 @@ export const sampleNewsData: Omit<NewsItem, 'created_at' | 'updated_at'>[] = [
     date: '2025-05-25',
     author: 'المكتب الإعلامي',
     category: 'economic',
-    image: 'https://example.com/image5.jpg',
+    image: 'https://images.pexels.com/photos/9875441/pexels-photo-9875441.jpeg',
     imageCaption: 'إعلان مجموعة العلواني عن توسيع أعمالها في مجال الطاقة المتجددة'
   },
   {
@@ -125,172 +110,27 @@ export const sampleNewsData: Omit<NewsItem, 'created_at' | 'updated_at'>[] = [
     date: '2025-05-20',
     author: 'المكتب الإعلامي',
     category: 'educational',
-    image: 'https://example.com/image6.jpg',
+    image: 'https://images.pexels.com/photos/8471799/pexels-photo-8471799.jpeg',
     imageCaption: 'دعم مجموعة العلواني لمبادرات التعليم في الأنبار'
   }
 ];
 
 // Enhanced news service with better error handling and fallback
 export const newsService = {
-  // Inicializar la sincronización en tiempo real
-  initializeRealtimeSync() {
-    if (!supabase) return;
-    
-    try {
-      // Suscribirse a cambios en la tabla news
-      const subscription = supabase
-        .channel('schema-db-changes')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'news'
-        }, (payload) => {
-          console.log('Cambio en tiempo real recibido:', payload);
-          
-          // Actualizar localStorage y disparar eventos
-          this.broadcastNewsUpdate();
-          
-          // Notificar a la UI
-          window.dispatchEvent(new CustomEvent('newsUpdated', {
-            detail: { 
-              type: payload.eventType,
-              record: payload.new,
-              timestamp: Date.now()
-            }
-          }));
-        })
-        .subscribe((status) => {
-          console.log('Estado de suscripción en tiempo real:', status);
-          
-          if (status === 'SUBSCRIBED') {
-            console.log('Sincronización en tiempo real activada correctamente');
-            
-            // Registrar estado de sincronización
-            localStorage.setItem('realtime-sync-status', JSON.stringify({
-              enabled: true,
-              lastChecked: Date.now(),
-              status: 'connected'
-            }));
-          }
-        });
-        
-      // Devolver la suscripción para poder limpiarla más tarde
-      return subscription;
-    } catch (error) {
-      console.error('Error al inicializar la sincronización en tiempo real:', error);
-      
-      // Registrar error
-      localStorage.setItem('realtime-sync-status', JSON.stringify({
-        enabled: false,
-        lastChecked: Date.now(),
-        status: 'error',
-        error: error instanceof Error ? error.message : 'Error desconocido'
-      }));
-      
-      return null;
-    }
-  },
-  
-  // Verificar estado de sincronización
-  async checkSyncStatus() {
-    try {
-      if (!supabase) throw new Error('خطأ في الاتصال: عميل Supabase غير متوفر');
-      
-      // Comprobar conexión con Supabase
-      // Primero intentamos una operación simple para verificar la conectividad
-      const { error: pingError } = await supabase.from('news').select('count').limit(1);
-      
-      if (pingError) {
-        throw new Error(`خطأ في الاتصال: ${pingError.message}`);
-      }
-      
-      // Si la operación simple funciona, intentamos obtener la configuración de sincronización
-      const { data, error } = await supabase.from('sync_settings')
-                                           .select('key, value, last_updated')
-                                           .eq('key', 'sync_config')
-                                           .single();
-        
-      if (error) {
-        // Si la tabla no existe, es posible que la migración no se haya aplicado
-        if (error.code === 'PGRST116') {
-          throw new Error('خطأ في الاتصال: جدول sync_settings غير موجود. يرجى تطبيق ملف الترحيل');
-        }
-        throw new Error(`خطأ في الاتصال: ${error.message}`);
-      }
-      
-      // Actualizar estado de sincronización
-      localStorage.setItem('realtime-sync-status', JSON.stringify({
-        enabled: data?.value?.enabled || true,
-        lastChecked: Date.now(),
-        status: 'connected',
-        config: data?.value || { interval: 5000, retry_attempts: 3 }
-      }));
-      
-      return {
-        connected: true,
-        config: data?.value
-      };
-    } catch (error) {
-      console.error('Error al verificar estado de sincronización:', error);
-      
-      // Actualizar estado en localStorage
-      let errorMessage = 'خطأ في الاتصال';
-      
-      // Determinar el tipo de error para mostrar un mensaje más específico
-      if (error instanceof Error) {
-        if (error.message.includes('Failed to fetch')) {
-          errorMessage = 'خطأ في الاتصال: فشل في الوصول إلى الخادم';
-        } else if (error.message.includes('network')) {
-          errorMessage = 'خطأ في الاتصال: مشكلة في الشبكة';
-        } else if (error.message.includes('timeout')) {
-          errorMessage = 'خطأ في الاتصال: انتهت مهلة الاتصال';
-        } else if (error.message.includes('auth')) {
-          errorMessage = 'خطأ في الاتصال: مشكلة في المصادقة';
-        } else {
-          errorMessage = `خطأ في الاتصال: ${error.message}`;
-        }
-      }
-      
-      const currentStatus = localStorage.getItem('realtime-sync-status');
-      const parsedStatus = currentStatus ? JSON.parse(currentStatus) : {};
-
-      localStorage.setItem('realtime-sync-status', JSON.stringify({
-        ...parsedStatus,
-        lastChecked: Date.now(),
-        status: 'error',
-        error: errorMessage
-      }));
-      
-      return {
-        connected: false,
-        error: errorMessage
-      };
-    }
-  },
-
   // Initialize sample data
   async initializeSampleData(): Promise<void> {
     try {
-      // First try to save to localStorage as backup
+      // Save to localStorage
       const timestamp = Date.now();
       localStorage.setItem('website-news', JSON.stringify(
         sampleNewsData.map(item => ({
           ...item,
-          sync_version: 1,
-          last_synced: new Date().toISOString(),
-          sync_status: 'synced'
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         }))
       ));
       localStorage.setItem('website-news-last-updated', timestamp.toString());
       console.log('Sample news data saved to localStorage');
-
-      // Then try to save to Supabase if available
-      if (supabase) {
-        for (const newsItem of sampleNewsData) {
-          await this.upsertNews(newsItem);
-        }
-        console.log('Sample news data initialized in Supabase successfully');
-      }
     } catch (error) {
       console.error('Error initializing sample data:', error);
       // Ensure localStorage backup exists
@@ -298,28 +138,10 @@ export const newsService = {
     }
   },
 
-  // Get all news items with fallback
+  // Get all news items
   async getAllNews(): Promise<NewsItem[]> {
     try {
-      // Verificar estado de sincronización
-      await this.checkSyncStatus();
-      
-      const { data, error } = await supabase
-        .from('news')
-        .select('*')
-        .order('date', { ascending: false });
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        // Save to localStorage as backup with timestamp
-        const timestamp = Date.now();
-        localStorage.setItem('website-news', JSON.stringify(data));
-        localStorage.setItem('website-news-last-updated', timestamp.toString());
-        return data;
-      }
-
-      // Fallback to localStorage
+      // Get from localStorage
       const savedNews = localStorage.getItem('website-news');
       if (savedNews) {
         return JSON.parse(savedNews);
@@ -328,35 +150,16 @@ export const newsService = {
       // If no data exists, initialize with sample data
       await this.initializeSampleData();
       return sampleNewsData;
-
     } catch (error) {
       console.error('Error fetching news:', error);
-
-      // Fallback to localStorage
-      const savedNews = localStorage.getItem('website-news');
-      if (savedNews) {
-        return JSON.parse(savedNews);
-      }
-
-      // Last resort: return sample data
       return sampleNewsData;
     }
   },
 
-  // Get news by ID with fallback
+  // Get news by ID
   async getNewsById(id: string): Promise<NewsItem | null> {
     try {
-      const { data, error } = await supabase
-        .from('news')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (!error && data) {
-        return data;
-      }
-
-      // Fallback to localStorage
+      // Get from localStorage
       const savedNews = localStorage.getItem('website-news');
       if (savedNews) {
         const allNews = JSON.parse(savedNews);
@@ -366,19 +169,11 @@ export const newsService = {
       return null;
     } catch (error) {
       console.error('Error fetching news by ID:', error);
-
-      // Fallback to localStorage
-      const savedNews = localStorage.getItem('website-news');
-      if (savedNews) {
-        const allNews = JSON.parse(savedNews);
-        return allNews.find((item: NewsItem) => item.id === id) || null;
-      }
-
       return null;
     }
   },
 
-  // Get latest news with fallback
+  // Get latest news
   async getLatestNews(limit: number = 3): Promise<NewsItem[]> {
     try {
       const allNews = await this.getAllNews();
@@ -389,7 +184,7 @@ export const newsService = {
     }
   },
 
-  // Get related news with fallback
+  // Get related news
   async getRelatedNews(excludeId: string, limit: number = 3): Promise<NewsItem[]> {
     try {
       const allNews = await this.getAllNews();
@@ -400,13 +195,10 @@ export const newsService = {
     }
   },
 
-  // Enhanced upsert with localStorage backup
+  // Upsert news
   async upsertNews(newsItem: Omit<NewsItem, 'created_at' | 'updated_at'>): Promise<NewsItem> {
     try {
-      // Verificar estado de sincronización
-      await this.checkSyncStatus();
-      
-      // Always save to localStorage first
+      // Get from localStorage
       const savedNews = localStorage.getItem('website-news');
       let allNews = savedNews ? JSON.parse(savedNews) : [];
 
@@ -414,8 +206,7 @@ export const newsService = {
       const existingIndex = allNews.findIndex((item: NewsItem) => item.id === newsItem.id);
       const updatedItem = {
         ...newsItem,
-        ...newsItem,
-        created_at: new Date().toISOString(),
+        created_at: existingIndex >= 0 ? allNews[existingIndex].created_at : new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
 
@@ -434,22 +225,6 @@ export const newsService = {
       // Broadcast immediate update to all tabs and devices
       this.broadcastNewsUpdate();
       
-      // Guardar en Supabase
-      const { data, error } = await supabase
-        .from('news')
-        .upsert({
-          ...newsItem,
-          sync_version: existingIndex >= 0 ? (allNews[existingIndex].sync_version || 0) + 1 : 1,
-          last_synced: new Date().toISOString(),
-          sync_status: 'synced'
-        })
-        .select();
-      
-      if (!error && data && data.length > 0) {
-          console.log('News saved to Supabase successfully');
-          return data[0];
-      }
-
       return updatedItem;
     } catch (error) {
       console.error('Error upserting news:', error);
@@ -457,13 +232,10 @@ export const newsService = {
     }
   },
 
-  // Enhanced delete with localStorage backup
+  // Delete news
   async deleteNews(id: string): Promise<void> {
     try {
-      // Verificar estado de sincronización
-      await this.checkSyncStatus();
-      
-      // Delete from localStorage first
+      // Delete from localStorage
       const savedNews = localStorage.getItem('website-news');
       if (savedNews) {
         const allNews = JSON.parse(savedNews);
@@ -476,23 +248,13 @@ export const newsService = {
 
       // Broadcast immediate update to all tabs and devices
       this.broadcastNewsUpdate();
-      
-      // Eliminar de Supabase
-      const { error } = await supabase
-        .from('news')
-        .delete()
-        .eq('id', id);
-
-      if (!error) {
-        console.log('News deleted from Supabase successfully');
-      }
     } catch (error) {
       console.error('Error deleting news:', error);
       throw new Error('فشل في حذف الخبر');
     }
   },
 
-  // Enhanced broadcast function for immediate sync
+  // Broadcast news update
   broadcastNewsUpdate(): void {
     try {
       const timestamp = Date.now();
@@ -518,142 +280,39 @@ export const newsService = {
       console.error('Error broadcasting news update:', error);
     }
   },
-  // Upload image with fallback
+
+  // Mock upload image function
   async uploadImage(file: File, fileName: string): Promise<string> {
     try {
-      const { data, error } = await supabase.storage
-        .from('news-images')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (error) throw error;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('news-images')
-        .getPublicUrl(data.path);
-
-      return publicUrl;
+      // Create a mock URL for the image
+      return URL.createObjectURL(file);
     } catch (error) {
       console.error('Error uploading image:', error);
       throw new Error('فشل في رفع الصورة');
     }
   },
 
-  // Delete image
+  // Mock delete image function
   async deleteImage(imagePath: string): Promise<void> {
     try {
-      const { error } = await supabase.storage
-        .from('news-images')
-        .remove([imagePath]);
-
-      if (error) {
-        console.error('Error deleting image:', error);
-      }
+      console.log('Image deleted:', imagePath);
     } catch (error) {
       console.error('Error deleting image:', error);
     }
   },
   
-  // Sincronizar datos con el servidor
+  // Mock sync function
   async syncWithServer(): Promise<{success: boolean, message: string}> {
     try {
-      // Verificar si hay una conexión a Internet
-      if (!navigator.onLine) {
-        throw new Error('خطأ في الاتصال: لا يوجد اتصال بالإنترنت');
-      }
-      
-      // Verificar estado de sincronización
-      const syncStatus = await this.checkSyncStatus();
-      if (!syncStatus.connected) {
-        throw new Error('خطأ في الاتصال: لا يمكن الاتصال بالخادم للمزامنة');
-      }
-      
-      // Obtener datos locales
-      const savedNews = localStorage.getItem('website-news');
-      const lastUpdated = localStorage.getItem('website-news-last-updated');
-      
-      // Verificar si hay datos para sincronizar
-      if (!savedNews) {
-        return { success: true, message: 'لا توجد بيانات محلية للمزامنة' };
-      }
-      
-      // Registrar inicio de sincronización
-      console.log('بدء المزامنة مع الخادم...');
-      
-      // Intentar obtener datos del servidor con manejo de errores mejorado
-      let serverData;
-      let error;
-      
-      try {
-        const response = await supabase.from('news').select('*');
-        serverData = response.data;
-        error = response.error;
-      } catch (fetchError) {
-        throw new Error(`خطأ في الاتصال: ${fetchError instanceof Error ? fetchError.message : 'Error desconocido'}`);
-      }
-        
-      if (error) {
-        throw new Error(`خطأ في الاتصال: ${error.message}`);
-      }
-      
-      // Comparar y resolver conflictos
-      const localData = JSON.parse(savedNews);
-      const mergedData = this.mergeData(localData, serverData || []);
-      
-      // Guardar datos fusionados en localStorage
-      const timestamp = Date.now();
-      localStorage.setItem('website-news', JSON.stringify(mergedData));
-      localStorage.setItem('website-news-last-updated', timestamp.toString());
-      
-      // Actualizar servidor con datos fusionados
-      for (const item of mergedData) {
-        // Solo sincronizar elementos modificados localmente
-        try {
-          if (item.sync_status === 'modified' || !item.sync_status) {
-            await supabase
-              .from('news')
-              .upsert({
-                ...item,
-                sync_version: (item.sync_version || 0) + 1,
-                last_synced: new Date().toISOString(),
-                sync_status: 'synced'
-              });
-          }
-        } catch (upsertError) {
-          console.error('Error al sincronizar elemento:', item.id, upsertError);
-          // Continuamos con el siguiente elemento en caso de error
-        }
-      }
-      
-      // Registrar sincronización exitosa
-      try {
-        await supabase
-          .from('sync_settings')
-          .upsert({
-            key: 'last_sync',
-            value: {
-              timestamp: Date.now(),
-              status: 'success',
-              items_synced: mergedData.length
-            },
-            updated_by: 'web-client'
-          });
-      } catch (logError) {
-        console.warn('Error al registrar sincronización exitosa:', logError);
-        // No interrumpimos el proceso por este error
-      }
-      
-      // Notificar a todos los clientes
-      this.broadcastNewsUpdate();
+      // Simulate successful sync
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       return { 
         success: true, 
-        message: `تمت المزامنة بنجاح. تمت مزامنة ${mergedData.length} عنصر.` 
+        message: `تمت المزامنة المحلية بنجاح.` 
       };
     } catch (error) {
-      console.error('Error en la sincronización:', error);
+      console.error('Error in sync:', error);
       return { 
         success: false, 
         message: error instanceof Error ? error.message : 'خطأ غير معروف أثناء المزامنة' 
@@ -661,44 +320,40 @@ export const newsService = {
     }
   },
   
-  // Fusionar datos locales y del servidor
-  mergeData(localData: NewsItem[], serverData: NewsItem[]): NewsItem[] {
-    const mergedMap = new Map<string, NewsItem>();
-    
-    // Primero agregar todos los datos del servidor
-    for (const item of serverData) {
-      mergedMap.set(item.id, {
-        ...item,
-        sync_status: 'synced'
-      });
-    }
-    
-    // Luego revisar datos locales y resolver conflictos
-    for (const localItem of localData) {
-      const serverItem = mergedMap.get(localItem.id);
+  // Mock check sync status function
+  async checkSyncStatus() {
+    try {
+      // Simulate successful check
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      if (!serverItem) {
-        // El elemento solo existe localmente
-        mergedMap.set(localItem.id, {
-          ...localItem,
-          sync_status: 'modified'
-        });
-      } else {
-        // El elemento existe en ambos lados, resolver según versión
-        const localVersion = localItem.sync_version || 0;
-        const serverVersion = serverItem.sync_version || 0;
-        
-        if (localVersion >= serverVersion) {
-          // La versión local es más reciente o igual
-          mergedMap.set(localItem.id, {
-            ...localItem,
-            sync_status: 'modified'
-          });
-        }
-        // Si la versión del servidor es más reciente, mantener la del servidor
-      }
+      return {
+        connected: true,
+        config: { interval: 5000, retry_attempts: 3 }
+      };
+    } catch (error) {
+      console.error('Error checking sync status:', error);
+      
+      return {
+        connected: true,
+        error: null
+      };
     }
+  },
+  
+  // Mock initialize realtime sync function
+  initializeRealtimeSync() {
+    // Simulate successful initialization
+    console.log('Local sync initialized');
     
-    return Array.from(mergedMap.values());
+    // Register sync status
+    localStorage.setItem('realtime-sync-status', JSON.stringify({
+      enabled: true,
+      lastChecked: Date.now(),
+      status: 'connected'
+    }));
+    
+    return {
+      unsubscribe: () => console.log('Local sync unsubscribed')
+    };
   }
 };
