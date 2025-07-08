@@ -101,14 +101,13 @@ export const drAhmedNewsService = {
       if (supabase) {
         try {
           const { data, error } = await supabase
-            .from('dr_ahmed_news')
+            .from('news')
             .select('*')
             .order('date', { ascending: false });
 
           if (error) {
             if (error.code === '42P01') {
-              console.warn('Table "dr_ahmed_news" does not exist in Supabase. Using localStorage fallback.');
-              console.warn('To fix this, run the SQL from supabase/migrations/20250708040435_restless_base.sql in your Supabase SQL Editor.');
+              console.warn('Table "news" does not exist in Supabase. Using localStorage fallback.');
             } else {
               console.warn('Supabase query error:', error.message);
             }
@@ -181,14 +180,14 @@ export const drAhmedNewsService = {
       if (supabase) {
         try {
           const { data, error } = await supabase
-            .from('dr_ahmed_news')
+            .from('news')
             .select('*')
             .eq('id', id)
             .single();
 
           if (error) {
             if (error.code === '42P01') {
-              console.warn('Table "dr_ahmed_news" does not exist in Supabase. Using localStorage fallback.');
+              console.warn('Table "news" does not exist in Supabase. Using localStorage fallback.');
             } else {
               console.warn('Supabase query error for news by ID:', error.message);
             }
@@ -229,7 +228,7 @@ export const drAhmedNewsService = {
       if (supabase) {
         try {
           const { data, error } = await supabase
-            .from('dr_ahmed_news')
+            .from('news')
             .select('*')
             .eq('status', 'published')
             .order('date', { ascending: false })
@@ -270,7 +269,7 @@ export const drAhmedNewsService = {
       if (supabase) {
         try {
           const { data, error } = await supabase
-            .from('dr_ahmed_news')
+            .from('news')
             .select('*')
             .eq('status', 'published')
             .eq('featured', true)
@@ -312,7 +311,7 @@ export const drAhmedNewsService = {
       if (supabase) {
         try {
           let query = supabase
-            .from('dr_ahmed_news')
+            .from('news')
             .select('*')
             .eq('status', 'published')
             .neq('id', excludeId)
@@ -382,7 +381,7 @@ export const drAhmedNewsService = {
       if (supabase) {
         try {
           const { data, error } = await supabase
-            .from('dr_ahmed_news')
+            .from('news')
             .upsert(updatedItem)
             .select()
             .single();
@@ -475,7 +474,7 @@ export const drAhmedNewsService = {
       if (supabase) {
         try {
           const { error } = await supabase
-            .from('dr_ahmed_news')
+            .from('news')
             .delete()
             .eq('id', id);
 
@@ -520,7 +519,19 @@ export const drAhmedNewsService = {
     try {
       if (supabase) {
         try {
-          await supabase.rpc('increment_dr_ahmed_news_views', { news_id: id });
+          // Since we don't have the increment function, we'll update the views directly
+          const { data: currentNews } = await supabase
+            .from('news')
+            .select('views')
+            .eq('id', id)
+            .single();
+            
+          if (currentNews) {
+            await supabase
+              .from('news')
+              .update({ views: (currentNews.views || 0) + 1 })
+              .eq('id', id);
+          }
         } catch (supabaseError) {
           console.warn('Supabase connection failed for incrementViews, updating localStorage only:', supabaseError);
           // Don't throw here, still update localStorage
@@ -572,12 +583,12 @@ export const drAhmedNewsService = {
         try {
           for (const newsItem of SAMPLE_DR_AHMED_NEWS) {
             const { error } = await supabase
-              .from('dr_ahmed_news')
+              .from('news')
               .upsert(newsItem);
               
             if (error) {
               if (error.code === '42P01') {
-                console.warn('Cannot insert sample data: table "dr_ahmed_news" does not exist in Supabase.');
+                console.warn('Cannot insert sample data: table "news" does not exist in Supabase.');
                 break; // Stop trying to insert if table doesn't exist
               } else {
                 console.error('Error inserting sample data:', error);
@@ -638,7 +649,7 @@ export const drAhmedNewsService = {
         .on('postgres_changes', { 
           event: '*', 
           schema: 'public',
-          table: 'dr_ahmed_news'
+          table: 'news'
         }, (payload) => {
           console.log('Realtime update received from Supabase:', payload);
           

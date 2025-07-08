@@ -56,12 +56,11 @@ if (supabase) {
   console.log('Supabase client initialized with URL:', supabaseUrl?.substring(0, 20) + '...');
   
   // Test connection and table existence
-  supabase.from('dr_ahmed_news').select('id', { count: 'exact', head: true })
+  supabase.from('news').select('id', { count: 'exact', head: true })
     .then(({ error }) => {
       if (error) {
         if (error.code === '42P01') {
-          console.warn('Supabase table "dr_ahmed_news" does not exist. Please apply database migrations.');
-          console.warn('Run the SQL from supabase/migrations/20250708040435_restless_base.sql in your Supabase SQL Editor.');
+          console.warn('Supabase table "news" does not exist. Please check your database setup.');
         } else {
           console.warn('Supabase connection test failed:', error.message);
         }
