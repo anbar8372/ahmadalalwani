@@ -64,11 +64,32 @@ export function useSyncStatus() {
   // Check sync status
   const checkSyncStatus = async () => {
     try {
-      // Check Supabase connection
-      const { error } = await supabase.from('news').select('count', { count: 'exact', head: true });
+      // Check if Supabase client is available
+      if (!supabase) {
+        setSyncStatus({
+          connected: false,
+          lastSynced: null,
+          status: 'error',
+          error: 'Supabase client not initialized'
+        });
+        return;
+      }
+
+      // Check Supabase connection with a simple query
+      const { data, error } = await supabase
+        .from('news')
+        .select('id')
+        .limit(1);
       
       if (error) {
-        throw error;
+        console.error('Supabase connection error:', error);
+        setSyncStatus({
+          connected: false,
+          lastSynced: null,
+          status: 'error',
+          error: `خطأ في الاتصال: ${error.message}`
+        });
+        return;
       }
       
       // Update status
@@ -86,7 +107,7 @@ export function useSyncStatus() {
         timestamp: Date.now()
       }));
     } catch (error) {
-      console.error('Error checking sync status:', error);
+      console.error('Network error checking sync status:', error);
       
       setSyncStatus({
         connected: false,
@@ -99,7 +120,7 @@ export function useSyncStatus() {
         connected: false,
         lastSynced: null,
         status: 'error',
-        error: error instanceof Error ? error.message : 'خطأ غير معروف',
+        error: 'خطأ في الشبكة - تحقق من الاتصال بالإنترنت',
         timestamp: Date.now()
       }));
     }
@@ -109,6 +130,13 @@ export function useSyncStatus() {
   const syncNow = async () => {
     try {
       // Start sync process
+      if (!supabase) {
+        return { 
+          success: false, 
+          error: 'Supabase client not available' 
+        };
+      }
+
       setIsSyncing(true);
       setSyncStatus(prev => ({
         ...prev,
@@ -121,7 +149,7 @@ export function useSyncStatus() {
       }));
       
       // Get all news from Supabase
-      const { data, error } = await supabase
+      const { data, error } = await supabase!
         .from('news')
         .select('*')
         .order('date', { ascending: false });
@@ -153,7 +181,7 @@ export function useSyncStatus() {
       
       return { success: true };
     } catch (error) {
-      console.error('Error syncing:', error);
+      console.error('Network error during sync:', error);
       
       setSyncStatus({
         connected: false,
@@ -164,7 +192,7 @@ export function useSyncStatus() {
       
       return { 
         success: false, 
-        error: error instanceof Error ? error.message : 'خطأ غير معروف' 
+        error: 'خطأ في الشبكة - تحقق من الاتصال بالإنترنت'
       };
     } finally {
       setIsSyncing(false);
