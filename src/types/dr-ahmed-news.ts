@@ -100,13 +100,29 @@ export const drAhmedNewsService = {
     try {
       if (supabase) {
         try {
+          // First check if the table exists by attempting a simple query
+          const { data: tableCheck, error: tableError } = await supabase
+            .from('dr_ahmed_news')
+            .select('id')
+            .limit(1);
+
+          // If table doesn't exist, skip Supabase and use localStorage
+          if (tableError && (
+            tableError.message.includes('relation "public.dr_ahmed_news" does not exist') ||
+            tableError.message.includes('table "dr_ahmed_news" does not exist') ||
+            tableError.code === 'PGRST116'
+          )) {
+            console.warn('dr_ahmed_news table does not exist in Supabase. Please apply the database migration.');
+            throw new Error('Table does not exist');
+          }
+
           const { data, error } = await supabase
             .from('dr_ahmed_news')
             .select('*')
             .order('date', { ascending: false });
 
           if (error) {
-            console.warn('Supabase query error:', error.message);
+            console.warn('Supabase query error:', error.message, 'Code:', error.code);
             throw error;
           }
           
@@ -173,6 +189,21 @@ export const drAhmedNewsService = {
     try {
       if (supabase) {
         try {
+          // First check if the table exists
+          const { data: tableCheck, error: tableError } = await supabase
+            .from('dr_ahmed_news')
+            .select('id')
+            .limit(1);
+
+          if (tableError && (
+            tableError.message.includes('relation "public.dr_ahmed_news" does not exist') ||
+            tableError.message.includes('table "dr_ahmed_news" does not exist') ||
+            tableError.code === 'PGRST116'
+          )) {
+            console.warn('dr_ahmed_news table does not exist in Supabase. Please apply the database migration.');
+            throw new Error('Table does not exist');
+          }
+
           const { data, error } = await supabase
             .from('dr_ahmed_news')
             .select('*')
@@ -180,7 +211,7 @@ export const drAhmedNewsService = {
             .single();
 
           if (error) {
-            console.warn('Supabase query error for news by ID:', error.message);
+            console.warn('Supabase query error for news by ID:', error.message, 'Code:', error.code);
             throw error;
           }
           return data;
@@ -217,6 +248,21 @@ export const drAhmedNewsService = {
     try {
       if (supabase) {
         try {
+          // First check if the table exists
+          const { data: tableCheck, error: tableError } = await supabase
+            .from('dr_ahmed_news')
+            .select('id')
+            .limit(1);
+
+          if (tableError && (
+            tableError.message.includes('relation "public.dr_ahmed_news" does not exist') ||
+            tableError.message.includes('table "dr_ahmed_news" does not exist') ||
+            tableError.code === 'PGRST116'
+          )) {
+            console.warn('dr_ahmed_news table does not exist in Supabase. Please apply the database migration.');
+            throw new Error('Table does not exist');
+          }
+
           const { data, error } = await supabase
             .from('dr_ahmed_news')
             .select('*')
@@ -225,7 +271,7 @@ export const drAhmedNewsService = {
             .limit(limit);
 
           if (error) {
-            console.warn('Supabase query error for latest news:', error.message);
+            console.warn('Supabase query error for latest news:', error.message, 'Code:', error.code);
             throw error;
           }
           return data || [];
@@ -258,6 +304,21 @@ export const drAhmedNewsService = {
     try {
       if (supabase) {
         try {
+          // First check if the table exists
+          const { data: tableCheck, error: tableError } = await supabase
+            .from('dr_ahmed_news')
+            .select('id')
+            .limit(1);
+
+          if (tableError && (
+            tableError.message.includes('relation "public.dr_ahmed_news" does not exist') ||
+            tableError.message.includes('table "dr_ahmed_news" does not exist') ||
+            tableError.code === 'PGRST116'
+          )) {
+            console.warn('dr_ahmed_news table does not exist in Supabase. Please apply the database migration.');
+            throw new Error('Table does not exist');
+          }
+
           const { data, error } = await supabase
             .from('dr_ahmed_news')
             .select('*')
@@ -267,7 +328,7 @@ export const drAhmedNewsService = {
             .limit(limit);
 
           if (error) {
-            console.warn('Supabase query error for featured news:', error.message);
+            console.warn('Supabase query error for featured news:', error.message, 'Code:', error.code);
             throw error;
           }
           return data || [];
@@ -300,6 +361,21 @@ export const drAhmedNewsService = {
     try {
       if (supabase) {
         try {
+          // First check if the table exists
+          const { data: tableCheck, error: tableError } = await supabase
+            .from('dr_ahmed_news')
+            .select('id')
+            .limit(1);
+
+          if (tableError && (
+            tableError.message.includes('relation "public.dr_ahmed_news" does not exist') ||
+            tableError.message.includes('table "dr_ahmed_news" does not exist') ||
+            tableError.code === 'PGRST116'
+          )) {
+            console.warn('dr_ahmed_news table does not exist in Supabase. Please apply the database migration.');
+            throw new Error('Table does not exist');
+          }
+
           let query = supabase
             .from('dr_ahmed_news')
             .select('*')
@@ -315,7 +391,7 @@ export const drAhmedNewsService = {
           const { data, error } = await query;
 
           if (error) {
-            console.warn('Supabase query error for related news:', error.message);
+            console.warn('Supabase query error for related news:', error.message, 'Code:', error.code);
             throw error;
           }
           return data || [];
@@ -370,6 +446,21 @@ export const drAhmedNewsService = {
       
       if (supabase) {
         try {
+          // First check if the table exists
+          const { data: tableCheck, error: tableError } = await supabase
+            .from('dr_ahmed_news')
+            .select('id')
+            .limit(1);
+
+          if (tableError && (
+            tableError.message.includes('relation "public.dr_ahmed_news" does not exist') ||
+            tableError.message.includes('table "dr_ahmed_news" does not exist') ||
+            tableError.code === 'PGRST116'
+          )) {
+            console.warn('dr_ahmed_news table does not exist in Supabase. Please apply the database migration.');
+            throw new Error('Table does not exist');
+          }
+
           const { data, error } = await supabase
             .from('dr_ahmed_news')
             .upsert(updatedItem)
@@ -377,7 +468,7 @@ export const drAhmedNewsService = {
             .single();
 
           if (error) {
-            console.warn('Supabase upsert error:', error.message);
+            console.warn('Supabase upsert error:', error.message, 'Code:', error.code);
             throw error;
           }
           
@@ -463,13 +554,28 @@ export const drAhmedNewsService = {
     try {
       if (supabase) {
         try {
+          // First check if the table exists
+          const { data: tableCheck, error: tableError } = await supabase
+            .from('dr_ahmed_news')
+            .select('id')
+            .limit(1);
+
+          if (tableError && (
+            tableError.message.includes('relation "public.dr_ahmed_news" does not exist') ||
+            tableError.message.includes('table "dr_ahmed_news" does not exist') ||
+            tableError.code === 'PGRST116'
+          )) {
+            console.warn('dr_ahmed_news table does not exist in Supabase. Please apply the database migration.');
+            throw new Error('Table does not exist');
+          }
+
           const { error } = await supabase
             .from('dr_ahmed_news')
             .delete()
             .eq('id', id);
 
           if (error) {
-            console.warn('Supabase delete error:', error.message);
+            console.warn('Supabase delete error:', error.message, 'Code:', error.code);
             throw error;
           }
         } catch (supabaseError) {
@@ -509,6 +615,21 @@ export const drAhmedNewsService = {
     try {
       if (supabase) {
         try {
+          // First check if the table exists
+          const { data: tableCheck, error: tableError } = await supabase
+            .from('dr_ahmed_news')
+            .select('id')
+            .limit(1);
+
+          if (tableError && (
+            tableError.message.includes('relation "public.dr_ahmed_news" does not exist') ||
+            tableError.message.includes('table "dr_ahmed_news" does not exist') ||
+            tableError.code === 'PGRST116'
+          )) {
+            console.warn('dr_ahmed_news table does not exist in Supabase. Please apply the database migration.');
+            throw new Error('Table does not exist');
+          }
+
           await supabase.rpc('increment_dr_ahmed_news_views', { news_id: id });
         } catch (supabaseError) {
           console.warn('Supabase connection failed for incrementViews, updating localStorage only:', supabaseError);
@@ -559,6 +680,21 @@ export const drAhmedNewsService = {
     try {
       if (supabase) {
         try {
+          // First check if the table exists
+          const { data: tableCheck, error: tableError } = await supabase
+            .from('dr_ahmed_news')
+            .select('id')
+            .limit(1);
+
+          if (tableError && (
+            tableError.message.includes('relation "public.dr_ahmed_news" does not exist') ||
+            tableError.message.includes('table "dr_ahmed_news" does not exist') ||
+            tableError.code === 'PGRST116'
+          )) {
+            console.warn('dr_ahmed_news table does not exist in Supabase. Please apply the database migration.');
+            throw new Error('Table does not exist');
+          }
+
           for (const newsItem of SAMPLE_DR_AHMED_NEWS) {
             const { error } = await supabase
               .from('dr_ahmed_news')
