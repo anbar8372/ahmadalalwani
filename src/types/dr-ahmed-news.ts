@@ -1,3 +1,5 @@
+import { supabase } from '@/lib/supabaseClient';
+
 export interface DrAhmedNewsItem {
   id: string;
   title: string;
@@ -39,7 +41,7 @@ export const DEFAULT_CATEGORIES = [
   { id: 'general', name: 'عام', color: 'bg-gray-100 text-gray-800' }
 ];
 
-// Sample news data
+// Sample news data for fallback
 export const SAMPLE_DR_AHMED_NEWS: DrAhmedNewsItem[] = [
   {
     id: '1',
@@ -94,131 +96,363 @@ export const SAMPLE_DR_AHMED_NEWS: DrAhmedNewsItem[] = [
 // Dr. Ahmed News Service
 export const drAhmedNewsService = {
   // Get all news
-  getAllNews(): Promise<DrAhmedNewsItem[]> {
+  async getAllNews(): Promise<DrAhmedNewsItem[]> {
     try {
-      // Try to get from localStorage
+      if (supabase) {
+        const { data, error } = await supabase
+          .from('dr_ahmed_news')
+          .select('*')
+          .order('date', { ascending: false });
+
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          // Save to localStorage as backup
+          localStorage.setItem('dr-ahmed-news', JSON.stringify(data));
+          return data;
+        }
+        
+        // If no data in Supabase, initialize with sample data
+        await this.initializeSampleData();
+        
+        // Try fetching again
+        const { data: refreshedData, error: refreshedError } = await supabase
+          .from('dr_ahmed_news')
+          .select('*')
+          .order('date', { ascending: false });
+          
+        if (refreshedError) throw refreshedError;
+        
+        if (refreshedData && refreshedData.length > 0) {
+          localStorage.setItem('dr-ahmed-news', JSON.stringify(refreshedData));
+          return refreshedData;
+        }
+      }
+      
+      // Fallback to localStorage
       const savedNews = localStorage.getItem('dr-ahmed-news');
       if (savedNews) {
-        return Promise.resolve(JSON.parse(savedNews));
+        return JSON.parse(savedNews);
       }
       
       // Initialize with sample data if no data exists
       localStorage.setItem('dr-ahmed-news', JSON.stringify(SAMPLE_DR_AHMED_NEWS));
-      return Promise.resolve(SAMPLE_DR_AHMED_NEWS);
+      return SAMPLE_DR_AHMED_NEWS;
     } catch (error) {
       console.error('Error fetching Dr. Ahmed news:', error);
-      return Promise.resolve(SAMPLE_DR_AHMED_NEWS);
+      
+      // Fallback to localStorage
+      const savedNews = localStorage.getItem('dr-ahmed-news');
+      if (savedNews) {
+        return JSON.parse(savedNews);
+      }
+      
+      // Initialize with sample data if no data exists
+      localStorage.setItem('dr-ahmed-news', JSON.stringify(SAMPLE_DR_AHMED_NEWS));
+      return SAMPLE_DR_AHMED_NEWS;
     }
   },
 
   // Get news by ID
-  getNewsById(id: string): Promise<DrAhmedNewsItem | null> {
+  async getNewsById(id: string): Promise<DrAhmedNewsItem | null> {
     try {
+      if (supabase) {
+        const { data, error } = await supabase
+          .from('dr_ahmed_news')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+        return data;
+      }
+      
+      // Fallback to localStorage
       const savedNews = localStorage.getItem('dr-ahmed-news');
       if (savedNews) {
         const allNews = JSON.parse(savedNews);
-        const newsItem = allNews.find((item: DrAhmedNewsItem) => item.id === id);
-        return Promise.resolve(newsItem || null);
+        return allNews.find((item: DrAhmedNewsItem) => item.id === id) || null;
       }
       
-      // Try to find in sample data
-      const newsItem = SAMPLE_DR_AHMED_NEWS.find(item => item.id === id);
-      return Promise.resolve(newsItem || null);
+      return null;
     } catch (error) {
       console.error('Error fetching Dr. Ahmed news by ID:', error);
-      return Promise.resolve(null);
+      
+      // Fallback to localStorage
+      const savedNews = localStorage.getItem('dr-ahmed-news');
+      if (savedNews) {
+        const allNews = JSON.parse(savedNews);
+        return allNews.find((item: DrAhmedNewsItem) => item.id === id) || null;
+      }
+      
+      return null;
     }
   },
 
   // Get latest news
-  getLatestNews(limit: number = 3): Promise<DrAhmedNewsItem[]> {
-    return this.getAllNews()
-      .then(news => 
-        news
-          .filter(item => item.status === 'published')
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-          .slice(0, limit)
-      );
+  async getLatestNews(limit: number = 3): Promise<DrAhmedNewsItem[]> {
+    try {
+      if (supabase) {
+        const { data, error } = await supabase
+          .from('dr_ahmed_news')
+          .select('*')
+          .eq('status', 'published')
+          .order('date', { ascending: false })
+          .limit(limit);
+
+        if (error) throw error;
+        return data || [];
+      }
+      
+      // Fallback to getAllNews
+      const allNews = await this.getAllNews();
+      return allNews
+        .filter(item => item.status === 'published')
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, limit);
+    } catch (error) {
+      console.error('Error fetching latest Dr. Ahmed news:', error);
+      
+      // Fallback to getAllNews
+      const allNews = await this.getAllNews();
+      return allNews
+        .filter(item => item.status === 'published')
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, limit);
+    }
   },
 
   // Get featured news
-  getFeaturedNews(limit: number = 1): Promise<DrAhmedNewsItem[]> {
-    return this.getAllNews()
-      .then(news => 
-        news
-          .filter(item => item.status === 'published' && item.featured)
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-          .slice(0, limit)
-      );
+  async getFeaturedNews(limit: number = 1): Promise<DrAhmedNewsItem[]> {
+    try {
+      if (supabase) {
+        const { data, error } = await supabase
+          .from('dr_ahmed_news')
+          .select('*')
+          .eq('status', 'published')
+          .eq('featured', true)
+          .order('date', { ascending: false })
+          .limit(limit);
+
+        if (error) throw error;
+        return data || [];
+      }
+      
+      // Fallback to getAllNews
+      const allNews = await this.getAllNews();
+      return allNews
+        .filter(item => item.status === 'published' && item.featured)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, limit);
+    } catch (error) {
+      console.error('Error fetching featured Dr. Ahmed news:', error);
+      
+      // Fallback to getAllNews
+      const allNews = await this.getAllNews();
+      return allNews
+        .filter(item => item.status === 'published' && item.featured)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, limit);
+    }
   },
 
   // Get related news
-  getRelatedNews(excludeId: string, categoryId?: string, limit: number = 3): Promise<DrAhmedNewsItem[]> {
-    return this.getAllNews()
-      .then(news => {
-        let filtered = news.filter(item => 
-          item.status === 'published' && item.id !== excludeId
-        );
-        
+  async getRelatedNews(excludeId: string, categoryId?: string, limit: number = 3): Promise<DrAhmedNewsItem[]> {
+    try {
+      if (supabase) {
+        let query = supabase
+          .from('dr_ahmed_news')
+          .select('*')
+          .eq('status', 'published')
+          .neq('id', excludeId)
+          .order('date', { ascending: false })
+          .limit(limit);
+          
         if (categoryId) {
-          filtered = filtered.filter(item => item.category === categoryId);
+          query = query.eq('category', categoryId);
         }
         
-        return filtered
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-          .slice(0, limit);
-      });
+        const { data, error } = await query;
+
+        if (error) throw error;
+        return data || [];
+      }
+      
+      // Fallback to getAllNews
+      const allNews = await this.getAllNews();
+      let filtered = allNews
+        .filter(item => item.status === 'published' && item.id !== excludeId);
+      
+      if (categoryId) {
+        filtered = filtered.filter(item => item.category === categoryId);
+      }
+      
+      return filtered
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, limit);
+    } catch (error) {
+      console.error('Error fetching related Dr. Ahmed news:', error);
+      
+      // Fallback to getAllNews
+      const allNews = await this.getAllNews();
+      let filtered = allNews
+        .filter(item => item.status === 'published' && item.id !== excludeId);
+      
+      if (categoryId) {
+        filtered = filtered.filter(item => item.category === categoryId);
+      }
+      
+      return filtered
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, limit);
+    }
   },
 
   // Create or update news
-  upsertNews(newsItem: DrAhmedNewsItem): Promise<DrAhmedNewsItem> {
-    return this.getAllNews()
-      .then(news => {
-        const now = new Date().toISOString();
-        const updatedItem = {
-          ...newsItem,
-          updated_at: now
-        };
+  async upsertNews(newsItem: DrAhmedNewsItem): Promise<DrAhmedNewsItem> {
+    try {
+      const now = new Date().toISOString();
+      const updatedItem = {
+        ...newsItem,
+        updated_at: now
+      };
+      
+      if (!updatedItem.created_at) {
+        updatedItem.created_at = now;
+      }
+      
+      if (supabase) {
+        const { data, error } = await supabase
+          .from('dr_ahmed_news')
+          .upsert(updatedItem)
+          .select()
+          .single();
+
+        if (error) throw error;
         
-        if (!updatedItem.created_at) {
-          updatedItem.created_at = now;
+        // Update localStorage as backup
+        const savedNews = localStorage.getItem('dr-ahmed-news');
+        if (savedNews) {
+          const allNews = JSON.parse(savedNews);
+          const existingIndex = allNews.findIndex((item: DrAhmedNewsItem) => item.id === updatedItem.id);
+          
+          if (existingIndex >= 0) {
+            allNews[existingIndex] = data;
+          } else {
+            allNews.unshift(data);
+          }
+          
+          localStorage.setItem('dr-ahmed-news', JSON.stringify(allNews));
         }
-        
-        // Find and update existing item or add new one
-        const existingIndex = news.findIndex(item => item.id === updatedItem.id);
-        if (existingIndex >= 0) {
-          news[existingIndex] = updatedItem;
-        } else {
-          news.unshift(updatedItem);
-        }
-        
-        // Save to localStorage
-        localStorage.setItem('dr-ahmed-news', JSON.stringify(news));
         
         // Broadcast update
         this.broadcastNewsUpdate();
         
-        return updatedItem;
-      });
+        return data;
+      }
+      
+      // Fallback to localStorage
+      const savedNews = localStorage.getItem('dr-ahmed-news');
+      let allNews = savedNews ? JSON.parse(savedNews) : [];
+      
+      const existingIndex = allNews.findIndex((item: DrAhmedNewsItem) => item.id === updatedItem.id);
+      
+      if (existingIndex >= 0) {
+        allNews[existingIndex] = updatedItem;
+      } else {
+        allNews.unshift(updatedItem);
+      }
+      
+      localStorage.setItem('dr-ahmed-news', JSON.stringify(allNews));
+      
+      // Broadcast update
+      this.broadcastNewsUpdate();
+      
+      return updatedItem;
+    } catch (error) {
+      console.error('Error upserting Dr. Ahmed news:', error);
+      
+      // Fallback to localStorage
+      const savedNews = localStorage.getItem('dr-ahmed-news');
+      let allNews = savedNews ? JSON.parse(savedNews) : [];
+      
+      const now = new Date().toISOString();
+      const updatedItem = {
+        ...newsItem,
+        updated_at: now
+      };
+      
+      if (!updatedItem.created_at) {
+        updatedItem.created_at = now;
+      }
+      
+      const existingIndex = allNews.findIndex((item: DrAhmedNewsItem) => item.id === updatedItem.id);
+      
+      if (existingIndex >= 0) {
+        allNews[existingIndex] = updatedItem;
+      } else {
+        allNews.unshift(updatedItem);
+      }
+      
+      localStorage.setItem('dr-ahmed-news', JSON.stringify(allNews));
+      
+      // Broadcast update
+      this.broadcastNewsUpdate();
+      
+      return updatedItem;
+    }
   },
 
   // Delete news
-  deleteNews(id: string): Promise<void> {
-    return this.getAllNews()
-      .then(news => {
-        const filteredNews = news.filter(item => item.id !== id);
+  async deleteNews(id: string): Promise<void> {
+    try {
+      if (supabase) {
+        const { error } = await supabase
+          .from('dr_ahmed_news')
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+      }
+      
+      // Also delete from localStorage
+      const savedNews = localStorage.getItem('dr-ahmed-news');
+      if (savedNews) {
+        const allNews = JSON.parse(savedNews);
+        const filteredNews = allNews.filter((item: DrAhmedNewsItem) => item.id !== id);
         localStorage.setItem('dr-ahmed-news', JSON.stringify(filteredNews));
-        
-        // Broadcast update
-        this.broadcastNewsUpdate();
-      });
+      }
+      
+      // Broadcast update
+      this.broadcastNewsUpdate();
+    } catch (error) {
+      console.error('Error deleting Dr. Ahmed news:', error);
+      
+      // Fallback to localStorage
+      const savedNews = localStorage.getItem('dr-ahmed-news');
+      if (savedNews) {
+        const allNews = JSON.parse(savedNews);
+        const filteredNews = allNews.filter((item: DrAhmedNewsItem) => item.id !== id);
+        localStorage.setItem('dr-ahmed-news', JSON.stringify(filteredNews));
+      }
+      
+      // Broadcast update
+      this.broadcastNewsUpdate();
+    }
   },
 
   // Increment views
-  incrementViews(id: string): Promise<void> {
-    return this.getAllNews()
-      .then(news => {
-        const updatedNews = news.map(item => {
+  async incrementViews(id: string): Promise<void> {
+    try {
+      if (supabase) {
+        await supabase.rpc('increment_dr_ahmed_news_views', { news_id: id });
+      }
+      
+      // Also update localStorage
+      const savedNews = localStorage.getItem('dr-ahmed-news');
+      if (savedNews) {
+        const allNews = JSON.parse(savedNews);
+        const updatedNews = allNews.map((item: DrAhmedNewsItem) => {
           if (item.id === id) {
             return {
               ...item,
@@ -229,7 +463,58 @@ export const drAhmedNewsService = {
         });
         
         localStorage.setItem('dr-ahmed-news', JSON.stringify(updatedNews));
-      });
+      }
+    } catch (error) {
+      console.error('Error incrementing Dr. Ahmed news views:', error);
+      
+      // Fallback to localStorage
+      const savedNews = localStorage.getItem('dr-ahmed-news');
+      if (savedNews) {
+        const allNews = JSON.parse(savedNews);
+        const updatedNews = allNews.map((item: DrAhmedNewsItem) => {
+          if (item.id === id) {
+            return {
+              ...item,
+              views: (item.views || 0) + 1
+            };
+          }
+          return item;
+        });
+        
+        localStorage.setItem('dr-ahmed-news', JSON.stringify(updatedNews));
+      }
+    }
+  },
+
+  // Initialize sample data
+  async initializeSampleData(): Promise<void> {
+    try {
+      if (supabase) {
+        for (const newsItem of SAMPLE_DR_AHMED_NEWS) {
+          const { error } = await supabase
+            .from('dr_ahmed_news')
+            .upsert(newsItem);
+            
+          if (error) {
+            console.error('Error inserting sample data:', error);
+          }
+        }
+      }
+      
+      // Also save to localStorage
+      localStorage.setItem('dr-ahmed-news', JSON.stringify(SAMPLE_DR_AHMED_NEWS));
+      
+      // Broadcast update
+      this.broadcastNewsUpdate();
+    } catch (error) {
+      console.error('Error initializing sample data:', error);
+      
+      // Fallback to localStorage
+      localStorage.setItem('dr-ahmed-news', JSON.stringify(SAMPLE_DR_AHMED_NEWS));
+      
+      // Broadcast update
+      this.broadcastNewsUpdate();
+    }
   },
 
   // Broadcast news update
@@ -248,5 +533,49 @@ export const drAhmedNewsService = {
     window.dispatchEvent(new CustomEvent('drAhmedNewsUpdated', {
       detail: { timestamp: Date.now() }
     }));
+  },
+
+  // Initialize realtime sync
+  initializeRealtimeSync() {
+    if (!supabase) {
+      console.log('No Supabase client available for realtime sync');
+      return { unsubscribe: () => console.log('No Supabase client available') };
+    }
+    
+    try {
+      console.log('Initializing realtime sync...');
+      const subscription = supabase
+        .channel('schema-db-changes')
+        .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public',
+          table: 'dr_ahmed_news'
+        }, (payload) => {
+          console.log('Realtime update received from Supabase:', payload);
+          
+          // Refresh data
+          this.getAllNews().then(() => {
+            // Broadcast to all tabs
+            this.broadcastNewsUpdate();
+          });
+        })
+        .subscribe((status) => {
+          console.log('Realtime subscription status:', status);
+        });
+      
+      console.log('Realtime sync initialized');
+      
+      return {
+        unsubscribe: () => {
+          subscription.unsubscribe();
+          console.log('Realtime sync unsubscribed');
+        }
+      };
+    } catch (channelError) {
+      console.error('Error creating realtime channel:', channelError);
+      return {
+        unsubscribe: () => console.log('No active subscription to unsubscribe')
+      }
+    }
   }
 };
