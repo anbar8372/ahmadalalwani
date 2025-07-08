@@ -11,7 +11,7 @@ const isValidAnonKey = supabaseAnonKey && supabaseAnonKey.length > 20;
 console.log('Supabase URL valid:', isValidSupabaseUrl);
 console.log('Supabase key valid:', isValidAnonKey);
 
-export const supabase = (isValidSupabaseUrl && isValidAnonKey) 
+export const supabase = (isValidSupabaseUrl && isValidAnonKey)
   ? createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
@@ -56,7 +56,8 @@ if (supabase) {
   console.log('Supabase client initialized with URL:', supabaseUrl?.substring(0, 20) + '...');
   
   // Test connection and table existence
-  supabase.from('news').select('id', { count: 'exact', head: true })
+  supabase.from('news').select('id')
+    .limit(1)
     .then(({ error }) => {
       if (error) {
         if (error.code === '42P01') {

@@ -15,7 +15,7 @@ import { supabase } from '@/lib/supabaseClient';
 const ConnectionTester = () => {
   const [isTesting, setIsTesting] = useState(true);
   const [testResults, setTestResults] = useState({
-    supabase: { status: 'error', message: 'تم تعطيل الاتصال بقاعدة البيانات' },
+    supabase: { status: 'testing', message: 'جاري اختبار الاتصال بقاعدة البيانات...' },
     localStorage: { status: 'pending', message: '' },
     realtime: { status: 'pending', message: '' }
   });
@@ -28,19 +28,53 @@ const ConnectionTester = () => {
   const runTests = async () => {
     setIsTesting(true);
     setTestResults({
-      supabase: { status: 'error', message: 'تم تعطيل الاتصال بقاعدة البيانات' },
+      supabase: { status: 'testing', message: 'جاري اختبار الاتصال بقاعدة البيانات...' },
       localStorage: { status: 'testing', message: 'جاري اختبار التخزين المحلي...' },
       realtime: { status: 'testing', message: 'جاري اختبار المزامنة المباشرة...' }
     });
 
-    // Supabase is disabled
-    setTestResults(prev => ({
-      ...prev,
-      supabase: { 
-        status: 'error', 
-        message: 'تم تعطيل الاتصال بقاعدة البيانات عمداً، يتم استخدام التخزين المحلي فقط' 
+    // Test Supabase connection
+    try {
+      if (!supabase) {
+        throw new Error('لم يتم تهيئة اتصال Supabase');
       }
-    }));
+      
+      const { data, error } = await supabase
+        .from('news')
+        .select('id')
+        .limit(1);
+      
+      if (error) {
+        if (error.code === '42P01') {
+          setTestResults(prev => ({
+            ...prev,
+            supabase: { 
+              status: 'error', 
+              message: 'جدول الأخبار غير موجود. يرجى إنشاء الجدول أولاً.' 
+            }
+          }));
+        } else {
+          throw error;
+        }
+      } else {
+        setTestResults(prev => ({
+          ...prev,
+          supabase: { 
+            status: 'success', 
+            message: 'الاتصال بقاعدة البيانات يعمل بشكل صحيح' 
+          }
+        }));
+      }
+    } catch (error) {
+      console.error('Supabase test failed:', error);
+      setTestResults(prev => ({
+        ...prev,
+        supabase: { 
+          status: 'error', 
+          message: error instanceof Error ? error.message : 'فشل الاتصال بقاعدة البيانات' 
+        }
+      }));
+    }
 
     // Test localStorage
     try {
@@ -155,7 +189,7 @@ const ConnectionTester = () => {
               </div>
             </div>
             <div>
-              <XCircle className="w-5 h-5 text-red-600" />
+              {getStatusIcon(testResults.supabase.status)}
             </div>
           </div>
 

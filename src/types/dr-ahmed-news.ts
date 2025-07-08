@@ -100,6 +100,19 @@ export const drAhmedNewsService = {
     try {
       if (supabase) {
         try {
+          // تحقق من وجود الجدول أولاً
+          const { error: tableCheckError } = await supabase
+            .from('news')
+            .select('id')
+            .limit(1);
+
+          // إذا كان هناك خطأ في التحقق من الجدول، قم بإنشاء الجدول
+          if (tableCheckError && tableCheckError.code === '42P01') {
+            console.warn('Table "news" does not exist in Supabase. Using localStorage fallback.');
+            throw tableCheckError;
+          }
+
+          // إذا كان الجدول موجوداً، قم بجلب البيانات
           const { data, error } = await supabase
             .from('news')
             .select('*')
@@ -126,7 +139,7 @@ export const drAhmedNewsService = {
             
             // Try fetching again
             const { data: refreshedData, error: refreshedError } = await supabase
-              .from('dr_ahmed_news')
+              .from('news')
               .select('*')
               .order('date', { ascending: false });
               

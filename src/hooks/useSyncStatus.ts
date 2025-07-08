@@ -91,7 +91,7 @@ export function useSyncStatus() {
         setTimeout(() => reject(new Error('Connection timeout')), 10000);
       });
       
-      const fetchPromise = supabase.from('dr_ahmed_news').select('id').limit(1);
+      const fetchPromise = supabase.from('news').select('id').limit(1);
       
       // Race between the fetch and the timeout
       const { data, error } = await Promise.race([
@@ -188,7 +188,7 @@ export function useSyncStatus() {
       // Get all news from Supabase
       try {
         const { data, error } = await supabase
-          .from('dr_ahmed_news')
+          .from('news')
           .select('*')
           .order('date', { ascending: false });
         
