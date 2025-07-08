@@ -7,7 +7,8 @@ import {
   Database, 
   HardDrive,
   Server,
-  Loader2
+  Loader2,
+  CheckCircle
 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 
