@@ -56,7 +56,7 @@ if (supabase) {
   console.log('Supabase client initialized with URL:', supabaseUrl?.substring(0, 20) + '...');
   
   // Test connection
-  supabase.from('dr_ahmed_news').select('count', { count: 'exact', head: true })
+  supabase.from('dr_ahmed_news').select('id', { count: 'exact', head: true })
     .then(({ error }) => {
       if (error) {
         console.warn('Supabase connection test failed:', error.message);
@@ -70,38 +70,3 @@ if (supabase) {
 } else {
   console.warn('Supabase client initialization failed. Running in offline mode with localStorage.');
 }
-
-// Database types
-export interface NewsItem {
-  id: string;
-  title: string;
-  content: string;
-  date: string;
-  author: string;
-  image?: string;
-  imagecaption?: string;
-  category?: string;
-  youtubeurl?: string;
-  images?: string[];
-  content_html?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-// Empty sample data
-export const sampleNewsData = [];
-
-// Empty news service
-export const newsService = {
-  getAllNews: () => Promise.resolve([]),
-  getNewsById: () => Promise.resolve(null),
-  getLatestNews: () => Promise.resolve([]),
-  getRelatedNews: () => Promise.resolve([]),
-  upsertNews: () => Promise.resolve({}),
-  deleteNews: () => Promise.resolve(),
-  broadcastNewsUpdate: () => {},
-  uploadImage: () => Promise.resolve(''),
-  deleteImage: () => Promise.resolve(),
-  initializeSampleData: () => Promise.resolve(),
-  initializeRealtimeSync: () => ({ unsubscribe: () => {} })
-};
