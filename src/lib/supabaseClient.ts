@@ -1,9 +1,32 @@
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Validate Supabase credentials before creating client
+const isValidSupabaseUrl = supabaseUrl && supabaseUrl.startsWith('https://') && supabaseUrl.includes('.supabase.co');
+const isValidAnonKey = supabaseAnonKey && supabaseAnonKey.length > 20;
+
+export const supabase = (isValidSupabaseUrl && isValidAnonKey) 
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+      },
+      realtime: {
+        params: {
+          eventsPerSecond: 10
+        }
+      }
+    })
+  : null;
+
+// Log connection status for debugging
+if (supabase) {
+  console.log('Supabase client initialized successfully');
+} else {
+  console.warn('Supabase client initialization failed. Using localStorage fallback.');
+}
 
 // Database types
 export interface NewsItem {
@@ -127,15 +150,17 @@ export const newsService = {
   // Initialize sample data
   async initializeSampleData(): Promise<void> {
     try {
-      // First try to save to Supabase
-      for (const newsItem of sampleNewsData) {
-        await this.upsertNews(newsItem);
-      }
-      console.log('Sample news data initialized in Supabase successfully');
-      
-      // Also save to localStorage as backup
+      // First try to save to localStorage as backup
       localStorage.setItem('website-news', JSON.stringify(sampleNewsData));
       console.log('Sample news data saved to localStorage');
+
+      // Then try to save to Supabase if available
+      if (supabase) {
+        for (const newsItem of sampleNewsData) {
+          await this.upsertNews(newsItem);
+        }
+        console.log('Sample news data initialized in Supabase successfully');
+      }
     } catch (error) {
       console.error('Error initializing sample data:', error);
       // Ensure localStorage backup exists
@@ -146,33 +171,35 @@ export const newsService = {
   // Get all news items with fallback
   async getAllNews(): Promise<NewsItem[]> {
     try {
-      const { data, error } = await supabase
-        .from('news')
-        .select('*')
-        .order('date', { ascending: false });
+      if (supabase) {
+        const { data, error } = await supabase
+          .from('news')
+          .select('*')
+          .order('date', { ascending: false });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      if (data && data.length > 0) {
-        // Save to localStorage as backup
-        localStorage.setItem('website-news', JSON.stringify(data));
-        return data;
-      }
+        if (data && data.length > 0) {
+          // Save to localStorage as backup
+          localStorage.setItem('website-news', JSON.stringify(data));
+          return data;
+        }
 
-      // If no data in Supabase, try to initialize with sample data
-      await this.initializeSampleData();
-      
-      // Try fetching again
-      const { data: refreshedData, error: refreshedError } = await supabase
-        .from('news')
-        .select('*')
-        .order('date', { ascending: false });
+        // If no data in Supabase, try to initialize with sample data
+        await this.initializeSampleData();
         
-      if (refreshedError) throw refreshedError;
-      
-      if (refreshedData && refreshedData.length > 0) {
-        localStorage.setItem('website-news', JSON.stringify(refreshedData));
-        return refreshedData;
+        // Try fetching again
+        const { data: refreshedData, error: refreshedError } = await supabase
+          .from('news')
+          .select('*')
+          .order('date', { ascending: false });
+          
+        if (refreshedError) throw refreshedError;
+        
+        if (refreshedData && refreshedData.length > 0) {
+          localStorage.setItem('website-news', JSON.stringify(refreshedData));
+          return refreshedData;
+        }
       }
 
       // Fallback to localStorage
@@ -199,14 +226,16 @@ export const newsService = {
   // Get news by ID with fallback
   async getNewsById(id: string): Promise<NewsItem | null> {
     try {
-      const { data, error } = await supabase
-        .from('news')
-        .select('*')
-        .eq('id', id)
-        .single();
+      if (supabase) {
+        const { data, error } = await supabase
+          .from('news')
+          .select('*')
+          .eq('id', id)
+          .single();
 
-      if (!error && data) {
-        return data;
+        if (!error && data) {
+          return data;
+        }
       }
 
       // Fallback to localStorage
@@ -234,16 +263,18 @@ export const newsService = {
   // Get latest news with fallback
   async getLatestNews(limit: number = 3): Promise<NewsItem[]> {
     try {
-      const { data, error } = await supabase
-        .from('news')
-        .select('*')
-        .order('date', { ascending: false })
-        .limit(limit);
+      if (supabase) {
+        const { data, error } = await supabase
+          .from('news')
+          .select('*')
+          .order('date', { ascending: false })
+          .limit(limit);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      if (data && data.length > 0) {
-        return data;
+        if (data && data.length > 0) {
+          return data;
+        }
       }
 
       // Fallback to getAllNews
@@ -266,17 +297,19 @@ export const newsService = {
   // Get related news with fallback
   async getRelatedNews(excludeId: string, limit: number = 3): Promise<NewsItem[]> {
     try {
-      const { data, error } = await supabase
-        .from('news')
-        .select('*')
-        .neq('id', excludeId)
-        .order('date', { ascending: false })
-        .limit(limit);
+      if (supabase) {
+        const { data, error } = await supabase
+          .from('news')
+          .select('*')
+          .neq('id', excludeId)
+          .order('date', { ascending: false })
+          .limit(limit);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      if (data && data.length > 0) {
-        return data;
+        if (data && data.length > 0) {
+          return data;
+        }
       }
 
       // Fallback to getAllNews
@@ -299,7 +332,7 @@ export const newsService = {
   // Enhanced upsert with localStorage backup
   async upsertNews(newsItem: Omit<NewsItem, 'created_at' | 'updated_at'>): Promise<NewsItem> {
     try {
-      // Always save to localStorage first as backup
+      // Always save to localStorage first
       const savedNews = localStorage.getItem('website-news');
       let allNews = savedNews ? JSON.parse(savedNews) : [];
 
@@ -323,25 +356,32 @@ export const newsService = {
       localStorage.setItem('website-news', JSON.stringify(allNews));
       console.log('News saved to localStorage successfully');
 
-      // Save to Supabase
-      const { data, error } = await supabase
-        .from('news')
-        .upsert(updatedItem)
-        .select()
-        .single();
+      // Try to save to Supabase if available
+      if (supabase) {
+        const { data, error } = await supabase
+          .from('news')
+          .upsert(updatedItem)
+          .select()
+          .single();
 
-      if (error) {
-        console.warn('Supabase save failed, but localStorage backup successful:', error);
-        // Return the locally updated item
-        return updatedItem;
+        if (error) {
+          console.warn('Supabase save failed, but localStorage backup successful:', error);
+          // Return the locally updated item
+          return updatedItem;
+        }
+
+        console.log('News saved to Supabase successfully');
+        
+        // Broadcast immediate update to all tabs and devices
+        this.broadcastNewsUpdate();
+        
+        return data;
       }
-
-      console.log('News saved to Supabase successfully');
       
       // Broadcast immediate update to all tabs and devices
       this.broadcastNewsUpdate();
       
-      return data;
+      return updatedItem;
     } catch (error) {
       console.error('Error upserting news:', error);
       throw new Error('فشل في حفظ الخبر');
@@ -354,22 +394,28 @@ export const newsService = {
       // Delete from localStorage first
       const savedNews = localStorage.getItem('website-news');
       if (savedNews) {
-        const allNews = JSON.parse(savedNews);
-        const filteredNews = allNews.filter((item: NewsItem) => item.id !== id);
-        localStorage.setItem('website-news', JSON.stringify(filteredNews));
-        console.log('News deleted from localStorage successfully');
+        try {
+          const allNews = JSON.parse(savedNews);
+          const filteredNews = allNews.filter((item: NewsItem) => item.id !== id);
+          localStorage.setItem('website-news', JSON.stringify(filteredNews));
+          console.log('News deleted from localStorage successfully');
+        } catch (parseError) {
+          console.error('Error parsing localStorage news:', parseError);
+        }
       }
 
-      // Delete from Supabase
-      const { error } = await supabase
-        .from('news')
-        .delete()
-        .eq('id', id);
+      // Try to delete from Supabase if available
+      if (supabase) {
+        const { error } = await supabase
+          .from('news')
+          .delete()
+          .eq('id', id);
 
-      if (error) {
-        console.warn('Supabase delete failed, but localStorage delete successful:', error);
-      } else {
-        console.log('News deleted from Supabase successfully');
+        if (error) {
+          console.warn('Supabase delete failed, but localStorage delete successful:', error);
+        } else {
+          console.log('News deleted from Supabase successfully');
+        }
       }
       
       // Broadcast immediate update to all tabs and devices
@@ -408,20 +454,22 @@ export const newsService = {
   // Upload image with fallback
   async uploadImage(file: File, fileName: string): Promise<string> {
     try {
-      const { data, error } = await supabase.storage
-        .from('news-images')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
+      if (supabase) {
+        const { data, error } = await supabase.storage
+          .from('news-images')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('news-images')
-        .getPublicUrl(data.path);
+        const { data: { publicUrl } } = supabase!.storage
+          .from('news-images')
+          .getPublicUrl(data.path);
 
-      return publicUrl;
+        return publicUrl;
+      }
     } catch (error) {
       console.error('Error uploading image:', error);
       
@@ -433,7 +481,8 @@ export const newsService = {
   // Delete image
   async deleteImage(imagePath: string): Promise<void> {
     try {
-      // Extract path from URL
+      if (!supabase || !imagePath) return;
+      
       const path = imagePath.split('/').pop();
       
       if (path) {
@@ -453,7 +502,8 @@ export const newsService = {
   // Initialize realtime sync
   initializeRealtimeSync() {
     try {
-      // Set up realtime subscription
+      if (!supabase) return { unsubscribe: () => console.log('No Supabase client available') };
+      
       const subscription = supabase
         .channel('schema-db-changes')
         .on('postgres_changes', { 
@@ -461,7 +511,7 @@ export const newsService = {
           schema: 'public',
           table: 'news'
         }, (payload) => {
-          console.log('Realtime update received:', payload);
+          console.log('Realtime update received from Supabase:', payload);
           
           // Refresh data
           this.getAllNews().then(() => {
