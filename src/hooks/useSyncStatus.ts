@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase, newsService } from '@/lib/supabaseClient';
 
+// Maximum number of retries for connection attempts
+const MAX_RETRIES = 3;
+
 interface SyncStatus {
   connected: boolean;
   lastSynced: Date | null;
@@ -17,14 +20,28 @@ export function useSyncStatus() {
   const [isSyncing, setIsSyncing] = useState(false);
 
   // Check sync status on load
+  const [retryCount, setRetryCount] = useState(0);
+  
   useEffect(() => {
-    checkSyncStatus();
+    const initialCheck = async () => {
+      try {
+        await checkSyncStatus();
+      } catch (error) {
+        console.error('Initial sync status check failed:', error);
+      }
+    };
+    
+    initialCheck();
     
     // Set up interval to check status
-    const interval = setInterval(checkSyncStatus, 60000); // Check every minute
+    const interval = setInterval(() => {
+      if (retryCount < MAX_RETRIES || syncStatus.connected) {
+        checkSyncStatus();
+      }
+    }, 60000); // Check every minute
     
     return () => clearInterval(interval);
-  }, []);
+  }, [retryCount, syncStatus.connected]);
 
   // Listen for sync events
   useEffect(() => {
@@ -64,8 +81,11 @@ export function useSyncStatus() {
   // Check sync status
   const checkSyncStatus = async () => {
     try {
+      console.log('Checking sync status...');
+      
       // Check if Supabase client is available
       if (!supabase) {
+        console.warn('Supabase client not initialized');
         setSyncStatus({
           connected: false,
           lastSynced: null,
@@ -75,11 +95,18 @@ export function useSyncStatus() {
         return;
       }
 
-      // Check Supabase connection with a simple query
-      const { data, error } = await supabase
-        .from('news')
-        .select('id')
-        .limit(1);
+      // Use a Promise with timeout to handle potential hanging requests
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Connection timeout')), 10000);
+      });
+      
+      const fetchPromise = supabase.from('news').select('id').limit(1);
+      
+      // Race between the fetch and the timeout
+      const { data, error } = await Promise.race([
+        fetchPromise,
+        timeoutPromise.then(() => { throw new Error('Connection timeout'); })
+      ]) as any;
       
       if (error) {
         console.warn('Supabase connection error:', error.message);
@@ -101,6 +128,9 @@ export function useSyncStatus() {
         return;
       }
       
+      // Reset retry count on success
+      setRetryCount(0);
+      
       // Update status
       setSyncStatus({
         connected: true,
@@ -117,7 +147,10 @@ export function useSyncStatus() {
       }));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.warn('Network error checking sync status - switching to offline mode:', errorMessage);
+      console.warn('Error checking sync status - switching to offline mode:', errorMessage);
+      
+      // Increment retry count
+      setRetryCount(prev => prev + 1);
       
       setSyncStatus({
         connected: false,
@@ -139,8 +172,11 @@ export function useSyncStatus() {
   // Force manual sync
   const syncNow = async () => {
     try {
+      console.log('Manual sync initiated...');
+      
       // Start sync process
       if (!supabase) {
+        console.warn('Supabase client not available for manual sync');
         return { 
           success: false, 
           error: 'Supabase client not available - using offline mode' 
@@ -159,16 +195,22 @@ export function useSyncStatus() {
       }));
       
       // Get all news from Supabase
-      const { data, error } = await supabase
-        .from('news')
-        .select('*')
-        .order('date', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('news')
+          .select('*')
+          .order('date', { ascending: false });
         
-      if (error) throw error;
+        if (error) throw error;
       
-      // Update localStorage
-      if (data) {
-        localStorage.setItem('website-news', JSON.stringify(data));
+        // Update localStorage
+        if (data) {
+          localStorage.setItem('website-news', JSON.stringify(data));
+          console.log(`Synced ${data.length} news items to localStorage`);
+        }
+      } catch (queryError) {
+        console.error('Error fetching data during sync:', queryError);
+        throw queryError;
       }
       
       // Broadcast news update
@@ -192,7 +234,7 @@ export function useSyncStatus() {
       return { success: true };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.warn('Network error during sync - continuing in offline mode:', errorMessage);
+      console.warn('Error during manual sync - continuing in offline mode:', errorMessage);
       
       setSyncStatus({
         connected: false,
