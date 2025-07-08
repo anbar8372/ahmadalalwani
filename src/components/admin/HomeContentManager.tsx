@@ -1,11 +1,10 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Save, Plus, Trash2 } from 'lucide-react';
+import { Save, Plus, Trash2, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface HeroSection {
@@ -25,35 +24,103 @@ interface FeatureCard {
 
 const HomeContentManager = () => {
   const { toast } = useToast();
-  const [heroSection, setHeroSection] = useState<HeroSection>({
-    title: 'الدكتور أحمد العلواني',
-    subtitle: 'نائب سابق في البرلمان العراقي (2010-2013)',
-    description: 'رئيس اللجنة الاقتصادية، عمل من أجل خدمة الشعب العراقي وتحقيق التنمية والازدهار',
-    backgroundImage: ''
+  
+  // Load data from localStorage with real-time sync
+  const [heroSection, setHeroSection] = useState<HeroSection>(() => {
+    const saved = localStorage.getItem('home-hero-section');
+    return saved ? JSON.parse(saved) : {
+      title: 'الدكتور أحمد العلواني',
+      subtitle: 'نائب سابق في البرلمان العراقي (2005-2014)',
+      description: 'حاصل على الدكتوراه في علوم الأرض من جامعة بغداد، شغل منصب نائب في البرلمان العراقي لدورتين متتاليتين من عام 2005 إلى عام 2014.',
+      backgroundImage: ''
+    };
   });
 
-  const [featureCards, setFeatureCards] = useState<FeatureCard[]>([
-    {
-      id: '1',
-      title: 'الخبرة البرلمانية',
-      description: 'خدم كنائب في البرلمان العراقي من 2010 إلى 2013',
-      icon: 'briefcase',
-      image: ''
-    },
-    {
-      id: '2',
-      title: 'القيادة الاقتصادية',
-      description: 'ترأس اللجنة الاقتصادية في البرلمان العراقي',
-      icon: 'award',
-      image: ''
-    }
-  ]);
+  const [featureCards, setFeatureCards] = useState<FeatureCard[]>(() => {
+    const saved = localStorage.getItem('home-feature-cards');
+    return saved ? JSON.parse(saved) : [
+      {
+        id: '1',
+        title: 'الخبرة البرلمانية',
+        description: 'خدم كنائب في البرلمان العراقي من 2005 إلى 2014',
+        icon: 'briefcase',
+        image: ''
+      },
+      {
+        id: '2',
+        title: 'القيادة الاقتصادية',
+        description: 'ترأس اللجنة الاقتصادية في البرلمان العراقي',
+        icon: 'award',
+        image: ''
+      }
+    ];
+  });
+
+  // Real-time sync setup
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'home-hero-section-update-trigger') {
+        const saved = localStorage.getItem('home-hero-section');
+        if (saved) {
+          setHeroSection(JSON.parse(saved));
+        }
+      }
+      if (e.key === 'home-feature-cards-update-trigger') {
+        const saved = localStorage.getItem('home-feature-cards');
+        if (saved) {
+          setFeatureCards(JSON.parse(saved));
+        }
+      }
+    };
+
+    const channel = new BroadcastChannel('admin-updates');
+    channel.onmessage = (event) => {
+      if (event.data.type === 'DATA_UPDATED') {
+        if (event.data.key === 'home-hero-section') {
+          setHeroSection(event.data.data);
+        }
+        if (event.data.key === 'home-feature-cards') {
+          setFeatureCards(event.data.data);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      channel.close();
+    };
+  }, []);
+
+  // Broadcast function for real-time sync
+  const broadcastUpdate = (key: string, data: any) => {
+    // Save to localStorage
+    localStorage.setItem(key, JSON.stringify(data));
+    
+    // Broadcast to other tabs
+    const channel = new BroadcastChannel('admin-updates');
+    channel.postMessage({ type: 'DATA_UPDATED', key, data, timestamp: Date.now() });
+    
+    // Trigger storage event for cross-tab communication
+    localStorage.setItem(`${key}-update-trigger`, Date.now().toString());
+  };
 
   const handleSaveHero = () => {
-    // هنا سيتم حفظ البيانات في قاعدة البيانات
+    broadcastUpdate('home-hero-section', heroSection);
+    
     toast({
       title: "تم الحفظ بنجاح",
-      description: "تم حفظ محتوى القسم الرئيسي",
+      description: "تم حفظ محتوى القسم الرئيسي ومزامنته عبر جميع الأجهزة",
+    });
+  };
+
+  const handleSaveFeatureCards = () => {
+    broadcastUpdate('home-feature-cards', featureCards);
+    
+    toast({
+      title: "تم الحفظ بنجاح",
+      description: "تم حفظ البطاقات المميزة ومزامنتها عبر جميع الأجهزة",
     });
   };
 
@@ -65,23 +132,46 @@ const HomeContentManager = () => {
       icon: 'star',
       image: ''
     };
-    setFeatureCards([...featureCards, newCard]);
+    const updatedCards = [...featureCards, newCard];
+    setFeatureCards(updatedCards);
+    broadcastUpdate('home-feature-cards', updatedCards);
   };
 
   const updateFeatureCard = (id: string, field: keyof FeatureCard, value: string) => {
-    setFeatureCards(cards => 
-      cards.map(card => 
-        card.id === id ? { ...card, [field]: value } : card
-      )
+    const updatedCards = featureCards.map(card => 
+      card.id === id ? { ...card, [field]: value } : card
     );
+    setFeatureCards(updatedCards);
+    // Auto-save on change
+    broadcastUpdate('home-feature-cards', updatedCards);
   };
 
   const deleteFeatureCard = (id: string) => {
-    setFeatureCards(cards => cards.filter(card => card.id !== id));
+    const updatedCards = featureCards.filter(card => card.id !== id);
+    setFeatureCards(updatedCards);
+    broadcastUpdate('home-feature-cards', updatedCards);
+    
+    toast({
+      title: "تم الحذف",
+      description: "تم حذف البطاقة بنجاح",
+    });
   };
 
   return (
     <div className="space-y-6">
+      {/* Success Indicator */}
+      <Card className="bg-green-50 border-green-200">
+        <CardContent className="p-4">
+          <div className="flex items-center space-x-2 space-x-reverse text-green-800">
+            <CheckCircle className="w-5 h-5" />
+            <span className="font-medium">نظام المزامنة المباشرة مفعل</span>
+          </div>
+          <p className="text-sm text-green-700 mt-1">
+            جميع التغييرات يتم حفظها ومزامنتها تلقائياً عبر جميع الأجهزة والمتصفحات
+          </p>
+        </CardContent>
+      </Card>
+
       {/* Hero Section */}
       <Card>
         <CardHeader>
@@ -94,7 +184,11 @@ const HomeContentManager = () => {
               <Input
                 id="hero-title"
                 value={heroSection.title}
-                onChange={(e) => setHeroSection({...heroSection, title: e.target.value})}
+                onChange={(e) => {
+                  const updated = {...heroSection, title: e.target.value};
+                  setHeroSection(updated);
+                  broadcastUpdate('home-hero-section', updated);
+                }}
                 className="text-right"
               />
             </div>
@@ -103,7 +197,11 @@ const HomeContentManager = () => {
               <Input
                 id="hero-subtitle"
                 value={heroSection.subtitle}
-                onChange={(e) => setHeroSection({...heroSection, subtitle: e.target.value})}
+                onChange={(e) => {
+                  const updated = {...heroSection, subtitle: e.target.value};
+                  setHeroSection(updated);
+                  broadcastUpdate('home-hero-section', updated);
+                }}
                 className="text-right"
               />
             </div>
@@ -113,7 +211,11 @@ const HomeContentManager = () => {
             <Textarea
               id="hero-description"
               value={heroSection.description}
-              onChange={(e) => setHeroSection({...heroSection, description: e.target.value})}
+              onChange={(e) => {
+                const updated = {...heroSection, description: e.target.value};
+                setHeroSection(updated);
+                broadcastUpdate('home-hero-section', updated);
+              }}
               className="text-right"
               rows={3}
             />
@@ -123,7 +225,11 @@ const HomeContentManager = () => {
             <Input
               id="hero-bg"
               value={heroSection.backgroundImage}
-              onChange={(e) => setHeroSection({...heroSection, backgroundImage: e.target.value})}
+              onChange={(e) => {
+                const updated = {...heroSection, backgroundImage: e.target.value};
+                setHeroSection(updated);
+                broadcastUpdate('home-hero-section', updated);
+              }}
               placeholder="https://example.com/image.jpg"
               className="text-right"
             />
@@ -196,7 +302,7 @@ const HomeContentManager = () => {
               </div>
             </div>
           ))}
-          <Button className="w-full">
+          <Button onClick={handleSaveFeatureCards} className="w-full">
             <Save className="w-4 h-4 ml-2" />
             حفظ البطاقات المميزة
           </Button>

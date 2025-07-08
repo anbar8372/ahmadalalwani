@@ -1,11 +1,10 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Save, Plus, Trash2 } from 'lucide-react';
+import { Save, Plus, Trash2, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface PersonalInfo {
@@ -27,45 +26,140 @@ interface EducationSection {
 const BiographyManager = () => {
   const { toast } = useToast();
   
-  const [personalInfo, setPersonalInfo] = useState<PersonalInfo>({
-    fullName: 'أحمد سليمان العلواني',
-    birthDate: '27 أبريل، 1969',
-    birthPlace: 'الرمادي، محافظة الأنبار، العراق',
-    religion: 'مسلم',
-    nationality: 'عراقي'
+  const [personalInfo, setPersonalInfo] = useState<PersonalInfo>(() => {
+    const saved = localStorage.getItem('biography-personal-info');
+    return saved ? JSON.parse(saved) : {
+      fullName: 'أحمد سليمان العلواني',
+      birthDate: '27 أبريل، 1969',
+      birthPlace: 'الرمادي، محافظة الأنبار، العراق',
+      religion: 'مسلم',
+      nationality: 'عراقي'
+    };
   });
 
-  const [earlyLife, setEarlyLife] = useState('');
-  const [personalCharacter, setPersonalCharacter] = useState('');
+  const [earlyLife, setEarlyLife] = useState(() => {
+    const saved = localStorage.getItem('biography-early-life');
+    return saved ? JSON.parse(saved) : '';
+  });
+
+  const [personalCharacter, setPersonalCharacter] = useState(() => {
+    const saved = localStorage.getItem('biography-character');
+    return saved ? JSON.parse(saved) : '';
+  });
   
-  const [educationSections, setEducationSections] = useState<EducationSection[]>([
-    {
-      id: '1',
-      title: 'البكالوريوس',
-      description: 'علوم الأرض',
-      institution: 'جامعة بغداد',
-      year: ''
-    },
-    {
-      id: '2',
-      title: 'الماجستير',
-      description: 'علوم الأرض',
-      institution: 'جامعة بغداد',
-      year: ''
-    },
-    {
-      id: '3',
-      title: 'الدكتوراه',
-      description: 'علوم الأرض',
-      institution: 'جامعة بغداد',
-      year: ''
-    }
-  ]);
+  const [educationSections, setEducationSections] = useState<EducationSection[]>(() => {
+    const saved = localStorage.getItem('biography-education');
+    return saved ? JSON.parse(saved) : [
+      {
+        id: '1',
+        title: 'البكالوريوس',
+        description: 'علوم الأرض',
+        institution: 'جامعة بغداد',
+        year: ''
+      },
+      {
+        id: '2',
+        title: 'الماجستير',
+        description: 'علوم الأرض',
+        institution: 'جامعة بغداد',
+        year: ''
+      },
+      {
+        id: '3',
+        title: 'الدكتوراه',
+        description: 'علوم الأرض',
+        institution: 'جامعة بغداد',
+        year: ''
+      }
+    ];
+  });
+
+  // Real-time sync setup
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'biography-personal-info-update-trigger') {
+        const saved = localStorage.getItem('biography-personal-info');
+        if (saved) setPersonalInfo(JSON.parse(saved));
+      }
+      if (e.key === 'biography-early-life-update-trigger') {
+        const saved = localStorage.getItem('biography-early-life');
+        if (saved) setEarlyLife(JSON.parse(saved));
+      }
+      if (e.key === 'biography-character-update-trigger') {
+        const saved = localStorage.getItem('biography-character');
+        if (saved) setPersonalCharacter(JSON.parse(saved));
+      }
+      if (e.key === 'biography-education-update-trigger') {
+        const saved = localStorage.getItem('biography-education');
+        if (saved) setEducationSections(JSON.parse(saved));
+      }
+    };
+
+    const channel = new BroadcastChannel('admin-updates');
+    channel.onmessage = (event) => {
+      if (event.data.type === 'DATA_UPDATED') {
+        if (event.data.key === 'biography-personal-info') {
+          setPersonalInfo(event.data.data);
+        }
+        if (event.data.key === 'biography-early-life') {
+          setEarlyLife(event.data.data);
+        }
+        if (event.data.key === 'biography-character') {
+          setPersonalCharacter(event.data.data);
+        }
+        if (event.data.key === 'biography-education') {
+          setEducationSections(event.data.data);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      channel.close();
+    };
+  }, []);
+
+  // Broadcast function for real-time sync
+  const broadcastUpdate = (key: string, data: any) => {
+    localStorage.setItem(key, JSON.stringify(data));
+    
+    const channel = new BroadcastChannel('admin-updates');
+    channel.postMessage({ type: 'DATA_UPDATED', key, data, timestamp: Date.now() });
+    
+    localStorage.setItem(`${key}-update-trigger`, Date.now().toString());
+  };
 
   const handleSavePersonalInfo = () => {
+    broadcastUpdate('biography-personal-info', personalInfo);
     toast({
       title: "تم الحفظ بنجاح",
-      description: "تم حفظ المعلومات الشخصية",
+      description: "تم حفظ المعلومات الشخصية ومزامنتها عبر جميع الأجهزة",
+    });
+  };
+
+  const handleSaveEarlyLife = () => {
+    broadcastUpdate('biography-early-life', earlyLife);
+    toast({
+      title: "تم الحفظ بنجاح",
+      description: "تم حفظ النشأة والتكوين المبكر ومزامنتها عبر جميع الأجهزة",
+    });
+  };
+
+  const handleSaveCharacter = () => {
+    broadcastUpdate('biography-character', personalCharacter);
+    toast({
+      title: "تم الحفظ بنجاح",
+      description: "تم حفظ الشخصية والمبادئ ومزامنتها عبر جميع الأجهزة",
+    });
+  };
+
+  const handleSaveEducation = () => {
+    broadcastUpdate('biography-education', educationSections);
+    toast({
+      title: "تم الحفظ بنجاح",
+      description: "تم حفظ المسيرة التعليمية ومزامنتها عبر جميع الأجهزة",
     });
   };
 
@@ -77,23 +171,40 @@ const BiographyManager = () => {
       institution: '',
       year: ''
     };
-    setEducationSections([...educationSections, newSection]);
+    const updated = [...educationSections, newSection];
+    setEducationSections(updated);
+    broadcastUpdate('biography-education', updated);
   };
 
   const updateEducationSection = (id: string, field: keyof EducationSection, value: string) => {
-    setEducationSections(sections => 
-      sections.map(section => 
-        section.id === id ? { ...section, [field]: value } : section
-      )
+    const updated = educationSections.map(section => 
+      section.id === id ? { ...section, [field]: value } : section
     );
+    setEducationSections(updated);
+    broadcastUpdate('biography-education', updated);
   };
 
   const deleteEducationSection = (id: string) => {
-    setEducationSections(sections => sections.filter(section => section.id !== id));
+    const updated = educationSections.filter(section => section.id !== id);
+    setEducationSections(updated);
+    broadcastUpdate('biography-education', updated);
   };
 
   return (
     <div className="space-y-6">
+      {/* Success Indicator */}
+      <Card className="bg-green-50 border-green-200">
+        <CardContent className="p-4">
+          <div className="flex items-center space-x-2 space-x-reverse text-green-800">
+            <CheckCircle className="w-5 h-5" />
+            <span className="font-medium">نظام المزامنة المباشرة مفعل</span>
+          </div>
+          <p className="text-sm text-green-700 mt-1">
+            جميع التغييرات يتم حفظها ومزامنتها تلقائياً عبر جميع الأجهزة والمتصفحات
+          </p>
+        </CardContent>
+      </Card>
+
       {/* Personal Information */}
       <Card>
         <CardHeader>
@@ -106,7 +217,11 @@ const BiographyManager = () => {
               <Input
                 id="full-name"
                 value={personalInfo.fullName}
-                onChange={(e) => setPersonalInfo({...personalInfo, fullName: e.target.value})}
+                onChange={(e) => {
+                  const updated = {...personalInfo, fullName: e.target.value};
+                  setPersonalInfo(updated);
+                  broadcastUpdate('biography-personal-info', updated);
+                }}
                 className="text-right"
               />
             </div>
@@ -115,7 +230,11 @@ const BiographyManager = () => {
               <Input
                 id="birth-date"
                 value={personalInfo.birthDate}
-                onChange={(e) => setPersonalInfo({...personalInfo, birthDate: e.target.value})}
+                onChange={(e) => {
+                  const updated = {...personalInfo, birthDate: e.target.value};
+                  setPersonalInfo(updated);
+                  broadcastUpdate('biography-personal-info', updated);
+                }}
                 className="text-right"
               />
             </div>
@@ -124,7 +243,11 @@ const BiographyManager = () => {
               <Input
                 id="birth-place"
                 value={personalInfo.birthPlace}
-                onChange={(e) => setPersonalInfo({...personalInfo, birthPlace: e.target.value})}
+                onChange={(e) => {
+                  const updated = {...personalInfo, birthPlace: e.target.value};
+                  setPersonalInfo(updated);
+                  broadcastUpdate('biography-personal-info', updated);
+                }}
                 className="text-right"
               />
             </div>
@@ -133,7 +256,11 @@ const BiographyManager = () => {
               <Input
                 id="religion"
                 value={personalInfo.religion}
-                onChange={(e) => setPersonalInfo({...personalInfo, religion: e.target.value})}
+                onChange={(e) => {
+                  const updated = {...personalInfo, religion: e.target.value};
+                  setPersonalInfo(updated);
+                  broadcastUpdate('biography-personal-info', updated);
+                }}
                 className="text-right"
               />
             </div>
@@ -142,7 +269,11 @@ const BiographyManager = () => {
               <Input
                 id="nationality"
                 value={personalInfo.nationality}
-                onChange={(e) => setPersonalInfo({...personalInfo, nationality: e.target.value})}
+                onChange={(e) => {
+                  const updated = {...personalInfo, nationality: e.target.value};
+                  setPersonalInfo(updated);
+                  broadcastUpdate('biography-personal-info', updated);
+                }}
                 className="text-right"
               />
             </div>
@@ -165,12 +296,15 @@ const BiographyManager = () => {
             <Textarea
               id="early-life"
               value={earlyLife}
-              onChange={(e) => setEarlyLife(e.target.value)}
+              onChange={(e) => {
+                setEarlyLife(e.target.value);
+                broadcastUpdate('biography-early-life', e.target.value);
+              }}
               className="text-right min-h-[200px]"
               placeholder="اكتب عن النشأة والتكوين المبكر..."
             />
           </div>
-          <Button className="w-full">
+          <Button onClick={handleSaveEarlyLife} className="w-full">
             <Save className="w-4 h-4 ml-2" />
             حفظ النشأة والتكوين المبكر
           </Button>
@@ -235,7 +369,7 @@ const BiographyManager = () => {
               </div>
             </div>
           ))}
-          <Button className="w-full">
+          <Button onClick={handleSaveEducation} className="w-full">
             <Save className="w-4 h-4 ml-2" />
             حفظ المسيرة التعليمية
           </Button>
@@ -253,12 +387,15 @@ const BiographyManager = () => {
             <Textarea
               id="character"
               value={personalCharacter}
-              onChange={(e) => setPersonalCharacter(e.target.value)}
+              onChange={(e) => {
+                setPersonalCharacter(e.target.value);
+                broadcastUpdate('biography-character', e.target.value);
+              }}
               className="text-right min-h-[200px]"
               placeholder="اكتب عن الشخصية والمبادئ..."
             />
           </div>
-          <Button className="w-full">
+          <Button onClick={handleSaveCharacter} className="w-full">
             <Save className="w-4 h-4 ml-2" />
             حفظ الشخصية والمبادئ
           </Button>

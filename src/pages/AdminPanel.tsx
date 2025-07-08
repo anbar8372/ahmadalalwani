@@ -1,8 +1,7 @@
-
 import { useState } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { 
   Settings, 
   User, 
@@ -11,9 +10,10 @@ import {
   Image, 
   Mail, 
   Home,
-  Globe,
   Shield,
-  Newspaper
+  Newspaper,
+  Menu,
+  X
 } from 'lucide-react';
 import HomeContentManager from '@/components/admin/HomeContentManager';
 import BiographyManager from '@/components/admin/BiographyManager';
@@ -30,109 +30,166 @@ import { useAuth } from '@/hooks/useAuth';
 
 const AdminPanel = () => {
   const { isAuthenticated } = useAuth();
+  const [activeTab, setActiveTab] = useState('home');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   if (!isAuthenticated) {
     return <LoginForm />;
   }
 
+  const menuItems = [
+    { id: 'home', label: 'الصفحة الرئيسية', icon: Home },
+    { id: 'news', label: 'إدارة الأخبار', icon: Newspaper },
+    { id: 'biography', label: 'السيرة الذاتية', icon: User },
+    { id: 'political', label: 'المسيرة السياسية', icon: Briefcase },
+    { id: 'achievements', label: 'الإنجازات', icon: Award },
+    { id: 'media', label: 'وسائل الإعلام', icon: Image },
+    { id: 'contact', label: 'صفحة الاتصال', icon: Mail },
+    { id: 'gallery', label: 'معرض الصور', icon: Image },
+    { id: 'settings', label: 'إعدادات الموقع', icon: Settings },
+    { id: 'security', label: 'إعدادات الأمان', icon: Shield },
+  ];
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'home':
+        return <HomeContentManager />;
+      case 'news':
+        return <NewsManager />;
+      case 'biography':
+        return <BiographyManager />;
+      case 'political':
+        return <PoliticalCareerManager />;
+      case 'achievements':
+        return <AchievementsManager />;
+      case 'media':
+        return <MediaManager />;
+      case 'contact':
+        return <ContactManager />;
+      case 'gallery':
+        return <ImageGalleryManager />;
+      case 'settings':
+        return <SiteSettingsManager />;
+      case 'security':
+        return <SecurityManager />;
+      default:
+        return <HomeContentManager />;
+    }
+  };
+
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen bg-gray-50">
         {/* Header */}
-        <section className="py-8 bg-primary text-primary-foreground">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-3xl sm:text-4xl font-bold mb-4">لوحة التحكم</h1>
-            <p className="text-lg opacity-90">
-              إدارة محتوى الموقع والإعدادات العامة
-            </p>
+        <div className="bg-white shadow-sm border-b">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center space-x-4 space-x-reverse">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="lg:hidden"
+              >
+                {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </Button>
+              <h1 className="text-xl font-bold text-gray-900">لوحة التحكم</h1>
+            </div>
+            <div className="text-sm text-gray-600">
+              مرحباً بك في لوحة إدارة الموقع
+            </div>
           </div>
-        </section>
+        </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Tabs defaultValue="home" className="space-y-6" dir="rtl">
-            <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 gap-2">
-              <TabsTrigger value="home" className="flex items-center space-x-2 space-x-reverse">
-                <Home className="w-4 h-4" />
-                <span className="hidden sm:inline">الرئيسية</span>
-              </TabsTrigger>
-              <TabsTrigger value="news" className="flex items-center space-x-2 space-x-reverse">
-                <Newspaper className="w-4 h-4" />
-                <span className="hidden sm:inline">الأخبار</span>
-              </TabsTrigger>
-              <TabsTrigger value="biography" className="flex items-center space-x-2 space-x-reverse">
-                <User className="w-4 h-4" />
-                <span className="hidden sm:inline">السيرة</span>
-              </TabsTrigger>
-              <TabsTrigger value="political" className="flex items-center space-x-2 space-x-reverse">
-                <Briefcase className="w-4 h-4" />
-                <span className="hidden sm:inline">السياسية</span>
-              </TabsTrigger>
-              <TabsTrigger value="achievements" className="flex items-center space-x-2 space-x-reverse">
-                <Award className="w-4 h-4" />
-                <span className="hidden sm:inline">الإنجازات</span>
-              </TabsTrigger>
-              <TabsTrigger value="media" className="flex items-center space-x-2 space-x-reverse">
-                <Image className="w-4 h-4" />
-                <span className="hidden sm:inline">الإعلام</span>
-              </TabsTrigger>
-              <TabsTrigger value="contact" className="flex items-center space-x-2 space-x-reverse">
-                <Mail className="w-4 h-4" />
-                <span className="hidden sm:inline">الاتصال</span>
-              </TabsTrigger>
-              <TabsTrigger value="gallery" className="flex items-center space-x-2 space-x-reverse">
-                <Image className="w-4 h-4" />
-                <span className="hidden sm:inline">المعرض</span>
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="flex items-center space-x-2 space-x-reverse">
-                <Settings className="w-4 h-4" />
-                <span className="hidden sm:inline">الإعدادات</span>
-              </TabsTrigger>
-              <TabsTrigger value="security" className="flex items-center space-x-2 space-x-reverse">
-                <Shield className="w-4 h-4" />
-                <span className="hidden sm:inline">الأmان</span>
-              </TabsTrigger>
-            </TabsList>
+        <div className="flex">
+          {/* Sidebar */}
+          <div className={`
+            fixed lg:static inset-y-0 right-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
+            ${sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+            lg:translate-x-0 border-l
+          `}>
+            <div className="flex flex-col h-full">
+              {/* Sidebar Header */}
+              <div className="p-4 border-b bg-primary text-white">
+                <div className="flex items-center space-x-3 space-x-reverse">
+                  <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                    <span className="text-primary font-bold text-sm">ع</span>
+                  </div>
+                  <div>
+                    <h2 className="font-semibold">لوحة التحكم</h2>
+                    <p className="text-xs opacity-90">إدارة المحتوى</p>
+                  </div>
+                </div>
+              </div>
 
-            <TabsContent value="home">
-              <HomeContentManager />
-            </TabsContent>
+              {/* Menu Items */}
+              <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+                {menuItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setSidebarOpen(false); // Close sidebar on mobile after selection
+                      }}
+                      className={`
+                        w-full flex items-center space-x-3 space-x-reverse px-3 py-2 rounded-lg text-right transition-colors
+                        ${activeTab === item.id 
+                          ? 'bg-primary text-white shadow-md' 
+                          : 'text-gray-700 hover:bg-gray-100'
+                        }
+                      `}
+                    >
+                      <Icon className="w-5 h-5 flex-shrink-0" />
+                      <span className="font-medium">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
 
-            <TabsContent value="news">
-              <NewsManager />
-            </TabsContent>
+              {/* Sidebar Footer */}
+              <div className="p-4 border-t bg-gray-50">
+                <div className="text-xs text-gray-500 text-center">
+                  © 2025 الدكتور أحمد العلواني
+                </div>
+              </div>
+            </div>
+          </div>
 
-            <TabsContent value="biography">
-              <BiographyManager />
-            </TabsContent>
+          {/* Overlay for mobile */}
+          {sidebarOpen && (
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
 
-            <TabsContent value="political">
-              <PoliticalCareerManager />
-            </TabsContent>
+          {/* Main Content */}
+          <div className="flex-1 lg:mr-64">
+            <div className="p-4 lg:p-6">
+              {/* Content Header */}
+              <div className="mb-6">
+                <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-right flex items-center justify-between">
+                      <span>
+                        {menuItems.find(item => item.id === activeTab)?.label || 'لوحة التحكم'}
+                      </span>
+                      <div className="flex items-center space-x-2 space-x-reverse text-sm text-gray-600">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span>متصل</span>
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                </Card>
+              </div>
 
-            <TabsContent value="achievements">
-              <AchievementsManager />
-            </TabsContent>
-
-            <TabsContent value="media">
-              <MediaManager />
-            </TabsContent>
-
-            <TabsContent value="contact">
-              <ContactManager />
-            </TabsContent>
-
-            <TabsContent value="gallery">
-              <ImageGalleryManager />
-            </TabsContent>
-
-            <TabsContent value="settings">
-              <SiteSettingsManager />
-            </TabsContent>
-
-            <TabsContent value="security">
-              <SecurityManager />
-            </TabsContent>
-          </Tabs>
+              {/* Dynamic Content */}
+              <div className="space-y-6">
+                {renderContent()}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>

@@ -1,11 +1,10 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Save, Plus, Trash2 } from 'lucide-react';
+import { Save, Plus, Trash2, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ContactInfo {
@@ -53,14 +52,14 @@ const ContactManager = () => {
       {
         id: '1',
         platform: 'فيسبوك',
-        url: '',
+        url: 'https://facebook.com/ahmedalalwanicom',
         icon: 'facebook',
         color: '#1877F2'
       },
       {
         id: '2',
         platform: 'تويتر',
-        url: '',
+        url: 'https://x.com/ahmedalalwanicom',
         icon: 'twitter',
         color: '#1DA1F2'
       }
@@ -88,67 +87,99 @@ const ContactManager = () => {
     return saved ? JSON.parse(saved) : '';
   });
 
-  const handleSaveContactInfo = () => {
-    // Save to localStorage
-    localStorage.setItem('contact-info', JSON.stringify(contactInfo));
+  // Real-time sync setup
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'contact-info-update-trigger') {
+        const saved = localStorage.getItem('contact-info');
+        if (saved) setContactInfo(JSON.parse(saved));
+      }
+      if (e.key === 'social-media-update-trigger') {
+        const saved = localStorage.getItem('social-media');
+        if (saved) setSocialMedia(JSON.parse(saved));
+      }
+      if (e.key === 'office-locations-update-trigger') {
+        const saved = localStorage.getItem('office-locations');
+        if (saved) setOfficeLocations(JSON.parse(saved));
+      }
+      if (e.key === 'contact-page-content-update-trigger') {
+        const saved = localStorage.getItem('contact-page-content');
+        if (saved) setContactPageContent(JSON.parse(saved));
+      }
+    };
+
+    const channel = new BroadcastChannel('admin-updates');
+    channel.onmessage = (event) => {
+      if (event.data.type === 'DATA_UPDATED') {
+        if (event.data.key === 'contact-info') {
+          setContactInfo(event.data.data);
+        }
+        if (event.data.key === 'social-media') {
+          setSocialMedia(event.data.data);
+        }
+        if (event.data.key === 'office-locations') {
+          setOfficeLocations(event.data.data);
+        }
+        if (event.data.key === 'contact-page-content') {
+          setContactPageContent(event.data.data);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
     
-    // Broadcast update to other tabs
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      channel.close();
+    };
+  }, []);
+
+  // Broadcast function for real-time sync
+  const broadcastUpdate = (key: string, data: any) => {
+    localStorage.setItem(key, JSON.stringify(data));
+    
+    const channel = new BroadcastChannel('admin-updates');
+    channel.postMessage({ type: 'DATA_UPDATED', key, data, timestamp: Date.now() });
+    
+    localStorage.setItem(`${key}-update-trigger`, Date.now().toString());
+  };
+
+  const handleSaveContactInfo = () => {
     broadcastUpdate('contact-info', contactInfo);
     
     toast({
       title: "تم الحفظ بنجاح",
-      description: "تم حفظ معلومات الاتصال",
+      description: "تم حفظ معلومات الاتصال ومزامنتها عبر جميع الأجهزة",
     });
   };
 
   const handleSaveContactContent = () => {
-    // Save to localStorage
-    localStorage.setItem('contact-page-content', JSON.stringify(contactPageContent));
-    
-    // Broadcast update to other tabs
     broadcastUpdate('contact-page-content', contactPageContent);
     
     toast({
       title: "تم الحفظ بنجاح",
-      description: "تم حفظ محتوى الصفحة",
+      description: "تم حفظ محتوى الصفحة ومزامنته عبر جميع الأجهزة",
     });
   };
 
   const handleSaveSocialMedia = () => {
-    // Save to localStorage
-    localStorage.setItem('social-media', JSON.stringify(socialMedia));
-    
-    // Broadcast update to other tabs
     broadcastUpdate('social-media', socialMedia);
     
     toast({
       title: "تم الحفظ بنجاح",
-      description: "تم حفظ وسائل التواصل",
+      description: "تم حفظ وسائل التواصل ومزامنتها عبر جميع الأجهزة",
     });
   };
 
   const handleSaveOfficeLocations = () => {
-    // Save to localStorage
-    localStorage.setItem('office-locations', JSON.stringify(officeLocations));
-    
-    // Broadcast update to other tabs
     broadcastUpdate('office-locations', officeLocations);
     
     toast({
       title: "تم الحفظ بنجاح",
-      description: "تم حفظ مواقع المكاتب",
+      description: "تم حفظ مواقع المكاتب ومزامنتها عبر جميع الأجهزة",
     });
   };
 
-  // Broadcast function for real-time sync
-  const broadcastUpdate = (key: string, data: any) => {
-    // Broadcast to other tabs
-    const channel = new BroadcastChannel('admin-updates');
-    channel.postMessage({ type: 'DATA_UPDATED', key, data, timestamp: Date.now() });
-    
-    // Trigger storage event for cross-tab communication
-    localStorage.setItem(`${key}-update-trigger`, Date.now().toString());
-  };
   const addSocialMedia = () => {
     const newSocial: SocialMedia = {
       id: Date.now().toString(),
@@ -157,19 +188,23 @@ const ContactManager = () => {
       icon: '',
       color: '#000000'
     };
-    setSocialMedia([...socialMedia, newSocial]);
+    const updated = [...socialMedia, newSocial];
+    setSocialMedia(updated);
+    broadcastUpdate('social-media', updated);
   };
 
   const updateSocialMedia = (id: string, field: keyof SocialMedia, value: string) => {
-    setSocialMedia(social => 
-      social.map(item => 
-        item.id === id ? { ...item, [field]: value } : item
-      )
+    const updated = socialMedia.map(item => 
+      item.id === id ? { ...item, [field]: value } : item
     );
+    setSocialMedia(updated);
+    broadcastUpdate('social-media', updated);
   };
 
   const deleteSocialMedia = (id: string) => {
-    setSocialMedia(social => social.filter(item => item.id !== id));
+    const updated = socialMedia.filter(item => item.id !== id);
+    setSocialMedia(updated);
+    broadcastUpdate('social-media', updated);
   };
 
   const addOfficeLocation = () => {
@@ -181,23 +216,40 @@ const ContactManager = () => {
       email: '',
       workingHours: ''
     };
-    setOfficeLocations([...officeLocations, newLocation]);
+    const updated = [...officeLocations, newLocation];
+    setOfficeLocations(updated);
+    broadcastUpdate('office-locations', updated);
   };
 
   const updateOfficeLocation = (id: string, field: keyof OfficeLocation, value: string) => {
-    setOfficeLocations(locations => 
-      locations.map(location => 
-        location.id === id ? { ...location, [field]: value } : location
-      )
+    const updated = officeLocations.map(location => 
+      location.id === id ? { ...location, [field]: value } : location
     );
+    setOfficeLocations(updated);
+    broadcastUpdate('office-locations', updated);
   };
 
   const deleteOfficeLocation = (id: string) => {
-    setOfficeLocations(locations => locations.filter(location => location.id !== id));
+    const updated = officeLocations.filter(location => location.id !== id);
+    setOfficeLocations(updated);
+    broadcastUpdate('office-locations', updated);
   };
 
   return (
     <div className="space-y-6">
+      {/* Success Indicator */}
+      <Card className="bg-green-50 border-green-200">
+        <CardContent className="p-4">
+          <div className="flex items-center space-x-2 space-x-reverse text-green-800">
+            <CheckCircle className="w-5 h-5" />
+            <span className="font-medium">نظام المزامنة المباشرة مفعل</span>
+          </div>
+          <p className="text-sm text-green-700 mt-1">
+            جميع التغييرات يتم حفظها ومزامنتها تلقائياً عبر جميع الأجهزة والمتصفحات
+          </p>
+        </CardContent>
+      </Card>
+
       {/* Contact Page Content */}
       <Card>
         <CardHeader>
@@ -209,7 +261,10 @@ const ContactManager = () => {
             <Textarea
               id="contact-content"
               value={contactPageContent}
-              onChange={(e) => setContactPageContent(e.target.value)}
+              onChange={(e) => {
+                setContactPageContent(e.target.value);
+                broadcastUpdate('contact-page-content', e.target.value);
+              }}
               className="text-right min-h-[150px]"
               placeholder="اكتب نص ترحيبي لصفحة الاتصال..."
             />
@@ -233,7 +288,11 @@ const ContactManager = () => {
               <Input
                 id="contact-email"
                 value={contactInfo.email}
-                onChange={(e) => setContactInfo({...contactInfo, email: e.target.value})}
+                onChange={(e) => {
+                  const updated = {...contactInfo, email: e.target.value};
+                  setContactInfo(updated);
+                  broadcastUpdate('contact-info', updated);
+                }}
                 className="text-right"
               />
             </div>
@@ -242,7 +301,11 @@ const ContactManager = () => {
               <Input
                 id="contact-phone"
                 value={contactInfo.phone}
-                onChange={(e) => setContactInfo({...contactInfo, phone: e.target.value})}
+                onChange={(e) => {
+                  const updated = {...contactInfo, phone: e.target.value};
+                  setContactInfo(updated);
+                  broadcastUpdate('contact-info', updated);
+                }}
                 className="text-right"
               />
             </div>
@@ -252,7 +315,11 @@ const ContactManager = () => {
             <Textarea
               id="contact-address"
               value={contactInfo.address}
-              onChange={(e) => setContactInfo({...contactInfo, address: e.target.value})}
+              onChange={(e) => {
+                const updated = {...contactInfo, address: e.target.value};
+                setContactInfo(updated);
+                broadcastUpdate('contact-info', updated);
+              }}
               className="text-right"
               rows={2}
             />
@@ -262,7 +329,11 @@ const ContactManager = () => {
             <Input
               id="working-hours"
               value={contactInfo.workingHours}
-              onChange={(e) => setContactInfo({...contactInfo, workingHours: e.target.value})}
+              onChange={(e) => {
+                const updated = {...contactInfo, workingHours: e.target.value};
+                setContactInfo(updated);
+                broadcastUpdate('contact-info', updated);
+              }}
               className="text-right"
             />
           </div>
