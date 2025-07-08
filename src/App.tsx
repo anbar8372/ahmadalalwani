@@ -12,6 +12,8 @@ const Achievements = lazy(() => import('./pages/Achievements'));
 const Media = lazy(() => import('./pages/Media'));
 const Contact = lazy(() => import('./pages/Contact'));
 const AdminPanel = lazy(() => import('./pages/AdminPanel'));
+const DrAhmedNews = lazy(() => import('./pages/DrAhmedNews'));
+const DrAhmedNewsDetail = lazy(() => import('./pages/DrAhmedNewsDetail'));
 const News = lazy(() => import('./pages/News'));
 const AllNews = lazy(() => import('./pages/AllNews'));
 const NotFound = lazy(() => import('./pages/NotFound'));
@@ -44,6 +46,16 @@ const App = () => (
             <Route path="/media" element={
               <Suspense fallback={<div>جاري التحميل...</div>}>
                 <Media />
+              </Suspense>
+            } />
+            <Route path="/dr-ahmed-news" element={
+              <Suspense fallback={<div>جاري التحميل...</div>}>
+                <DrAhmedNews />
+              </Suspense>
+            } />
+            <Route path="/dr-ahmed-news/:id" element={
+              <Suspense fallback={<div>جاري التحميل...</div>}>
+                <DrAhmedNewsDetail />
               </Suspense>
             } />
             <Route path="/contact" element={
