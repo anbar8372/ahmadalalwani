@@ -39,15 +39,19 @@ const ConnectionTester = () => {
         throw new Error('Supabase client not initialized');
       }
       
-      const { error } = await supabase.from('dr_ahmed_news').select('count', { count: 'exact', head: true });
+      // Test with a simple query that should work regardless of data
+      const { error } = await supabase.from('dr_ahmed_news').select('id').limit(1);
       
-      if (error) throw error;
+      if (error) {
+        console.warn('Supabase connection test error:', error);
+        throw error;
+      }
       
       setTestResults(prev => ({
         ...prev,
         supabase: { 
           status: 'success', 
-          message: 'الاتصال بقاعدة البيانات يعمل بشكل صحيح' 
+          message: 'الاتصال بقاعدة البيانات يعمل بشكل صحيح (dr_ahmed_news table accessible)' 
         }
       }));
     } catch (error) {
@@ -56,7 +60,9 @@ const ConnectionTester = () => {
         ...prev,
         supabase: { 
           status: 'error', 
-          message: error instanceof Error ? error.message : 'فشل الاتصال بقاعدة البيانات' 
+          message: error instanceof Error ? 
+            `فشل الاتصال بقاعدة البيانات: ${error.message}` : 
+            'فشل الاتصال بقاعدة البيانات' 
         }
       }));
     }
