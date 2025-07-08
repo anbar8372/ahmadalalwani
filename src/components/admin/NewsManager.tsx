@@ -6,10 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Save, Plus, Trash2, Edit, Calendar, Image, Link as LinkIcon, Upload, Loader2, Database, CheckCircle, Video, Type, Hash, ExternalLink, Crop, Eye, Settings, User } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Save, Plus, Trash2, Edit, Calendar, Image, Link as LinkIcon, Upload, Loader2, Database, CheckCircle, Video, Type, Hash, ExternalLink, Crop, Eye, Settings, User, AlertTriangle, RefreshCw, Newspaper } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { newsService, NewsItem, sampleNewsData } from '@/lib/supabaseClient';
+import { useSyncStatus } from '@/hooks/useSyncStatus';
 
 // Enhanced NewsItem interface with new fields
 interface EnhancedNewsItem extends NewsItem {
@@ -44,6 +45,7 @@ interface Category {
 
 const NewsManager = () => {
   const { toast } = useToast();
+  const { syncStatus } = useSyncStatus();
   const [news, setNews] = useState<EnhancedNewsItem[]>([]);
   const [editingNews, setEditingNews] = useState<EnhancedNewsItem | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -53,6 +55,8 @@ const NewsManager = () => {
   const [imagePreview, setImagePreview] = useState<string>('');
   const [cropArea, setCropArea] = useState({ x: 0, y: 0, width: 100, height: 100 });
   const [showImageCrop, setShowImageCrop] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Categories and Authors management
   const [categories, setCategories] = useState<Category[]>(() => {
@@ -95,20 +99,29 @@ const NewsManager = () => {
   // Load news from storage on component mount
   useEffect(() => {
     loadNews();
+    
+    // Initialize realtime subscription
+    const subscription = newsService.initializeRealtimeSync();
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const loadNews = async () => {
     try {
       setIsLoading(true);
+      setErrorMessage(null);
       const newsData = await newsService.getAllNews();
       setNews(newsData);
       console.log('Loaded news:', newsData.length, 'items');
     } catch (error) {
       console.error('خطأ في تحميل الأخبار:', error);
+      setErrorMessage('فشل في تحميل الأخبار. يرجى التحقق من اتصالك بالإنترنت وإعادة المحاولة.');
       toast({
-        title: "تحذير",
-        description: "تم تحميل الأخبار من التخزين المحلي",
-        variant: "default"
+        title: "خطأ في تحميل الأخبار",
+        description: "تم الاعتماد على التخزين المحلي كبديل مؤقت",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
@@ -118,6 +131,7 @@ const NewsManager = () => {
   const initializeSampleData = async () => {
     try {
       setIsLoading(true);
+      setErrorMessage(null);
       await newsService.initializeSampleData();
       await loadNews();
       toast({
@@ -126,6 +140,7 @@ const NewsManager = () => {
       });
     } catch (error) {
       console.error('خطأ في إضافة البيانات النموذجية:', error);
+      setErrorMessage('فشل في إضافة البيانات النموذجية. يرجى التحقق من اتصالك بالإنترنت وإعادة المحاولة.');
       toast({
         title: "خطأ",
         description: "فشل في إضافة البيانات النموذجية",
@@ -138,7 +153,7 @@ const NewsManager = () => {
 
   const addNews = () => {
     const newNews: EnhancedNewsItem = {
-      id: crypto.randomUUID(),
+      id: self.crypto.randomUUID(),
       title: '',
       content: '',
       date: new Date().toISOString().split('T')[0],
@@ -318,7 +333,7 @@ const NewsManager = () => {
   const saveNews = async () => {
     if (!editingNews || !editingNews.title.trim() || !editingNews.content.trim()) {
       toast({
-        title: "خطأ",
+        title: "بيانات غير مكتملة",
         description: "يرجى ملء جميع الحقول المطلوبة",
         variant: "destructive"
       });
@@ -327,9 +342,10 @@ const NewsManager = () => {
 
     try {
       setIsLoading(true);
+      setErrorMessage(null);
       
       // Combine regular content with HTML content
-      const finalContent = editingNews.content + (editingNews.content_html || '');
+      const finalContent = editingNews.content;
       const newsToSave = { ...editingNews, content: finalContent };
       
       // Save news item
@@ -347,12 +363,15 @@ const NewsManager = () => {
       setShowImageCrop(false);
 
       toast({
-        title: "تم الحفظ بنجاح",
-        description: "تم حفظ الخبر ومزامنته عبر جميع الأجهزة",
+        title: syncStatus.connected ? "تم الحفظ والمزامنة بنجاح" : "تم الحفظ محلياً",
+        description: syncStatus.connected 
+          ? "تم حفظ الخبر ومزامنته عبر جميع الأجهزة" 
+          : "تم حفظ الخبر محلياً. ستتم المزامنة عند استعادة الاتصال",
         variant: "default"
       });
     } catch (error) {
       console.error('Error saving news:', error);
+      setErrorMessage('فشل في حفظ الخبر. يرجى التحقق من اتصالك بالإنترنت وإعادة المحاولة.');
       toast({
         title: "خطأ في الحفظ",
         description: "فشل في حفظ الخبر. يرجى المحاولة مرة أخرى.",
@@ -363,12 +382,19 @@ const NewsManager = () => {
     }
   };
 
-  const deleteNews = async (id: string) => {
+  const confirmDelete = (id: string) => {
+    setDeleteConfirmId(id);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteConfirmId) return;
+    
     try {
       setIsLoading(true);
+      setErrorMessage(null);
       
       // Delete news item
-      await newsService.deleteNews(id);
+      await newsService.deleteNews(deleteConfirmId);
       
       // Broadcast update to other tabs/devices
       newsService.broadcastNewsUpdate();
@@ -377,18 +403,23 @@ const NewsManager = () => {
       await loadNews();
 
       toast({
-        title: "تم الحذف",
-        description: "تم حذف الخبر بنجاح",
+        title: "تم الحذف بنجاح",
+        description: syncStatus.connected 
+          ? "تم حذف الخبر ومزامنة التغييرات" 
+          : "تم حذف الخبر محلياً. ستتم المزامنة عند استعادة الاتصال",
       });
     } catch (error) {
       console.error('Error deleting news:', error);
+      setErrorMessage('فشل في حذف الخبر. يرجى التحقق من اتصالك بالإنترنت وإعادة المحاولة.');
       toast({
-        title: "خطأ في الحذف",
+        title: "خطأ أثناء الحذف",
         description: "فشل في حذف الخبر. يرجى المحاولة مرة أخرى.",
         variant: "destructive"
       });
     } finally {
       setIsLoading(false);
+      // Close confirmation dialog
+      setDeleteConfirmId(null);
     }
   };
 
@@ -429,12 +460,49 @@ const NewsManager = () => {
     setShowImageCrop(false);
   };
 
-  if (isLoading && news.length === 0) {
+  // Show loading state only on initial load
+  if (isLoading && news.length === 0 && !errorMessage) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="w-8 h-8 animate-spin" />
         <span className="mr-2">جاري تحميل الأخبار...</span>
       </div>
+    );
+  }
+
+  // Show error message if there's an error
+  if (errorMessage && news.length === 0) {
+    return (
+      <Card className="bg-red-50 border-red-200">
+        <CardContent className="p-6">
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-xl font-bold text-red-800 mb-2">خطأ في تحميل الأخبار</h3>
+            <p className="text-red-700 mb-6">{errorMessage}</p>
+            <div className="flex justify-center gap-4">
+              <Button onClick={loadNews} disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                    جاري المحاولة...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 ml-2" />
+                    إعادة المحاولة
+                  </>
+                )}
+              </Button>
+              <Button variant="outline" onClick={initializeSampleData} disabled={isLoading}>
+                <Database className="w-4 h-4 ml-2" />
+                تهيئة بيانات نموذجية
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -958,15 +1026,15 @@ const NewsManager = () => {
               <div className="flex gap-2 mt-6">
                 <Button onClick={saveNews} disabled={isLoading}>
                   {isLoading ? (
-                    <>
+                    <div className="flex items-center">
                       <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-                      جاري الحفظ...
-                    </>
+                      <span>جاري الحفظ...</span>
+                    </div>
                   ) : (
-                    <>
+                    <div className="flex items-center">
                       <Save className="w-4 h-4 ml-2" />
-                      حفظ الخبر
-                    </>
+                      <span>حفظ الخبر</span>
+                    </div>
                   )}
                 </Button>
                 <Button variant="outline" onClick={cancelEdit} disabled={isLoading}>
@@ -978,7 +1046,7 @@ const NewsManager = () => {
 
           {news.length === 0 && !isLoading ? (
             <div className="text-center py-8 text-gray-500">
-              <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <Newspaper className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>لا توجد أخبار حالياً</p>
               <p className="text-sm">اضغط على "إضافة أخبار نموذجية" لإضافة أخبار تجريبية أو "إضافة خبر جديد" لإضافة خبر مخصص</p>
             </div>
@@ -1008,7 +1076,7 @@ const NewsManager = () => {
                         <Edit className="w-4 h-4" />
                       </Button>
                       <Button 
-                        onClick={() => deleteNews(newsItem.id)}
+                        onClick={() => confirmDelete(newsItem.id)}
                         variant="destructive" 
                         size="sm"
                         disabled={isLoading}
@@ -1049,6 +1117,46 @@ const NewsManager = () => {
           )}
         </CardContent>
       </Card>
+      
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+        <DialogContent className="text-right">
+          <DialogHeader>
+            <DialogTitle>تأكيد حذف الخبر</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-gray-700">
+              هل أنت متأكد من رغبتك في حذف هذا الخبر؟ لا يمكن التراجع عن هذا الإجراء.
+            </p>
+          </div>
+          <DialogFooter className="flex justify-end gap-2 sm:gap-0">
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="flex items-center">
+                  <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                  <span>جاري الحذف...</span>
+                </div>
+              ) : (
+                <div className="flex items-center">
+                  <Trash2 className="w-4 h-4 ml-2" />
+                  <span>تأكيد الحذف</span>
+                </div>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteConfirmId(null)}
+              disabled={isLoading}
+            >
+              إلغاء
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
