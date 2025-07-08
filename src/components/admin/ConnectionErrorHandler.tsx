@@ -26,7 +26,7 @@ const ConnectionErrorHandler = ({
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-red-700">
-          حدث خطأ أثناء الاتصال بقاعدة البيانات. سيتم استخدام التخزين المحلي كبديل مؤقت.
+          حدث خطأ أثناء الاتصال بقاعدة البيانات. يرجى تطبيق ملف الترحيل (migration) على مشروع Supabase الخاص بك.
         </p>
         
         <div className="bg-white p-3 rounded border border-red-200">
@@ -82,9 +82,9 @@ const ConnectionErrorHandler = ({
             <div className="p-2 bg-gray-50 rounded border text-xs font-mono text-gray-700 max-h-40 overflow-y-auto">
               <p>وقت الخطأ: {new Date().toLocaleString('ar-IQ')}</p>
               <p>نوع الخطأ: خطأ اتصال بقاعدة البيانات</p>
-              <p>الوضع الحالي: استخدام التخزين المحلي</p>
+                غير متصل - يجب تطبيق ملف الترحيل
               <p>الإجراء المقترح: التحقق من اتصال الإنترنت وإعدادات قاعدة البيانات</p>
-            </div>
+            <p>الإجراء المقترح: تطبيق ملف الترحيل (migration) على مشروع Supabase</p>
           </div>
         )}
       </CardContent>

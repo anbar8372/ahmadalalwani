@@ -175,7 +175,7 @@ const ConnectionTester = () => {
                   testResults.supabase.status === 'success' ? 'text-green-700' : 
                   testResults.supabase.status === 'error' ? 'text-red-700' : 'text-gray-600'
                 }`}>
-                  {testResults.supabase.message || 'لم يتم الاختبار بعد'}
+                  {testResults.supabase.message || 'لم يتم الاختبار بعد. يرجى تطبيق ملف الترحيل (migration) أولاً.'}
                 </p>
               </div>
             </div>
