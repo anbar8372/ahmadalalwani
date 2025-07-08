@@ -69,10 +69,17 @@ const AllNews = () => {
       }
     };
 
+    // Listen for custom events for immediate updates
+    const handleNewsUpdated = () => {
+      loadNews();
+    };
+
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('newsUpdated', handleNewsUpdated);
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('newsUpdated', handleNewsUpdated);
       channel.close();
     };
   }, []);

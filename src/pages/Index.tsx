@@ -122,10 +122,10 @@ const Index = () => {
             
             <div className="text-center order-1 lg:order-2">
               <div className="w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 mx-auto rounded-full shadow-2xl overflow-hidden bg-white">
-                <img src="https://i.imgur.com/placeholder-parliament.jpg" alt="الدكتور أحمد العلواني في البرلمان" className="w-full h-full object-cover" onError={e => {
-                e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-red-600/20 to-green-600/20 rounded-full flex items-center justify-center"><div class="w-4/5 h-4/5 bg-gradient-to-br from-red-600 to-green-600 rounded-full flex items-center justify-center shadow-2xl"><span class="text-6xl md:text-8xl font-bold text-white">أ</span></div></div>';
-              }} />
+                <img src="/image.png" alt="الدكتور أحمد العلواني" className="w-full h-full object-cover" onError={e => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-red-600/20 to-green-600/20 rounded-full flex items-center justify-center"><div class="w-4/5 h-4/5 bg-gradient-to-br from-red-600 to-green-600 rounded-full flex items-center justify-center shadow-2xl"><span class="text-6xl md:text-8xl font-bold text-white">أ</span></div></div>';
+                }} />
               </div>
             </div>
           </div>

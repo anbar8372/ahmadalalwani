@@ -1,51 +1,97 @@
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, Settings, Facebook, Instagram, Youtube, Twitter, Send, Music, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useState, useEffect } from 'react';
 
 const Footer = () => {
-  const socialLinks = [{
-    platform: 'فيسبوك',
-    url: 'https://facebook.com/ahmedalalwanicom',
-    icon: 'facebook',
-    color: '#1877F2',
-    visible: true
-  }, {
-    platform: 'انستغرام',
-    url: 'https://instagram.com/ahmedalalwanicom',
-    icon: 'instagram',
-    color: '#E4405F',
-    visible: true
-  }, {
-    platform: 'تليغرام',
-    url: 'https://t.me/ahmedalalwanicom',
-    icon: 'send',
-    color: '#0088CC',
-    visible: true
-  }, {
-    platform: 'تيكتوك',
-    url: 'https://tiktok.com/@ahmedalalwanicom',
-    icon: 'music',
-    color: '#000000',
-    visible: true
-  }, {
-    platform: 'يوتيوب',
-    url: 'https://youtube.com/@ahmedalalwanicom',
-    icon: 'youtube',
-    color: '#FF0000',
-    visible: true
-  }, {
-    platform: 'منصة X',
-    url: 'https://x.com/ahmedalalwanicom',
-    icon: 'twitter',
-    color: '#000000',
-    visible: true
-  }, {
-    platform: 'قناة واتساب',
-    url: 'https://whatsapp.com/channel/0029VbB1kbuFCCoYtMnmHH1z',
-    icon: 'message-circle',
-    color: '#25D366',
-    visible: true
-  }].filter(link => link.visible && link.url);
+  // Load social media from localStorage with real-time updates
+  const [socialLinks, setSocialLinks] = useState(() => {
+    const saved = localStorage.getItem('social-media');
+    const defaultLinks = [{
+      platform: 'فيسبوك',
+      url: 'https://facebook.com/ahmedalalwanicom',
+      icon: 'facebook',
+      color: '#1877F2'
+    }, {
+      platform: 'انستغرام',
+      url: 'https://instagram.com/ahmedalalwanicom',
+      icon: 'instagram',
+      color: '#E4405F'
+    }, {
+      platform: 'تليغرام',
+      url: 'https://t.me/ahmedalalwanicom',
+      icon: 'send',
+      color: '#0088CC'
+    }, {
+      platform: 'تيكتوك',
+      url: 'https://tiktok.com/@ahmedalalwanicom',
+      icon: 'music',
+      color: '#000000'
+    }, {
+      platform: 'يوتيوب',
+      url: 'https://youtube.com/@ahmedalalwanicom',
+      icon: 'youtube',
+      color: '#FF0000'
+    }, {
+      platform: 'منصة X',
+      url: 'https://x.com/ahmedalalwanicom',
+      icon: 'twitter',
+      color: '#000000'
+    }, {
+      platform: 'قناة واتساب',
+      url: 'https://whatsapp.com/channel/0029VbB1kbuFCCoYtMnmHH1z',
+      icon: 'message-circle',
+      color: '#25D366'
+    }];
+    
+    return saved ? JSON.parse(saved).filter((link: any) => link.url) : defaultLinks.filter(link => link.url);
+  });
+
+  const [contactInfo, setContactInfo] = useState(() => {
+    const saved = localStorage.getItem('contact-info');
+    return saved ? JSON.parse(saved) : {
+      email: 'info@ahmedalalwani.com',
+      phone: '0096477XXXXXX',
+      address: 'الرمادي، محافظة الأنبار، العراق'
+    };
+  });
+
+  // Listen for real-time updates
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'social-media-update-trigger') {
+        const saved = localStorage.getItem('social-media');
+        if (saved) {
+          setSocialLinks(JSON.parse(saved).filter((link: any) => link.url));
+        }
+      }
+      if (e.key === 'contact-info-update-trigger') {
+        const saved = localStorage.getItem('contact-info');
+        if (saved) {
+          setContactInfo(JSON.parse(saved));
+        }
+      }
+    };
+
+    const channel = new BroadcastChannel('admin-updates');
+    channel.onmessage = (event) => {
+      if (event.data.type === 'DATA_UPDATED') {
+        if (event.data.key === 'social-media') {
+          setSocialLinks(event.data.data.filter((link: any) => link.url));
+        }
+        if (event.data.key === 'contact-info') {
+          setContactInfo(event.data.data);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      channel.close();
+    };
+  }, []);
 
   const getIcon = (iconName: string) => {
     switch (iconName) {
@@ -116,15 +162,15 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center space-x-3 space-x-reverse">
                 <MapPin className="w-5 h-5 text-iraqi-green" />
-                <span className="text-gray-300 text-sm">الرمادي، محافظة الأنبار، العراق</span>
+                <span className="text-gray-300 text-sm">{contactInfo.address}</span>
               </div>
               <div className="flex items-center space-x-3 space-x-reverse">
                 <Mail className="w-5 h-5 text-iraqi-green" />
-                <span className="text-gray-300 text-sm">info@ahmedalalwani.com</span>
+                <span className="text-gray-300 text-sm">{contactInfo.email}</span>
               </div>
               <div className="flex items-center space-x-3 space-x-reverse">
                 <Phone className="w-5 h-5 text-iraqi-green" />
-                <span className="text-gray-300 text-sm">0096477XXXXXX</span>
+                <span className="text-gray-300 text-sm">{contactInfo.phone}</span>
               </div>
               {/* Social Media Links */}
               {socialLinks.length > 0 && (

@@ -275,6 +275,8 @@ export const newsService = {
       localStorage.setItem('website-news', JSON.stringify(allNews));
       console.log('News saved to localStorage successfully');
 
+      // Broadcast immediate update to all tabs and devices
+      this.broadcastNewsUpdate();
       // Try to save to Supabase if available
       if (supabase) {
         const { data, error } = await supabase
@@ -310,6 +312,8 @@ export const newsService = {
         console.log('News deleted from localStorage successfully');
       }
 
+      // Broadcast immediate update to all tabs and devices
+      this.broadcastNewsUpdate();
       // Try to delete from Supabase if available
       if (supabase) {
         const { error } = await supabase
@@ -329,6 +333,30 @@ export const newsService = {
     }
   },
 
+  // Enhanced broadcast function for immediate sync
+  broadcastNewsUpdate(): void {
+    try {
+      // Broadcast to other tabs using BroadcastChannel
+      const channel = new BroadcastChannel('news-updates');
+      channel.postMessage({ 
+        type: 'NEWS_UPDATED', 
+        timestamp: Date.now(),
+        source: 'admin-panel'
+      });
+      
+      // Trigger storage event for cross-tab communication
+      localStorage.setItem('news-update-trigger', Date.now().toString());
+      
+      // Also trigger a custom event for immediate UI updates
+      window.dispatchEvent(new CustomEvent('newsUpdated', {
+        detail: { timestamp: Date.now() }
+      }));
+      
+      console.log('News update broadcasted successfully');
+    } catch (error) {
+      console.error('Error broadcasting news update:', error);
+    }
+  },
   // Upload image with fallback
   async uploadImage(file: File, fileName: string): Promise<string> {
     try {

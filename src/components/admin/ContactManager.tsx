@@ -20,6 +20,7 @@ interface SocialMedia {
   platform: string;
   url: string;
   icon: string;
+  color: string;
 }
 
 interface OfficeLocation {
@@ -34,54 +35,127 @@ interface OfficeLocation {
 const ContactManager = () => {
   const { toast } = useToast();
   
-  const [contactInfo, setContactInfo] = useState<ContactInfo>({
-    email: 'info@ahmedalalwani.com',
-    phone: '+964 XXX XXX XXXX',
-    address: 'الرمادي، محافظة الأنبار، العراق',
-    workingHours: 'الأحد - الخميس: 9:00 ص - 5:00 م'
+  // Load contact info from localStorage
+  const [contactInfo, setContactInfo] = useState<ContactInfo>(() => {
+    const saved = localStorage.getItem('contact-info');
+    return saved ? JSON.parse(saved) : {
+      email: 'info@ahmedalalwani.com',
+      phone: '+964 XXX XXX XXXX',
+      address: 'الرمادي، محافظة الأنبار، العراق',
+      workingHours: 'الأحد - الخميس: 9:00 ص - 5:00 م'
+    };
   });
 
-  const [socialMedia, setSocialMedia] = useState<SocialMedia[]>([
-    {
-      id: '1',
-      platform: 'فيسبوك',
-      url: '',
-      icon: 'facebook'
-    },
-    {
-      id: '2',
-      platform: 'تويتر',
-      url: '',
-      icon: 'twitter'
-    }
-  ]);
+  // Load social media from localStorage
+  const [socialMedia, setSocialMedia] = useState<SocialMedia[]>(() => {
+    const saved = localStorage.getItem('social-media');
+    return saved ? JSON.parse(saved) : [
+      {
+        id: '1',
+        platform: 'فيسبوك',
+        url: '',
+        icon: 'facebook',
+        color: '#1877F2'
+      },
+      {
+        id: '2',
+        platform: 'تويتر',
+        url: '',
+        icon: 'twitter',
+        color: '#1DA1F2'
+      }
+    ];
+  });
 
-  const [officeLocations, setOfficeLocations] = useState<OfficeLocation[]>([
-    {
-      id: '1',
-      name: 'المكتب الرئيسي',
-      address: 'الرمادي، محافظة الأنبار، العراق',
-      phone: '+964 XXX XXX XXXX',
-      email: 'info@ahmedalalwani.com',
-      workingHours: 'الأحد - الخميس: 9:00 ص - 5:00 م'
-    }
-  ]);
+  // Load office locations from localStorage
+  const [officeLocations, setOfficeLocations] = useState<OfficeLocation[]>(() => {
+    const saved = localStorage.getItem('office-locations');
+    return saved ? JSON.parse(saved) : [
+      {
+        id: '1',
+        name: 'المكتب الرئيسي',
+        address: 'الرمادي، محافظة الأنبار، العراق',
+        phone: '+964 XXX XXX XXXX',
+        email: 'info@ahmedalalwani.com',
+        workingHours: 'الأحد - الخميس: 9:00 ص - 5:00 م'
+      }
+    ];
+  });
 
-  const [contactPageContent, setContactPageContent] = useState('');
+  // Load contact page content from localStorage
+  const [contactPageContent, setContactPageContent] = useState(() => {
+    const saved = localStorage.getItem('contact-page-content');
+    return saved ? JSON.parse(saved) : '';
+  });
 
   const handleSaveContactInfo = () => {
+    // Save to localStorage
+    localStorage.setItem('contact-info', JSON.stringify(contactInfo));
+    
+    // Broadcast update to other tabs
+    broadcastUpdate('contact-info', contactInfo);
+    
     toast({
       title: "تم الحفظ بنجاح",
       description: "تم حفظ معلومات الاتصال",
     });
   };
 
+  const handleSaveContactContent = () => {
+    // Save to localStorage
+    localStorage.setItem('contact-page-content', JSON.stringify(contactPageContent));
+    
+    // Broadcast update to other tabs
+    broadcastUpdate('contact-page-content', contactPageContent);
+    
+    toast({
+      title: "تم الحفظ بنجاح",
+      description: "تم حفظ محتوى الصفحة",
+    });
+  };
+
+  const handleSaveSocialMedia = () => {
+    // Save to localStorage
+    localStorage.setItem('social-media', JSON.stringify(socialMedia));
+    
+    // Broadcast update to other tabs
+    broadcastUpdate('social-media', socialMedia);
+    
+    toast({
+      title: "تم الحفظ بنجاح",
+      description: "تم حفظ وسائل التواصل",
+    });
+  };
+
+  const handleSaveOfficeLocations = () => {
+    // Save to localStorage
+    localStorage.setItem('office-locations', JSON.stringify(officeLocations));
+    
+    // Broadcast update to other tabs
+    broadcastUpdate('office-locations', officeLocations);
+    
+    toast({
+      title: "تم الحفظ بنجاح",
+      description: "تم حفظ مواقع المكاتب",
+    });
+  };
+
+  // Broadcast function for real-time sync
+  const broadcastUpdate = (key: string, data: any) => {
+    // Broadcast to other tabs
+    const channel = new BroadcastChannel('admin-updates');
+    channel.postMessage({ type: 'DATA_UPDATED', key, data, timestamp: Date.now() });
+    
+    // Trigger storage event for cross-tab communication
+    localStorage.setItem(`${key}-update-trigger`, Date.now().toString());
+  };
   const addSocialMedia = () => {
     const newSocial: SocialMedia = {
       id: Date.now().toString(),
       platform: '',
       url: '',
-      icon: ''
+      icon: '',
+      color: '#000000'
     };
     setSocialMedia([...socialMedia, newSocial]);
   };
@@ -140,7 +214,7 @@ const ContactManager = () => {
               placeholder="اكتب نص ترحيبي لصفحة الاتصال..."
             />
           </div>
-          <Button className="w-full">
+          <Button onClick={handleSaveContactContent} className="w-full">
             <Save className="w-4 h-4 ml-2" />
             حفظ محتوى الصفحة
           </Button>
@@ -221,7 +295,7 @@ const ContactManager = () => {
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
                   <Label>اسم المنصة</Label>
                   <Input
@@ -249,10 +323,19 @@ const ContactManager = () => {
                     placeholder="facebook, twitter, instagram"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label>اللون</Label>
+                  <Input
+                    value={social.color}
+                    onChange={(e) => updateSocialMedia(social.id, 'color', e.target.value)}
+                    type="color"
+                    className="h-10"
+                  />
+                </div>
               </div>
             </div>
           ))}
-          <Button className="w-full">
+          <Button onClick={handleSaveSocialMedia} className="w-full">
             <Save className="w-4 h-4 ml-2" />
             حفظ وسائل التواصل
           </Button>
@@ -326,7 +409,7 @@ const ContactManager = () => {
               </div>
             </div>
           ))}
-          <Button className="w-full">
+          <Button onClick={handleSaveOfficeLocations} className="w-full">
             <Save className="w-4 h-4 ml-2" />
             حفظ مواقع المكاتب
           </Button>
