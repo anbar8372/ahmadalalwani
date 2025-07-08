@@ -30,7 +30,8 @@ import {
   Loader2, 
   Upload, 
   X, 
-  AlertCircle 
+  AlertCircle,
+  Search
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DrAhmedNewsItem, MediaItem, DEFAULT_CATEGORIES, drAhmedNewsService } from '@/types/dr-ahmed-news';
