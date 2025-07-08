@@ -1,6 +1,4 @@
 import Layout from '@/components/Layout';
-import NewsSection from '@/components/NewsSection';
-import DrAhmedNewsSection from '@/components/DrAhmedNewsSection';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
@@ -84,12 +82,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-
-      {/* News Section - Now matches the image exactly */}
-      <NewsSection />
-
-      {/* أخبار الدكتور أحمد العلواني */}
-      <DrAhmedNewsSection />
 
       {/* Brief Overview */}
       <section className="py-12 md:py-16 section-gradient">

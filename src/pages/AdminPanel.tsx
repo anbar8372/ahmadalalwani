@@ -11,11 +11,9 @@ import {
   Mail, 
   Home,
   Shield,
-  Newspaper,
   Menu,
   X,
   Server,
-  FileText
 } from 'lucide-react';
 import HomeContentManager from '@/components/admin/HomeContentManager';
 import BiographyManager from '@/components/admin/BiographyManager';
@@ -26,8 +24,6 @@ import ContactManager from '@/components/admin/ContactManager';
 import ImageGalleryManager from '@/components/admin/ImageGalleryManager';
 import SiteSettingsManager from '@/components/admin/SiteSettingsManager';
 import SecurityManager from '@/components/admin/SecurityManager';
-import NewsManager from '@/components/admin/NewsManager';
-import DrAhmedNewsManager from '@/components/admin/DrAhmedNewsManager';
 import LoginForm from '@/components/admin/LoginForm';
 import SyncStatusIndicator from '@/components/admin/SyncStatusIndicator';
 import ErrorBoundary from '@/components/admin/ErrorBoundary';
@@ -47,8 +43,6 @@ const AdminPanel = () => {
 
   const menuItems = [
     { id: 'home', label: 'الصفحة الرئيسية', icon: Home },
-    { id: 'news', label: 'إدارة الأخبار', icon: Newspaper },
-    { id: 'dr-ahmed-news', label: 'أخبار الدكتور أحمد', icon: FileText },
     { id: 'biography', label: 'السيرة الذاتية', icon: User },
     { id: 'political', label: 'المسيرة السياسية', icon: Briefcase },
     { id: 'achievements', label: 'الإنجازات', icon: Award },
@@ -63,10 +57,6 @@ const AdminPanel = () => {
     switch (activeTab) {
       case 'home':
         return <HomeContentManager />;
-      case 'news':
-        return <NewsManager />;
-      case 'dr-ahmed-news':
-        return <DrAhmedNewsManager />;
       case 'biography':
         return <BiographyManager />;
       case 'political':
