@@ -97,8 +97,50 @@ export const SAMPLE_DR_AHMED_NEWS: DrAhmedNewsItem[] = [
 export const drAhmedNewsService = {
   // Get all news
   async getAllNews(): Promise<DrAhmedNewsItem[]> {
-    try {      
-      // Using localStorage only
+    try {
+      if (supabase) {
+        try {
+          const { data, error } = await supabase
+            .from('dr_ahmed_news')
+            .select('*')
+            .order('date', { ascending: false });
+
+          if (error) {
+            console.warn('Supabase query error:', error.message);
+            throw error;
+          }
+          
+          if (data && data.length > 0) {
+            // Save to localStorage as backup
+            localStorage.setItem('dr-ahmed-news', JSON.stringify(data));
+            return data;
+          }
+          
+          // If no data in Supabase, initialize with sample data
+          await this.initializeSampleData();
+          
+          // Try fetching again
+          const { data: refreshedData, error: refreshedError } = await supabase
+            .from('dr_ahmed_news')
+            .select('*')
+            .order('date', { ascending: false });
+            
+          if (refreshedError) {
+            console.warn('Supabase refresh query error:', refreshedError.message);
+            throw refreshedError;
+          }
+          
+          if (refreshedData && refreshedData.length > 0) {
+            localStorage.setItem('dr-ahmed-news', JSON.stringify(refreshedData));
+            return refreshedData;
+          }
+        } catch (supabaseError) {
+          console.warn('Supabase connection failed, falling back to localStorage:', supabaseError);
+          // Don't throw here, fall through to localStorage fallback
+        }
+      }
+      
+      // Fallback to localStorage
       const savedNews = localStorage.getItem('dr-ahmed-news');
       if (savedNews) {
         console.log('Using localStorage fallback data');
@@ -129,6 +171,25 @@ export const drAhmedNewsService = {
   // Get news by ID
   async getNewsById(id: string): Promise<DrAhmedNewsItem | null> {
     try {
+      if (supabase) {
+        try {
+          const { data, error } = await supabase
+            .from('dr_ahmed_news')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+          if (error) {
+            console.warn('Supabase query error for news by ID:', error.message);
+            throw error;
+          }
+          return data;
+        } catch (supabaseError) {
+          console.warn('Supabase connection failed for getNewsById, falling back to localStorage:', supabaseError);
+          // Don't throw here, fall through to localStorage fallback
+        }
+      }
+      
       // Fallback to localStorage
       const savedNews = localStorage.getItem('dr-ahmed-news');
       if (savedNews) {
@@ -154,6 +215,26 @@ export const drAhmedNewsService = {
   // Get latest news
   async getLatestNews(limit: number = 3): Promise<DrAhmedNewsItem[]> {
     try {
+      if (supabase) {
+        try {
+          const { data, error } = await supabase
+            .from('dr_ahmed_news')
+            .select('*')
+            .eq('status', 'published')
+            .order('date', { ascending: false })
+            .limit(limit);
+
+          if (error) {
+            console.warn('Supabase query error for latest news:', error.message);
+            throw error;
+          }
+          return data || [];
+        } catch (supabaseError) {
+          console.warn('Supabase connection failed for getLatestNews, falling back to getAllNews:', supabaseError);
+          // Don't throw here, fall through to getAllNews fallback
+        }
+      }
+      
       // Fallback to getAllNews
       const allNews = await this.getAllNews();
       return allNews
@@ -175,6 +256,27 @@ export const drAhmedNewsService = {
   // Get featured news
   async getFeaturedNews(limit: number = 1): Promise<DrAhmedNewsItem[]> {
     try {
+      if (supabase) {
+        try {
+          const { data, error } = await supabase
+            .from('dr_ahmed_news')
+            .select('*')
+            .eq('status', 'published')
+            .eq('featured', true)
+            .order('date', { ascending: false })
+            .limit(limit);
+
+          if (error) {
+            console.warn('Supabase query error for featured news:', error.message);
+            throw error;
+          }
+          return data || [];
+        } catch (supabaseError) {
+          console.warn('Supabase connection failed for getFeaturedNews, falling back to getAllNews:', supabaseError);
+          // Don't throw here, fall through to getAllNews fallback
+        }
+      }
+      
       // Fallback to getAllNews
       const allNews = await this.getAllNews();
       return allNews
@@ -196,6 +298,33 @@ export const drAhmedNewsService = {
   // Get related news
   async getRelatedNews(excludeId: string, categoryId?: string, limit: number = 3): Promise<DrAhmedNewsItem[]> {
     try {
+      if (supabase) {
+        try {
+          let query = supabase
+            .from('dr_ahmed_news')
+            .select('*')
+            .eq('status', 'published')
+            .neq('id', excludeId)
+            .order('date', { ascending: false })
+            .limit(limit);
+            
+          if (categoryId) {
+            query = query.eq('category', categoryId);
+          }
+          
+          const { data, error } = await query;
+
+          if (error) {
+            console.warn('Supabase query error for related news:', error.message);
+            throw error;
+          }
+          return data || [];
+        } catch (supabaseError) {
+          console.warn('Supabase connection failed for getRelatedNews, falling back to getAllNews:', supabaseError);
+          // Don't throw here, fall through to getAllNews fallback
+        }
+      }
+      
       // Fallback to getAllNews
       const allNews = await this.getAllNews();
       let filtered = allNews
@@ -237,6 +366,44 @@ export const drAhmedNewsService = {
       
       if (!updatedItem.created_at) {
         updatedItem.created_at = now;
+      }
+      
+      if (supabase) {
+        try {
+          const { data, error } = await supabase
+            .from('dr_ahmed_news')
+            .upsert(updatedItem)
+            .select()
+            .single();
+
+          if (error) {
+            console.warn('Supabase upsert error:', error.message);
+            throw error;
+          }
+          
+          // Update localStorage as backup
+          const savedNews = localStorage.getItem('dr-ahmed-news');
+          if (savedNews) {
+            const allNews = JSON.parse(savedNews);
+            const existingIndex = allNews.findIndex((item: DrAhmedNewsItem) => item.id === updatedItem.id);
+            
+            if (existingIndex >= 0) {
+              allNews[existingIndex] = data;
+            } else {
+              allNews.unshift(data);
+            }
+            
+            localStorage.setItem('dr-ahmed-news', JSON.stringify(allNews));
+          }
+          
+          // Broadcast update
+          this.broadcastNewsUpdate();
+          
+          return data;
+        } catch (supabaseError) {
+          console.warn('Supabase connection failed for upsertNews, falling back to localStorage:', supabaseError);
+          // Don't throw here, fall through to localStorage fallback
+        }
       }
       
       // Fallback to localStorage
@@ -294,6 +461,23 @@ export const drAhmedNewsService = {
   // Delete news
   async deleteNews(id: string): Promise<void> {
     try {
+      if (supabase) {
+        try {
+          const { error } = await supabase
+            .from('dr_ahmed_news')
+            .delete()
+            .eq('id', id);
+
+          if (error) {
+            console.warn('Supabase delete error:', error.message);
+            throw error;
+          }
+        } catch (supabaseError) {
+          console.warn('Supabase connection failed for deleteNews, proceeding with localStorage only:', supabaseError);
+          // Don't throw here, still delete from localStorage
+        }
+      }
+      
       // Also delete from localStorage
       const savedNews = localStorage.getItem('dr-ahmed-news');
       if (savedNews) {
@@ -323,6 +507,15 @@ export const drAhmedNewsService = {
   // Increment views
   async incrementViews(id: string): Promise<void> {
     try {
+      if (supabase) {
+        try {
+          await supabase.rpc('increment_dr_ahmed_news_views', { news_id: id });
+        } catch (supabaseError) {
+          console.warn('Supabase connection failed for incrementViews, updating localStorage only:', supabaseError);
+          // Don't throw here, still update localStorage
+        }
+      }
+      
       // Also update localStorage
       const savedNews = localStorage.getItem('dr-ahmed-news');
       if (savedNews) {
@@ -364,6 +557,23 @@ export const drAhmedNewsService = {
   // Initialize sample data
   async initializeSampleData(): Promise<void> {
     try {
+      if (supabase) {
+        try {
+          for (const newsItem of SAMPLE_DR_AHMED_NEWS) {
+            const { error } = await supabase
+              .from('dr_ahmed_news')
+              .upsert(newsItem);
+              
+            if (error) {
+              console.error('Error inserting sample data:', error);
+            }
+          }
+        } catch (supabaseError) {
+          console.warn('Supabase connection failed for initializeSampleData, using localStorage only:', supabaseError);
+          // Don't throw here, still save to localStorage
+        }
+      }
+      
       // Also save to localStorage
       localStorage.setItem('dr-ahmed-news', JSON.stringify(SAMPLE_DR_AHMED_NEWS));
       
@@ -400,9 +610,45 @@ export const drAhmedNewsService = {
 
   // Initialize realtime sync
   initializeRealtimeSync() {
-    console.log('Realtime sync disabled - using localStorage only');
-    return {
-      unsubscribe: () => console.log('No active subscription to unsubscribe')
-    };
+    if (!supabase) {
+      console.log('No Supabase client available for realtime sync');
+      return { unsubscribe: () => console.log('No Supabase client available') };
+    }
+    
+    try {
+      console.log('Initializing realtime sync...');
+      const subscription = supabase
+        .channel('schema-db-changes')
+        .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public',
+          table: 'dr_ahmed_news'
+        }, (payload) => {
+          console.log('Realtime update received from Supabase:', payload);
+          
+          // Refresh data
+          this.getAllNews().then(() => {
+            // Broadcast to all tabs
+            this.broadcastNewsUpdate();
+          });
+        })
+        .subscribe((status) => {
+          console.log('Realtime subscription status:', status);
+        });
+      
+      console.log('Realtime sync initialized');
+      
+      return {
+        unsubscribe: () => {
+          subscription.unsubscribe();
+          console.log('Realtime sync unsubscribed');
+        }
+      };
+    } catch (channelError) {
+      console.error('Error creating realtime channel:', channelError);
+      return {
+        unsubscribe: () => console.log('No active subscription to unsubscribe')
+      }
+    }
   }
 };
