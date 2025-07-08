@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
-  CheckCircle, 
   XCircle, 
   RefreshCw, 
   Database, 
@@ -13,9 +12,9 @@ import {
 import { supabase } from '@/lib/supabaseClient';
 
 const ConnectionTester = () => {
-  const [isTesting, setIsTesting] = useState(false);
+  const [isTesting, setIsTesting] = useState(true);
   const [testResults, setTestResults] = useState({
-    supabase: { status: 'pending', message: '' },
+    supabase: { status: 'error', message: 'تم تعطيل الاتصال بقاعدة البيانات' },
     localStorage: { status: 'pending', message: '' },
     realtime: { status: 'pending', message: '' }
   });
@@ -28,44 +27,19 @@ const ConnectionTester = () => {
   const runTests = async () => {
     setIsTesting(true);
     setTestResults({
-      supabase: { status: 'testing', message: 'جاري اختبار الاتصال...' },
+      supabase: { status: 'error', message: 'تم تعطيل الاتصال بقاعدة البيانات' },
       localStorage: { status: 'testing', message: 'جاري اختبار التخزين المحلي...' },
       realtime: { status: 'testing', message: 'جاري اختبار المزامنة المباشرة...' }
     });
 
-    // Test Supabase connection
-    try {
-      if (!supabase) {
-        throw new Error('Supabase client not initialized');
+    // Supabase is disabled
+    setTestResults(prev => ({
+      ...prev,
+      supabase: { 
+        status: 'error', 
+        message: 'تم تعطيل الاتصال بقاعدة البيانات عمداً، يتم استخدام التخزين المحلي فقط' 
       }
-      
-      // Test with a simple query that should work regardless of data
-      const { error } = await supabase.from('dr_ahmed_news').select('id').limit(1);
-      
-      if (error) {
-        console.warn('Supabase connection test error:', error);
-        throw error;
-      }
-      
-      setTestResults(prev => ({
-        ...prev,
-        supabase: { 
-          status: 'success', 
-          message: 'الاتصال بقاعدة البيانات يعمل بشكل صحيح (dr_ahmed_news table accessible)' 
-        }
-      }));
-    } catch (error) {
-      console.error('Supabase connection test failed:', error);
-      setTestResults(prev => ({
-        ...prev,
-        supabase: { 
-          status: 'error', 
-          message: error instanceof Error ? 
-            `فشل الاتصال بقاعدة البيانات: ${error.message}` : 
-            'فشل الاتصال بقاعدة البيانات' 
-        }
-      }));
-    }
+    }));
 
     // Test localStorage
     try {
@@ -180,7 +154,7 @@ const ConnectionTester = () => {
               </div>
             </div>
             <div>
-              {getStatusIcon(testResults.supabase.status)}
+              <XCircle className="w-5 h-5 text-red-600" />
             </div>
           </div>
 

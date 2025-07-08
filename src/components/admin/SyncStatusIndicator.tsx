@@ -3,9 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   CheckCircle, 
-  RefreshCw, 
-  XCircle, 
-  AlertTriangle,
+  RefreshCw,
   Loader2
 } from 'lucide-react';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
@@ -15,7 +13,7 @@ const SyncStatusIndicator = () => {
   const { toast } = useToast();
   const { syncStatus, isSyncing, syncNow } = useSyncStatus();
   const [lastSyncTime, setLastSyncTime] = useState<string>('');
-
+  
   useEffect(() => {
     // Update last sync time when status changes
     if (syncStatus.lastSynced) {
@@ -55,39 +53,6 @@ const SyncStatusIndicator = () => {
     }
   };
 
-  // Render based on sync status
-  if (syncStatus.status === 'error') {
-    return (
-      <Card className="bg-red-50 border-red-200">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 space-x-reverse">
-              <XCircle className="w-5 h-5 text-red-600" />
-              <div>
-                <span className="font-medium text-red-800">
-                  خطأ في الاتصال بقاعدة البيانات
-                </span>
-                <div className="text-xs text-gray-600 mt-1">
-                  {syncStatus.error || 'حدث خطأ غير متوقع'}
-                </div>
-              </div>
-            </div>
-            
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={handleManualSync}
-              disabled={isSyncing}
-            >
-              <RefreshCw className={`w-4 h-4 ml-2 ${isSyncing ? 'animate-spin' : ''}`} />
-              {isSyncing ? 'جاري المحاولة...' : 'إعادة المحاولة'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   if (syncStatus.status === 'syncing' || isSyncing) {
     return (
       <Card className="bg-blue-50 border-blue-200">
@@ -110,38 +75,6 @@ const SyncStatusIndicator = () => {
     );
   }
 
-  if (syncStatus.status === 'disconnected') {
-    return (
-      <Card className="bg-yellow-50 border-yellow-200">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 space-x-reverse">
-              <AlertTriangle className="w-5 h-5 text-yellow-600" />
-              <div>
-                <span className="font-medium text-yellow-800">
-                  غير متصل بقاعدة البيانات
-                </span>
-                <div className="text-xs text-gray-600 mt-1">
-                  البيانات محفوظة محلياً فقط
-                </div>
-              </div>
-            </div>
-            
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={handleManualSync}
-              disabled={isSyncing}
-            >
-              <RefreshCw className={`w-4 h-4 ml-2 ${isSyncing ? 'animate-spin' : ''}`} />
-              {isSyncing ? 'جاري الاتصال...' : 'الاتصال بقاعدة البيانات'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   // Default: Connected
   return (
     <Card className="bg-green-50 border-green-200">
@@ -150,13 +83,13 @@ const SyncStatusIndicator = () => {
           <div className="flex items-center space-x-2 space-x-reverse">
             <CheckCircle className="w-5 h-5 text-green-600" />
             <div>
-              <span className="font-medium text-green-800">
-                متصل بقاعدة البيانات
+              <span className="font-medium text-green-800 flex items-center">
+                البيانات محفوظة محلياً
               </span>
               
               {lastSyncTime && (
                 <div className="text-xs text-gray-600 mt-1">
-                  آخر مزامنة: {lastSyncTime}
+                  آخر تحديث: {lastSyncTime}
                 </div>
               )}
             </div>
@@ -169,7 +102,7 @@ const SyncStatusIndicator = () => {
             disabled={isSyncing}
           >
             <RefreshCw className={`w-4 h-4 ml-2 ${isSyncing ? 'animate-spin' : ''}`} />
-            {isSyncing ? 'جاري المزامنة...' : 'مزامنة البيانات'}
+            {isSyncing ? 'جاري التحديث...' : 'تحديث البيانات'}
           </Button>
         </div>
       </CardContent>
