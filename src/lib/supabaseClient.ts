@@ -79,9 +79,9 @@ export interface NewsItem {
   date: string;
   author: string;
   image?: string;
-  imageCaption?: string;
+  imagecaption?: string;
   category?: string;
-  youtubeUrl?: string;
+  youtubeurl?: string;
   images?: string[];
   content_html?: string;
   created_at?: string;
@@ -104,7 +104,7 @@ export const sampleNewsData: Omit<NewsItem, 'created_at' | 'updated_at'>[] = [
     author: 'المكتب الإعلامي',
     category: 'political',
     image: 'https://d.top4top.io/p_3473n86931.jpg',
-    imageCaption: 'لقاء الدكتور أحمد عبد الجبار العلواني مع الشيخ رعد عبد الجبار العلي سليمان في مقر إقامته بالرمادي'
+    imagecaption: 'لقاء الدكتور أحمد عبد الجبار العلواني مع الشيخ رعد عبد الجبار العلي سليمان في مقر إقامته بالرمادي'
   },
   {
     id: '2',
@@ -120,7 +120,7 @@ export const sampleNewsData: Omit<NewsItem, 'created_at' | 'updated_at'>[] = [
     author: 'المكتب الإعلامي',
     category: 'economic',
     image: 'https://images.pexels.com/photos/3183197/pexels-photo-3183197.jpeg',
-    imageCaption: 'توقيع العقد الجديد بين مجموعة العلواني والشركة العالمية'
+    imagecaption: 'توقيع العقد الجديد بين مجموعة العلواني والشركة العالمية'
   },
   {
     id: '3',
@@ -136,7 +136,7 @@ export const sampleNewsData: Omit<NewsItem, 'created_at' | 'updated_at'>[] = [
     author: 'المكتب الإعلامي',
     category: 'social',
     image: 'https://images.pexels.com/photos/159306/construction-site-build-construction-work-159306.jpeg',
-    imageCaption: 'إطلاق المشروع التنموي الجديد في الأنبار'
+    imagecaption: 'إطلاق المشروع التنموي الجديد في الأنبار'
   },
   {
     id: '4',
@@ -152,7 +152,7 @@ export const sampleNewsData: Omit<NewsItem, 'created_at' | 'updated_at'>[] = [
     author: 'المكتب الإعلامي',
     category: 'economic',
     image: 'https://images.pexels.com/photos/7176026/pexels-photo-7176026.jpeg',
-    imageCaption: 'استلام جائزة أفضل شركة مساهمة في التنمية المستدامة'
+    imagecaption: 'استلام جائزة أفضل شركة مساهمة في التنمية المستدامة'
   },
   {
     id: '5',
@@ -168,7 +168,7 @@ export const sampleNewsData: Omit<NewsItem, 'created_at' | 'updated_at'>[] = [
     author: 'المكتب الإعلامي',
     category: 'economic',
     image: 'https://images.pexels.com/photos/9875441/pexels-photo-9875441.jpeg',
-    imageCaption: 'إعلان مجموعة العلواني عن توسيع أعمالها في مجال الطاقة المتجددة'
+    imagecaption: 'إعلان مجموعة العلواني عن توسيع أعمالها في مجال الطاقة المتجددة'
   },
   {
     id: '6',
@@ -184,7 +184,7 @@ export const sampleNewsData: Omit<NewsItem, 'created_at' | 'updated_at'>[] = [
     author: 'المكتب الإعلامي',
     category: 'educational',
     image: 'https://images.pexels.com/photos/8471799/pexels-photo-8471799.jpeg',
-    imageCaption: 'دعم مجموعة العلواني لمبادرات التعليم في الأنبار'
+    imagecaption: 'دعم مجموعة العلواني لمبادرات التعليم في الأنبار'
   }
 ];
 
@@ -443,9 +443,9 @@ export const newsService = {
             date: updatedItem.date,
             author: updatedItem.author,
             image: updatedItem.image || null,
-            imageCaption: updatedItem.imageCaption || null,
+            imagecaption: updatedItem.imagecaption || null,
             category: updatedItem.category || null,
-            youtubeUrl: updatedItem.youtubeUrl || null,
+            youtubeurl: updatedItem.youtubeurl || null,
             content_html: updatedItem.content_html || null,
             created_at: updatedItem.created_at,
             updated_at: updatedItem.updated_at

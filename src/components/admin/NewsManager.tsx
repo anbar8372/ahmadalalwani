@@ -15,7 +15,7 @@ import NewsDebugger from './NewsDebugger';
 // Enhanced NewsItem interface with new fields
 interface EnhancedNewsItem extends NewsItem {
   category?: string;
-  youtubeUrl?: string;
+  youtubeurl?: string;
   images?: string[];
   content_html?: string;
 }
@@ -156,9 +156,9 @@ const NewsManager = () => {
       date: new Date().toISOString().split('T')[0],
       author: authors[0] || 'الدكتور أحمد العلواني',
       image: '',
-      imageCaption: '',
+     imagecaption: '',
       category: categories[0]?.id || 'general',
-      youtubeUrl: '',
+     youtubeurl: '',
       images: [],
       content_html: ''
     };
@@ -289,8 +289,8 @@ const NewsManager = () => {
   };
 
   const addYouTubeVideo = () => {
-    if (editingNews && editingNews.youtubeUrl) {
-      const videoId = extractYouTubeId(editingNews.youtubeUrl);
+    if (editingNews && editingNews.youtubeurl) {
+      const videoId = extractYouTubeId(editingNews.youtubeurl);
       if (videoId) {
         const videoHtml = `<div class="my-6"><iframe width="100%" height="315" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen class="rounded-lg shadow-md"></iframe></div>`;
         setEditingNews({
@@ -864,8 +864,8 @@ const NewsManager = () => {
                       <Label htmlFor="image-caption">وصف الصورة (اختياري)</Label>
                       <Input
                         id="image-caption"
-                        value={editingNews.imageCaption || ''}
-                        onChange={(e) => setEditingNews({...editingNews, imageCaption: e.target.value})}
+                        value={editingNews.imagecaption || ''}
+                        onChange={(e) => setEditingNews({...editingNews, imagecaption: e.target.value})}
                         className="text-right"
                         placeholder="أدخل وصف الصورة"
                         disabled={isLoading}
@@ -882,15 +882,15 @@ const NewsManager = () => {
                     <div className="flex gap-2">
                       <Input
                         placeholder="رابط فيديو يوتيوب"
-                        value={editingNews.youtubeUrl || ''}
-                        onChange={(e) => setEditingNews({...editingNews, youtubeUrl: e.target.value})}
+                        value={editingNews.youtubeurl || ''}
+                        onChange={(e) => setEditingNews({...editingNews, youtubeurl: e.target.value})}
                         className="text-right flex-1"
                         disabled={isLoading}
                       />
                       <Button
                         variant="outline"
                         onClick={addYouTubeVideo}
-                        disabled={!editingNews.youtubeUrl}
+                        disabled={!editingNews.youtubeurl}
                       >
                         <Plus className="w-4 h-4 ml-2" />
                         إضافة للمحتوى
@@ -1007,9 +1007,9 @@ const NewsManager = () => {
                           alt={editingNews.title}
                           className="w-full max-h-96 object-cover rounded-lg"
                         />
-                        {editingNews.imageCaption && (
+                        {editingNews.imagecaption && (
                           <p className="text-sm text-gray-600 mt-2 text-center italic">
-                            {editingNews.imageCaption}
+                            {editingNews.imagecaption}
                           </p>
                         )}
                       </div>
