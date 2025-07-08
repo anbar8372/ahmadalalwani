@@ -13,7 +13,8 @@ import {
   Shield,
   Newspaper,
   Menu,
-  X
+  X,
+  Server
 } from 'lucide-react';
 import HomeContentManager from '@/components/admin/HomeContentManager';
 import BiographyManager from '@/components/admin/BiographyManager';
@@ -28,12 +29,15 @@ import NewsManager from '@/components/admin/NewsManager';
 import LoginForm from '@/components/admin/LoginForm';
 import SyncStatusIndicator from '@/components/admin/SyncStatusIndicator';
 import ErrorBoundary from '@/components/admin/ErrorBoundary';
+import ConnectionTester from '@/components/admin/ConnectionTester';
+import ConnectionErrorHandler from '@/components/admin/ConnectionErrorHandler';
 import { useAuth } from '@/hooks/useAuth';
 
 const AdminPanel = () => {
   const { isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState('home');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showConnectionTester, setShowConnectionTester] = useState(false);
 
   if (!isAuthenticated) {
     return <LoginForm />;
@@ -96,8 +100,18 @@ const AdminPanel = () => {
               </Button>
               <h1 className="text-xl font-bold text-gray-900">لوحة التحكم</h1>
             </div>
-            <div className="text-sm text-gray-600">
-              مرحباً بك في لوحة إدارة الموقع
+            <div className="flex items-center space-x-2 space-x-reverse">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowConnectionTester(!showConnectionTester)}
+              >
+                <Server className="w-4 h-4 ml-2" />
+                {showConnectionTester ? 'إخفاء اختبار الاتصال' : 'اختبار الاتصال'}
+              </Button>
+              <div className="text-sm text-gray-600">
+                مرحباً بك في لوحة إدارة الموقع
+              </div>
             </div>
           </div>
         </div>
@@ -180,6 +194,11 @@ const AdminPanel = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0 pb-2">
+                    {showConnectionTester && (
+                      <div className="mb-4">
+                        <ConnectionTester />
+                      </div>
+                    )}
                     <SyncStatusIndicator />
                   </CardContent>
                 </Card>
