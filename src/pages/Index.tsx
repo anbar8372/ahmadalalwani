@@ -16,7 +16,7 @@ const Index = () => {
             {/* Distinguished Profile Image */}
             <div className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 mx-auto mb-6 md:mb-8 rounded-full shadow-2xl overflow-hidden bg-white border-4 border-iraqi-red/20 relative">
               <div className="absolute inset-0 bg-gradient-to-br from-iraqi-red/10 to-iraqi-green/10 rounded-full"></div>
-              <img src="https://k.top4top.io/p_3475kzsn81.jpg" alt="الدكتور أحمد العلواني" className="w-full h-full object-cover relative z-10" onError={(e) => {
+              <img src="https://k.top4top.io/p_3475kzsn81.jpg" alt="الدكتور أحمد العلواني" className="w-full h-full object-cover relative z-10" onError={e => {
               e.currentTarget.style.display = 'none';
               e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-gradient-to-br from-red-600 to-green-600 flex items-center justify-center relative z-10"><span class="text-4xl md:text-6xl font-bold text-white">أ.ع</span></div>';
             }} />

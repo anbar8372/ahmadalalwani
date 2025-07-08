@@ -15,8 +15,6 @@ import {
   X, 
   FileText,
   Server,
-  Database,
-  FileJson
 } from 'lucide-react';
 import HomeContentManager from '@/components/admin/HomeContentManager';
 import BiographyManager from '@/components/admin/BiographyManager';
@@ -32,7 +30,6 @@ import DrAhmedNewsManager from '@/components/admin/DrAhmedNewsManager';
 import SyncStatusIndicator from '@/components/admin/SyncStatusIndicator';
 import ErrorBoundary from '@/components/admin/ErrorBoundary';
 import ConnectionTester from '@/components/admin/ConnectionTester';
-import JsonNewsManager from '@/components/admin/JsonNewsManager';
 import ConnectionErrorHandler from '@/components/admin/ConnectionErrorHandler';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -49,7 +46,6 @@ const AdminPanel = () => {
   const menuItems = [
     { id: 'home', label: 'الصفحة الرئيسية', icon: Home },
     { id: 'dr-ahmed-news', label: 'أخبار الدكتور أحمد', icon: FileText },
-    { id: 'json-news', label: 'نظام الأخبار JSON', icon: FileJson },
     { id: 'biography', label: 'السيرة الذاتية', icon: User },
     { id: 'political', label: 'المسيرة السياسية', icon: Briefcase },
     { id: 'achievements', label: 'الإنجازات', icon: Award },
@@ -66,8 +62,6 @@ const AdminPanel = () => {
         return <HomeContentManager />;
       case 'dr-ahmed-news':
         return <DrAhmedNewsManager />;
-      case 'json-news':
-        return <JsonNewsManager />;
       case 'biography':
         return <BiographyManager />;
       case 'political':

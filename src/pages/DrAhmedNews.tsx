@@ -257,11 +257,11 @@ const DrAhmedNews = () => {
                           {/* News Image */}
                           <div className="h-48 overflow-hidden">
                             <img
-                              src={newsItem.image || 'https://k.top4top.io/p_3475kzsn81.jpg'}
+                              src={newsItem.image || 'https://images.pexels.com/photos/6801648/pexels-photo-6801648.jpeg'}
                               alt={newsItem.title}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               onError={(e) => {
-                                e.currentTarget.src = 'https://k.top4top.io/p_3475kzsn81.jpg';
+                                e.currentTarget.src = 'https://images.pexels.com/photos/6801648/pexels-photo-6801648.jpeg';
                               }}
                             />
                             {/* Featured Badge */}

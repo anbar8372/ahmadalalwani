@@ -298,11 +298,11 @@ const DrAhmedNewsDetail = () => {
                             {/* News Image */}
                             <div className="h-40 overflow-hidden">
                               <img 
-                                src={item.image || 'https://k.top4top.io/p_3475kzsn81.jpg'} 
+                                src={item.image || 'https://images.pexels.com/photos/6801648/pexels-photo-6801648.jpeg'} 
                                 alt={item.title}
                                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                                 onError={(e) => {
-                                  e.currentTarget.src = 'https://k.top4top.io/p_3475kzsn81.jpg';
+                                  e.currentTarget.src = 'https://images.pexels.com/photos/6801648/pexels-photo-6801648.jpeg';
                                 }}
                               />
                               {/* Category Badge */}
