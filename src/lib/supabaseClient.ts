@@ -28,7 +28,6 @@ export const supabase = (isValidSupabaseUrl && isValidAnonKey)
 // Log connection status for debugging
 if (supabase) {
   console.log('Supabase client initialized with URL:', supabaseUrl?.substring(0, 20) + '...');
-  console.log('Using hardcoded credentials for development');
 } else {
   console.warn('Supabase client initialization failed. Check your environment variables.');
 }

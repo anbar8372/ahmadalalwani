@@ -26,7 +26,7 @@ const ConnectionErrorHandler = ({
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-red-700">
-          حدث خطأ أثناء الاتصال بقاعدة البيانات. يرجى تطبيق ملف الترحيل (migration) على مشروع Supabase الخاص بك.
+          حدث خطأ أثناء الاتصال بقاعدة البيانات. يرجى تطبيق ملف الترحيل (migration) كما هو موضح في ملف MIGRATION_INSTRUCTIONS.md
         </p>
         
         <div className="bg-white p-3 rounded border border-red-200">
@@ -84,8 +84,8 @@ const ConnectionErrorHandler = ({
             <div className="p-2 bg-gray-50 rounded border text-xs font-mono text-gray-700 max-h-40 overflow-y-auto">
               <p>وقت الخطأ: {new Date().toLocaleString('ar-IQ')}</p>
               <p>نوع الخطأ: خطأ اتصال بقاعدة البيانات</p>
-                غير متصل - يجب تطبيق ملف الترحيل
-              <p>الإجراء المقترح: التحقق من اتصال الإنترنت وإعدادات قاعدة البيانات</p>
+              <p>الوضع الحالي: غير متصل - جدول dr_ahmed_news غير موجود</p>
+              <p>الإجراء المقترح: تطبيق ملف الترحيل (migration) على مشروع Supabase</p>
             <p>الإجراء المقترح: تطبيق ملف الترحيل (migration) على مشروع Supabase</p>
           </div>
         )}

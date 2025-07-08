@@ -40,18 +40,26 @@ const ConnectionTester = () => {
       }
       
       // Test with a simple query that should work regardless of data
-      const { error } = await supabase.from('dr_ahmed_news').select('id').limit(1);
+      const { data, error } = await supabase.from('dr_ahmed_news').select('id').limit(1);
       
       if (error) {
-        console.warn('Supabase connection test error:', error);
+        console.warn('Supabase connection test error:', error.message, 'Code:', error.code);
+        
+        // Check if the error is because the table doesn't exist
+        if (error.message.includes('relation "public.dr_ahmed_news" does not exist') || 
+            error.message.includes('table "dr_ahmed_news" does not exist') ||
+            error.code === 'PGRST116') {
+          throw new Error('جدول dr_ahmed_news غير موجود. يرجى تطبيق ملف الترحيل (migration)');
+        }
+        
         throw error;
       }
       
       setTestResults(prev => ({
         ...prev,
         supabase: { 
-          status: 'success', 
-          message: 'الاتصال بقاعدة البيانات يعمل بشكل صحيح (dr_ahmed_news table accessible)' 
+          status: 'success',
+          message: `الاتصال بقاعدة البيانات يعمل بشكل صحيح (${data ? data.length : 0} records found)` 
         }
       }));
     } catch (error) {
