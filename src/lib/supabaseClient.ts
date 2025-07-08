@@ -417,8 +417,7 @@ export const newsService = {
       
       if (!error && data && data.length > 0) {
           console.log('News saved to Supabase successfully');
-          return data;
-        }
+          return data[0];
       }
 
       return updatedItem;
