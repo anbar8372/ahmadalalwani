@@ -14,7 +14,8 @@ import {
   Newspaper,
   Menu,
   X,
-  Server
+  Server,
+  FileText
 } from 'lucide-react';
 import HomeContentManager from '@/components/admin/HomeContentManager';
 import BiographyManager from '@/components/admin/BiographyManager';
