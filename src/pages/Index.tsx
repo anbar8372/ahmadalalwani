@@ -1,6 +1,7 @@
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import DrAhmedNewsSection from '@/components/DrAhmedNewsSection';
 import { Link } from 'react-router-dom';
 import { ChevronDown, Users, Building, Award, BookOpen, Briefcase } from 'lucide-react';
 
@@ -84,6 +85,10 @@ const Index = () => {
       </section>
 
       {/* Brief Overview */}
+      
+      {/* أخبار الدكتور أحمد العلواني */}
+      <DrAhmedNewsSection />
+      
       <section className="py-12 md:py-16 section-gradient">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 md:mb-12">

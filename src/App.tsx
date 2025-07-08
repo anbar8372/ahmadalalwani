@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/hooks/useAuth';
 import Index from './pages/Index';
 
+const DrAhmedNews = lazy(() => import('./pages/DrAhmedNews'));
+const DrAhmedNewsDetail = lazy(() => import('./pages/DrAhmedNewsDetail'));
 const Biography = lazy(() => import('./pages/Biography'));
 const PoliticalCareer = lazy(() => import('./pages/PoliticalCareer'));
 const Achievements = lazy(() => import('./pages/Achievements'));
@@ -24,6 +26,16 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/dr-ahmed-news" element={
+              <Suspense fallback={<div>جاري التحميل...</div>}>
+                <DrAhmedNews />
+              </Suspense>
+            } />
+            <Route path="/dr-ahmed-news/:id" element={
+              <Suspense fallback={<div>جاري التحميل...</div>}>
+                <DrAhmedNewsDetail />
+              </Suspense>
+            } />
             <Route path="/biography" element={
               <Suspense fallback={<div>جاري التحميل...</div>}>
                 <Biography />
