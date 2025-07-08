@@ -6,11 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Save, Plus, Trash2, Edit, Calendar, Image, Link as LinkIcon, Upload, Loader2, Database, CheckCircle, Video, Type, Hash, ExternalLink, Crop, Eye, Settings, User, AlertTriangle, RefreshCw, Newspaper } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Save, Plus, Trash2, Edit, Calendar, Image, Link as LinkIcon, Upload, Loader2, Database, CheckCircle, Video, Type, Hash, ExternalLink, Crop, Eye, Settings, User, Bug } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { newsService, NewsItem, sampleNewsData } from '@/lib/supabaseClient';
-import { useSyncStatus } from '@/hooks/useSyncStatus';
+import NewsDebugger from './NewsDebugger';
 
 // Enhanced NewsItem interface with new fields
 interface EnhancedNewsItem extends NewsItem {
@@ -45,7 +45,6 @@ interface Category {
 
 const NewsManager = () => {
   const { toast } = useToast();
-  const { syncStatus } = useSyncStatus();
   const [news, setNews] = useState<EnhancedNewsItem[]>([]);
   const [editingNews, setEditingNews] = useState<EnhancedNewsItem | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -57,6 +56,7 @@ const NewsManager = () => {
   const [showImageCrop, setShowImageCrop] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showDebugger, setShowDebugger] = useState(false);
 
   // Categories and Authors management
   const [categories, setCategories] = useState<Category[]>(() => {
@@ -99,29 +99,20 @@ const NewsManager = () => {
   // Load news from storage on component mount
   useEffect(() => {
     loadNews();
-    
-    // Initialize realtime subscription
-    const subscription = newsService.initializeRealtimeSync();
-    
-    return () => {
-      subscription.unsubscribe();
-    };
   }, []);
 
   const loadNews = async () => {
     try {
       setIsLoading(true);
-      setErrorMessage(null);
       const newsData = await newsService.getAllNews();
       setNews(newsData);
       console.log('Loaded news:', newsData.length, 'items');
     } catch (error) {
       console.error('خطأ في تحميل الأخبار:', error);
-      setErrorMessage('فشل في تحميل الأخبار. يرجى التحقق من اتصالك بالإنترنت وإعادة المحاولة.');
       toast({
-        title: "خطأ في تحميل الأخبار",
-        description: "تم الاعتماد على التخزين المحلي كبديل مؤقت",
-        variant: "destructive"
+        title: "تحذير",
+        description: "تم تحميل الأخبار من التخزين المحلي",
+        variant: "default"
       });
     } finally {
       setIsLoading(false);
@@ -131,7 +122,6 @@ const NewsManager = () => {
   const initializeSampleData = async () => {
     try {
       setIsLoading(true);
-      setErrorMessage(null);
       await newsService.initializeSampleData();
       await loadNews();
       toast({
@@ -140,7 +130,6 @@ const NewsManager = () => {
       });
     } catch (error) {
       console.error('خطأ في إضافة البيانات النموذجية:', error);
-      setErrorMessage('فشل في إضافة البيانات النموذجية. يرجى التحقق من اتصالك بالإنترنت وإعادة المحاولة.');
       toast({
         title: "خطأ",
         description: "فشل في إضافة البيانات النموذجية",
@@ -153,7 +142,7 @@ const NewsManager = () => {
 
   const addNews = () => {
     const newNews: EnhancedNewsItem = {
-      id: self.crypto.randomUUID(),
+      id: crypto.randomUUID(),
       title: '',
       content: '',
       date: new Date().toISOString().split('T')[0],
@@ -333,7 +322,7 @@ const NewsManager = () => {
   const saveNews = async () => {
     if (!editingNews || !editingNews.title.trim() || !editingNews.content.trim()) {
       toast({
-        title: "بيانات غير مكتملة",
+        title: "خطأ",
         description: "يرجى ملء جميع الحقول المطلوبة",
         variant: "destructive"
       });
@@ -342,10 +331,9 @@ const NewsManager = () => {
 
     try {
       setIsLoading(true);
-      setErrorMessage(null);
       
       // Combine regular content with HTML content
-      const finalContent = editingNews.content;
+      const finalContent = editingNews.content + (editingNews.content_html || '');
       const newsToSave = { ...editingNews, content: finalContent };
       
       // Save news item
@@ -363,15 +351,12 @@ const NewsManager = () => {
       setShowImageCrop(false);
 
       toast({
-        title: syncStatus.connected ? "تم الحفظ والمزامنة بنجاح" : "تم الحفظ محلياً",
-        description: syncStatus.connected 
-          ? "تم حفظ الخبر ومزامنته عبر جميع الأجهزة" 
-          : "تم حفظ الخبر محلياً. ستتم المزامنة عند استعادة الاتصال",
+        title: "تم الحفظ بنجاح",
+        description: "تم حفظ الخبر ومزامنته عبر جميع الأجهزة",
         variant: "default"
       });
     } catch (error) {
       console.error('Error saving news:', error);
-      setErrorMessage('فشل في حفظ الخبر. يرجى التحقق من اتصالك بالإنترنت وإعادة المحاولة.');
       toast({
         title: "خطأ في الحفظ",
         description: "فشل في حفظ الخبر. يرجى المحاولة مرة أخرى.",
@@ -382,19 +367,12 @@ const NewsManager = () => {
     }
   };
 
-  const confirmDelete = (id: string) => {
-    setDeleteConfirmId(id);
-  };
-
-  const handleDelete = async () => {
-    if (!deleteConfirmId) return;
-    
+  const deleteNews = async (id: string) => {
     try {
       setIsLoading(true);
-      setErrorMessage(null);
       
       // Delete news item
-      await newsService.deleteNews(deleteConfirmId);
+      await newsService.deleteNews(id);
       
       // Broadcast update to other tabs/devices
       newsService.broadcastNewsUpdate();
@@ -403,23 +381,18 @@ const NewsManager = () => {
       await loadNews();
 
       toast({
-        title: "تم الحذف بنجاح",
-        description: syncStatus.connected 
-          ? "تم حذف الخبر ومزامنة التغييرات" 
-          : "تم حذف الخبر محلياً. ستتم المزامنة عند استعادة الاتصال",
+        title: "تم الحذف",
+        description: "تم حذف الخبر بنجاح",
       });
     } catch (error) {
       console.error('Error deleting news:', error);
-      setErrorMessage('فشل في حذف الخبر. يرجى التحقق من اتصالك بالإنترنت وإعادة المحاولة.');
       toast({
-        title: "خطأ أثناء الحذف",
+        title: "خطأ في الحذف",
         description: "فشل في حذف الخبر. يرجى المحاولة مرة أخرى.",
         variant: "destructive"
       });
     } finally {
       setIsLoading(false);
-      // Close confirmation dialog
-      setDeleteConfirmId(null);
     }
   };
 
@@ -460,49 +433,12 @@ const NewsManager = () => {
     setShowImageCrop(false);
   };
 
-  // Show loading state only on initial load
-  if (isLoading && news.length === 0 && !errorMessage) {
+  if (isLoading && news.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="w-8 h-8 animate-spin" />
         <span className="mr-2">جاري تحميل الأخبار...</span>
       </div>
-    );
-  }
-
-  // Show error message if there's an error
-  if (errorMessage && news.length === 0) {
-    return (
-      <Card className="bg-red-50 border-red-200">
-        <CardContent className="p-6">
-          <div className="text-center py-8">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-8 h-8 text-red-600" />
-            </div>
-            <h3 className="text-xl font-bold text-red-800 mb-2">خطأ في تحميل الأخبار</h3>
-            <p className="text-red-700 mb-6">{errorMessage}</p>
-            <div className="flex justify-center gap-4">
-              <Button onClick={loadNews} disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-                    جاري المحاولة...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="w-4 h-4 ml-2" />
-                    إعادة المحاولة
-                  </>
-                )}
-              </Button>
-              <Button variant="outline" onClick={initializeSampleData} disabled={isLoading}>
-                <Database className="w-4 h-4 ml-2" />
-                تهيئة بيانات نموذجية
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     );
   }
 
@@ -512,6 +448,14 @@ const NewsManager = () => {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-right">إدارة الأخبار المتقدمة</CardTitle>
           <div className="flex gap-2">
+            <Button 
+              onClick={() => setShowDebugger(!showDebugger)} 
+              size="sm" 
+              variant="outline"
+            >
+              <Bug className="w-4 h-4 ml-2" />
+              {showDebugger ? 'إخفاء أداة التصحيح' : 'أداة التصحيح'}
+            </Button>
             {news.length === 0 && (
               <Button onClick={initializeSampleData} size="sm" variant="outline" disabled={isLoading}>
                 <Database className="w-4 h-4 ml-2" />
@@ -525,6 +469,13 @@ const NewsManager = () => {
           </div>
         </CardHeader>
         <CardContent>
+          {/* Debug Tool */}
+          {showDebugger && (
+            <div className="mb-6">
+              <NewsDebugger />
+            </div>
+          )}
+          
           {/* Categories and Authors Management */}
           <div className="mb-6 p-4 bg-gray-50 rounded-lg">
             <h4 className="text-lg font-semibold mb-4 text-right">إدارة التصنيفات والكتّاب</h4>
@@ -589,7 +540,7 @@ const NewsManager = () => {
                     <div key={category.id} className="flex items-center justify-between p-2 border rounded">
                       <Button
                         size="sm"
-                        variant="ghost"
+                        variant="outline"
                         onClick={() => deleteCategory(category.id)}
                         className="text-red-600 hover:text-red-800"
                       >
@@ -646,7 +597,7 @@ const NewsManager = () => {
                     <div key={index} className="flex items-center justify-between p-2 border rounded">
                       <Button
                         size="sm"
-                        variant="ghost"
+                        variant="outline"
                         onClick={() => deleteAuthor(author)}
                         className="text-red-600 hover:text-red-800"
                       >
@@ -744,6 +695,7 @@ const NewsManager = () => {
                   <div className="space-y-2">
                     <Label htmlFor="news-content">محتوى الخبر الأساسي *</Label>
                     <Textarea
+                      dir="rtl"
                       id="news-content"
                       value={editingNews.content}
                       onChange={(e) => setEditingNews({...editingNews, content: e.target.value})}
@@ -960,7 +912,7 @@ const NewsManager = () => {
                       <Label>المحتوى المتقدم المضاف</Label>
                       <div className="border rounded p-4 bg-white min-h-[100px] max-h-[300px] overflow-y-auto">
                         {editingNews.content_html ? (
-                          <div dangerouslySetInnerHTML={{ __html: editingNews.content_html }} />
+                          <div dir="rtl" dangerouslySetInnerHTML={{ __html: editingNews.content_html }} />
                         ) : (
                           <p className="text-gray-500 text-center">لم يتم إضافة محتوى متقدم بعد</p>
                         )}
@@ -1016,7 +968,7 @@ const NewsManager = () => {
                     <div className="prose max-w-none text-right">
                       <div className="whitespace-pre-wrap mb-4">{editingNews.content}</div>
                       {editingNews.content_html && (
-                        <div dangerouslySetInnerHTML={{ __html: editingNews.content_html }} />
+                        <div dir="rtl" dangerouslySetInnerHTML={{ __html: editingNews.content_html }} />
                       )}
                     </div>
                   </div>
@@ -1026,15 +978,15 @@ const NewsManager = () => {
               <div className="flex gap-2 mt-6">
                 <Button onClick={saveNews} disabled={isLoading}>
                   {isLoading ? (
-                    <div className="flex items-center">
+                    <>
                       <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-                      <span>جاري الحفظ...</span>
-                    </div>
+                      جاري الحفظ...
+                    </>
                   ) : (
-                    <div className="flex items-center">
+                    <>
                       <Save className="w-4 h-4 ml-2" />
-                      <span>حفظ الخبر</span>
-                    </div>
+                      حفظ الخبر
+                    </>
                   )}
                 </Button>
                 <Button variant="outline" onClick={cancelEdit} disabled={isLoading}>
@@ -1046,7 +998,7 @@ const NewsManager = () => {
 
           {news.length === 0 && !isLoading ? (
             <div className="text-center py-8 text-gray-500">
-              <Newspaper className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>لا توجد أخبار حالياً</p>
               <p className="text-sm">اضغط على "إضافة أخبار نموذجية" لإضافة أخبار تجريبية أو "إضافة خبر جديد" لإضافة خبر مخصص</p>
             </div>
@@ -1073,15 +1025,15 @@ const NewsManager = () => {
                         variant="outline"
                         disabled={isLoading}
                       >
-                        <Edit className="w-4 h-4" />
+                        <Edit className="w-4 h-4 ml-1" />
                       </Button>
                       <Button 
-                        onClick={() => confirmDelete(newsItem.id)}
+                        onClick={() => deleteNews(newsItem.id)}
                         variant="destructive" 
                         size="sm"
                         disabled={isLoading}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4 ml-1" />
                       </Button>
                     </div>
                     <div className="text-right flex-1">
@@ -1098,14 +1050,17 @@ const NewsManager = () => {
                       </p>
                       {newsItem.image && (
                         <div className="mb-2">
-                          <img 
-                            src={newsItem.image} 
-                            alt={newsItem.title}
-                            className="w-20 h-20 object-cover rounded border"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
+                          <div className="w-20 h-20 overflow-hidden rounded border">
+                            <img 
+                              src={newsItem.image} 
+                              alt={newsItem.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full bg-gray-200 flex items-center justify-center"><span class="text-gray-400">الصورة غير متوفرة</span></div>';
+                              }}
+                            />
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1114,49 +1069,18 @@ const NewsManager = () => {
                 </div>
               ))}
             </div>
+            
+            {/* Pagination placeholder for future implementation */}
+            {news.length > 10 && (
+              <div className="flex justify-center mt-6">
+                <Button variant="outline" size="sm" disabled>
+                  الصفحة 1 من {Math.ceil(news.length / 10)}
+                </Button>
+              </div>
+            )}
           )}
         </CardContent>
       </Card>
-      
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
-        <DialogContent className="text-right">
-          <DialogHeader>
-            <DialogTitle>تأكيد حذف الخبر</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-gray-700">
-              هل أنت متأكد من رغبتك في حذف هذا الخبر؟ لا يمكن التراجع عن هذا الإجراء.
-            </p>
-          </div>
-          <DialogFooter className="flex justify-end gap-2 sm:gap-0">
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="flex items-center">
-                  <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-                  <span>جاري الحذف...</span>
-                </div>
-              ) : (
-                <div className="flex items-center">
-                  <Trash2 className="w-4 h-4 ml-2" />
-                  <span>تأكيد الحذف</span>
-                </div>
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteConfirmId(null)}
-              disabled={isLoading}
-            >
-              إلغاء
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
