@@ -106,7 +106,12 @@ export const drAhmedNewsService = {
             .order('date', { ascending: false });
 
           if (error) {
-            console.warn('Supabase query error:', error.message);
+            if (error.code === '42P01') {
+              console.warn('Table "dr_ahmed_news" does not exist in Supabase. Using localStorage fallback.');
+              console.warn('To fix this, run the SQL from supabase/migrations/20250708040435_restless_base.sql in your Supabase SQL Editor.');
+            } else {
+              console.warn('Supabase query error:', error.message);
+            }
             throw error;
           }
           
@@ -116,23 +121,25 @@ export const drAhmedNewsService = {
             return data;
           }
           
-          // If no data in Supabase, initialize with sample data
-          await this.initializeSampleData();
-          
-          // Try fetching again
-          const { data: refreshedData, error: refreshedError } = await supabase
-            .from('dr_ahmed_news')
-            .select('*')
-            .order('date', { ascending: false });
+          // If no data in Supabase but table exists, initialize with sample data
+          if (!error || error.code !== '42P01') {
+            await this.initializeSampleData();
             
-          if (refreshedError) {
-            console.warn('Supabase refresh query error:', refreshedError.message);
-            throw refreshedError;
-          }
-          
-          if (refreshedData && refreshedData.length > 0) {
-            localStorage.setItem('dr-ahmed-news', JSON.stringify(refreshedData));
-            return refreshedData;
+            // Try fetching again
+            const { data: refreshedData, error: refreshedError } = await supabase
+              .from('dr_ahmed_news')
+              .select('*')
+              .order('date', { ascending: false });
+              
+            if (refreshedError && refreshedError.code !== '42P01') {
+              console.warn('Supabase refresh query error:', refreshedError.message);
+              throw refreshedError;
+            }
+            
+            if (refreshedData && refreshedData.length > 0) {
+              localStorage.setItem('dr-ahmed-news', JSON.stringify(refreshedData));
+              return refreshedData;
+            }
           }
         } catch (supabaseError) {
           console.warn('Supabase connection failed, falling back to localStorage:', supabaseError);
@@ -180,7 +187,11 @@ export const drAhmedNewsService = {
             .single();
 
           if (error) {
-            console.warn('Supabase query error for news by ID:', error.message);
+            if (error.code === '42P01') {
+              console.warn('Table "dr_ahmed_news" does not exist in Supabase. Using localStorage fallback.');
+            } else {
+              console.warn('Supabase query error for news by ID:', error.message);
+            }
             throw error;
           }
           return data;
@@ -565,7 +576,12 @@ export const drAhmedNewsService = {
               .upsert(newsItem);
               
             if (error) {
-              console.error('Error inserting sample data:', error);
+              if (error.code === '42P01') {
+                console.warn('Cannot insert sample data: table "dr_ahmed_news" does not exist in Supabase.');
+                break; // Stop trying to insert if table doesn't exist
+              } else {
+                console.error('Error inserting sample data:', error);
+              }
             }
           }
         } catch (supabaseError) {

@@ -55,17 +55,23 @@ export const supabase = (isValidSupabaseUrl && isValidAnonKey)
 if (supabase) {
   console.log('Supabase client initialized with URL:', supabaseUrl?.substring(0, 20) + '...');
   
-  // Test connection
+  // Test connection and table existence
   supabase.from('dr_ahmed_news').select('id', { count: 'exact', head: true })
     .then(({ error }) => {
       if (error) {
-        console.warn('Supabase connection test failed:', error.message);
+        if (error.code === '42P01') {
+          console.warn('Supabase table "dr_ahmed_news" does not exist. Please apply database migrations.');
+          console.warn('Run the SQL from supabase/migrations/20250708040435_restless_base.sql in your Supabase SQL Editor.');
+        } else {
+          console.warn('Supabase connection test failed:', error.message);
+        }
       } else {
         console.log('Supabase connection test successful');
       }
     })
     .catch(error => {
       console.warn('Supabase connection test error:', error.message);
+      console.warn('Application will use localStorage fallback for data storage.');
     });
 } else {
   console.warn('Supabase client initialization failed. Running in offline mode with localStorage.');
