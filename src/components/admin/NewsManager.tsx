@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Save, Plus, Trash2, Edit, Calendar, Image, Link as LinkIcon, Upload, Loader2, Database, CheckCircle, Video, Type, Hash, ExternalLink, Crop, Eye, Settings, User, Bug } from 'lucide-react';
+import { Save, Plus, Trash2, Edit, Calendar, Image, Link as LinkIcon, Upload, Loader2, Database, CheckCircle, Video, Type, Hash, ExternalLink, Crop, Eye, Settings, User, Bug, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { newsService, NewsItem, sampleNewsData } from '@/lib/supabaseClient';
 import NewsDebugger from './NewsDebugger';
@@ -56,6 +56,7 @@ const NewsManager = () => {
   const [showImageCrop, setShowImageCrop] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [saveAttempts, setSaveAttempts] = useState(0);
   const [showDebugger, setShowDebugger] = useState(false);
 
   // Categories and Authors management
@@ -99,6 +100,13 @@ const NewsManager = () => {
   // Load news from storage on component mount
   useEffect(() => {
     loadNews();
+    
+    // Set up realtime subscription
+    const subscription = newsService.initializeRealtimeSync();
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const loadNews = async () => {
@@ -322,19 +330,23 @@ const NewsManager = () => {
   const saveNews = async () => {
     if (!editingNews || !editingNews.title.trim() || !editingNews.content.trim()) {
       toast({
-        title: "خطأ",
+        title: "حقول مطلوبة",
         description: "يرجى ملء جميع الحقول المطلوبة",
         variant: "destructive"
       });
       return;
     }
 
+    // Increment save attempts counter
+    setSaveAttempts(prev => prev + 1);
+
     try {
       setIsLoading(true);
+      setErrorMessage(null);
       
       // Combine regular content with HTML content
-      const finalContent = editingNews.content + (editingNews.content_html || '');
-      const newsToSave = { ...editingNews, content: finalContent };
+      // Don't combine them - keep them separate
+      const newsToSave = { ...editingNews };
       
       // Save news item
       await newsService.upsertNews(newsToSave);
@@ -357,6 +369,13 @@ const NewsManager = () => {
       });
     } catch (error) {
       console.error('Error saving news:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'فشل في حفظ الخبر');
+      
+      // If we've tried multiple times, suggest using the debugger
+      if (saveAttempts > 1) {
+        setShowDebugger(true);
+      }
+      
       toast({
         title: "خطأ في الحفظ",
         description: "فشل في حفظ الخبر. يرجى المحاولة مرة أخرى.",
@@ -473,6 +492,36 @@ const NewsManager = () => {
           {showDebugger && (
             <div className="mb-6">
               <NewsDebugger />
+            </div>
+          )}
+          
+          {/* Error Message */}
+          {errorMessage && (
+            <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start space-x-3 space-x-reverse">
+                <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-red-800 mb-1">خطأ في حفظ الخبر</h3>
+                  <p className="text-red-700 text-sm">{errorMessage}</p>
+                  <div className="mt-2 flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setShowDebugger(true)}
+                    >
+                      <Bug className="w-4 h-4 ml-1" />
+                      استخدام أداة التصحيح
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setErrorMessage(null)}
+                    >
+                      إغلاق
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
           
@@ -696,6 +745,7 @@ const NewsManager = () => {
                     <Label htmlFor="news-content">محتوى الخبر الأساسي *</Label>
                     <Textarea
                       dir="rtl"
+                      lang="ar"
                       id="news-content"
                       value={editingNews.content}
                       onChange={(e) => setEditingNews({...editingNews, content: e.target.value})}
@@ -968,7 +1018,7 @@ const NewsManager = () => {
                     <div className="prose max-w-none text-right">
                       <div className="whitespace-pre-wrap mb-4">{editingNews.content}</div>
                       {editingNews.content_html && (
-                        <div dir="rtl" dangerouslySetInnerHTML={{ __html: editingNews.content_html }} />
+                        <div dir="rtl" lang="ar" dangerouslySetInnerHTML={{ __html: editingNews.content_html }} />
                       )}
                     </div>
                   </div>
@@ -978,15 +1028,15 @@ const NewsManager = () => {
               <div className="flex gap-2 mt-6">
                 <Button onClick={saveNews} disabled={isLoading}>
                   {isLoading ? (
-                    <>
+                    <span className="flex items-center">
                       <Loader2 className="w-4 h-4 ml-2 animate-spin" />
                       جاري الحفظ...
-                    </>
+                    </span>
                   ) : (
-                    <>
+                    <span className="flex items-center">
                       <Save className="w-4 h-4 ml-2" />
                       حفظ الخبر
-                    </>
+                    </span>
                   )}
                 </Button>
                 <Button variant="outline" onClick={cancelEdit} disabled={isLoading}>
