@@ -17,15 +17,23 @@ export const supabase = (isValidSupabaseUrl && isValidAnonKey)
         params: {
           eventsPerSecond: 10
         }
+      },
+      global: {
+        fetch: (url, options = {}) => {
+          return fetch(url, {
+            ...options,
+            signal: AbortSignal.timeout(10000) // 10 second timeout
+          });
+        }
       }
     })
   : null;
 
 // Log connection status for debugging
 if (supabase) {
-  console.log('Supabase client initialized successfully');
+  console.log('Supabase client initialized successfully - attempting connection...');
 } else {
-  console.warn('Supabase client initialization failed. Using localStorage fallback.');
+  console.warn('Supabase client initialization failed. Running in offline mode with localStorage.');
 }
 
 // Database types

@@ -75,20 +75,35 @@ export function useSyncStatus() {
         return;
       }
 
-      // Check Supabase connection with a simple query
-      const { data, error } = await supabase
+      // Check Supabase connection with a simple query and timeout
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Connection timeout')), 10000);
+      });
+
+      const queryPromise = supabase
         .from('news')
         .select('id')
         .limit(1);
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
       
       if (error) {
-        console.error('Supabase connection error:', error);
+        console.warn('Supabase connection error:', error);
         setSyncStatus({
           connected: false,
           lastSynced: null,
           status: 'error',
-          error: `خطأ في الاتصال: ${error.message}`
+          error: `Connection error: Using offline mode`
         });
+        
+        // Update localStorage to indicate offline mode
+        localStorage.setItem('realtime-sync-status', JSON.stringify({
+          connected: false,
+          lastSynced: null,
+          status: 'error',
+          error: 'Offline mode - using local data',
+          timestamp: Date.now()
+        }));
         return;
       }
       
@@ -107,20 +122,20 @@ export function useSyncStatus() {
         timestamp: Date.now()
       }));
     } catch (error) {
-      console.error('Network error checking sync status:', error);
+      console.warn('Network error checking sync status - switching to offline mode:', error);
       
       setSyncStatus({
         connected: false,
         lastSynced: null,
         status: 'error',
-        error: error instanceof Error ? error.message : 'خطأ غير معروف'
+        error: 'Offline mode - using local data'
       });
       
       localStorage.setItem('realtime-sync-status', JSON.stringify({
         connected: false,
         lastSynced: null,
         status: 'error',
-        error: 'خطأ في الشبكة - تحقق من الاتصال بالإنترنت',
+        error: 'Offline mode - using local data',
         timestamp: Date.now()
       }));
     }
@@ -133,7 +148,7 @@ export function useSyncStatus() {
       if (!supabase) {
         return { 
           success: false, 
-          error: 'Supabase client not available' 
+          error: 'Supabase client not available - using offline mode' 
         };
       }
 
@@ -148,11 +163,17 @@ export function useSyncStatus() {
         detail: { type: 'sync_started', timestamp: Date.now() }
       }));
       
-      // Get all news from Supabase
-      const { data, error } = await supabase!
+      // Get all news from Supabase with timeout
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Sync timeout')), 15000);
+      });
+
+      const queryPromise = supabase
         .from('news')
         .select('*')
         .order('date', { ascending: false });
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
         
       if (error) throw error;
       
@@ -181,18 +202,18 @@ export function useSyncStatus() {
       
       return { success: true };
     } catch (error) {
-      console.error('Network error during sync:', error);
+      console.warn('Network error during sync - continuing in offline mode:', error);
       
       setSyncStatus({
         connected: false,
         lastSynced: null,
         status: 'error',
-        error: error instanceof Error ? error.message : 'خطأ غير معروف'
+        error: 'Offline mode - using local data'
       });
       
       return { 
         success: false, 
-        error: 'خطأ في الشبكة - تحقق من الاتصال بالإنترنت'
+        error: 'Network error - continuing in offline mode'
       };
     } finally {
       setIsSyncing(false);
