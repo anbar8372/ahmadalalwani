@@ -194,16 +194,29 @@ export const newsService = {
   // Verificar estado de sincronización
   async checkSyncStatus() {
     try {
-      if (!supabase) throw new Error('Cliente Supabase no disponible');
+      if (!supabase) throw new Error('خطأ في الاتصال: عميل Supabase غير متوفر');
       
       // Comprobar conexión con Supabase
-      const { data, error } = await supabase
-        .from('sync_settings')
-        .select('key, value, last_updated')
-        .eq('key', 'sync_config')
-        .single();
+      // Primero intentamos una operación simple para verificar la conectividad
+      const { error: pingError } = await supabase.from('news').select('count').limit(1);
+      
+      if (pingError) {
+        throw new Error(`خطأ في الاتصال: ${pingError.message}`);
+      }
+      
+      // Si la operación simple funciona, intentamos obtener la configuración de sincronización
+      const { data, error } = await supabase.from('sync_settings')
+                                           .select('key, value, last_updated')
+                                           .eq('key', 'sync_config')
+                                           .single();
         
-      if (error) throw error;
+      if (error) {
+        // Si la tabla no existe, es posible que la migración no se haya aplicado
+        if (error.code === 'PGRST116') {
+          throw new Error('خطأ في الاتصال: جدول sync_settings غير موجود. يرجى تطبيق ملف الترحيل');
+        }
+        throw new Error(`خطأ في الاتصال: ${error.message}`);
+      }
       
       // Actualizar estado de sincronización
       localStorage.setItem('realtime-sync-status', JSON.stringify({
@@ -221,19 +234,36 @@ export const newsService = {
       console.error('Error al verificar estado de sincronización:', error);
       
       // Actualizar estado en localStorage
+      let errorMessage = 'خطأ في الاتصال';
+      
+      // Determinar el tipo de error para mostrar un mensaje más específico
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch')) {
+          errorMessage = 'خطأ في الاتصال: فشل في الوصول إلى الخادم';
+        } else if (error.message.includes('network')) {
+          errorMessage = 'خطأ في الاتصال: مشكلة في الشبكة';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'خطأ في الاتصال: انتهت مهلة الاتصال';
+        } else if (error.message.includes('auth')) {
+          errorMessage = 'خطأ في الاتصال: مشكلة في المصادقة';
+        } else {
+          errorMessage = `خطأ في الاتصال: ${error.message}`;
+        }
+      }
+      
       const currentStatus = localStorage.getItem('realtime-sync-status');
       const parsedStatus = currentStatus ? JSON.parse(currentStatus) : {};
-      
+
       localStorage.setItem('realtime-sync-status', JSON.stringify({
         ...parsedStatus,
         lastChecked: Date.now(),
         status: 'error',
-        error: error instanceof Error ? error.message : 'Error desconocido'
+        error: errorMessage
       }));
       
       return {
         connected: false,
-        error: error instanceof Error ? error.message : 'Error desconocido'
+        error: errorMessage
       };
     }
   },
@@ -529,30 +559,44 @@ export const newsService = {
   // Sincronizar datos con el servidor
   async syncWithServer(): Promise<{success: boolean, message: string}> {
     try {
+      // Verificar si hay una conexión a Internet
+      if (!navigator.onLine) {
+        throw new Error('خطأ في الاتصال: لا يوجد اتصال بالإنترنت');
+      }
+      
       // Verificar estado de sincronización
       const syncStatus = await this.checkSyncStatus();
       if (!syncStatus.connected) {
-        throw new Error('No se puede conectar con el servidor para sincronizar');
+        throw new Error('خطأ في الاتصال: لا يمكن الاتصال بالخادم للمزامنة');
       }
       
       // Obtener datos locales
       const savedNews = localStorage.getItem('website-news');
       const lastUpdated = localStorage.getItem('website-news-last-updated');
       
+      // Verificar si hay datos para sincronizar
       if (!savedNews) {
-        // No hay datos locales para sincronizar
-        return { success: true, message: 'No hay datos locales para sincronizar' };
+        return { success: true, message: 'لا توجد بيانات محلية للمزامنة' };
       }
       
       // Registrar inicio de sincronización
-      console.log('Iniciando sincronización con el servidor...');
+      console.log('بدء المزامنة مع الخادم...');
       
-      // Obtener datos del servidor
-      const { data: serverData, error } = await supabase
-        .from('news')
-        .select('*');
+      // Intentar obtener datos del servidor con manejo de errores mejorado
+      let serverData;
+      let error;
+      
+      try {
+        const response = await supabase.from('news').select('*');
+        serverData = response.data;
+        error = response.error;
+      } catch (fetchError) {
+        throw new Error(`خطأ في الاتصال: ${fetchError instanceof Error ? fetchError.message : 'Error desconocido'}`);
+      }
         
-      if (error) throw error;
+      if (error) {
+        throw new Error(`خطأ في الاتصال: ${error.message}`);
+      }
       
       // Comparar y resolver conflictos
       const localData = JSON.parse(savedNews);
@@ -566,43 +610,53 @@ export const newsService = {
       // Actualizar servidor con datos fusionados
       for (const item of mergedData) {
         // Solo sincronizar elementos modificados localmente
-        if (item.sync_status === 'modified' || !item.sync_status) {
-          await supabase
-            .from('news')
-            .upsert({
-              ...item,
-              sync_version: (item.sync_version || 0) + 1,
-              last_synced: new Date().toISOString(),
-              sync_status: 'synced'
-            });
+        try {
+          if (item.sync_status === 'modified' || !item.sync_status) {
+            await supabase
+              .from('news')
+              .upsert({
+                ...item,
+                sync_version: (item.sync_version || 0) + 1,
+                last_synced: new Date().toISOString(),
+                sync_status: 'synced'
+              });
+          }
+        } catch (upsertError) {
+          console.error('Error al sincronizar elemento:', item.id, upsertError);
+          // Continuamos con el siguiente elemento en caso de error
         }
       }
       
       // Registrar sincronización exitosa
-      await supabase
-        .from('sync_settings')
-        .upsert({
-          key: 'last_sync',
-          value: {
-            timestamp: Date.now(),
-            status: 'success',
-            items_synced: mergedData.length
-          },
-          updated_by: 'web-client'
-        });
+      try {
+        await supabase
+          .from('sync_settings')
+          .upsert({
+            key: 'last_sync',
+            value: {
+              timestamp: Date.now(),
+              status: 'success',
+              items_synced: mergedData.length
+            },
+            updated_by: 'web-client'
+          });
+      } catch (logError) {
+        console.warn('Error al registrar sincronización exitosa:', logError);
+        // No interrumpimos el proceso por este error
+      }
       
       // Notificar a todos los clientes
       this.broadcastNewsUpdate();
       
       return { 
         success: true, 
-        message: `Sincronización completada. ${mergedData.length} elementos sincronizados.` 
+        message: `تمت المزامنة بنجاح. تمت مزامنة ${mergedData.length} عنصر.` 
       };
     } catch (error) {
       console.error('Error en la sincronización:', error);
       return { 
         success: false, 
-        message: error instanceof Error ? error.message : 'Error desconocido durante la sincronización' 
+        message: error instanceof Error ? error.message : 'خطأ غير معروف أثناء المزامنة' 
       };
     }
   },

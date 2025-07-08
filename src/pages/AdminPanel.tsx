@@ -27,6 +27,7 @@ import SecurityManager from '@/components/admin/SecurityManager';
 import NewsManager from '@/components/admin/NewsManager';
 import LoginForm from '@/components/admin/LoginForm';
 import SyncStatusIndicator from '@/components/admin/SyncStatusIndicator';
+import ErrorBoundary from '@/components/admin/ErrorBoundary';
 import { useAuth } from '@/hooks/useAuth';
 
 const AdminPanel = () => {
@@ -186,7 +187,9 @@ const AdminPanel = () => {
 
               {/* Dynamic Content */}
               <div className="space-y-6">
-                {renderContent()}
+                <ErrorBoundary>
+                  {renderContent()}
+                </ErrorBoundary>
               </div>
             </div>
           </div>
