@@ -26,6 +26,7 @@ import SiteSettingsManager from '@/components/admin/SiteSettingsManager';
 import SecurityManager from '@/components/admin/SecurityManager';
 import NewsManager from '@/components/admin/NewsManager';
 import LoginForm from '@/components/admin/LoginForm';
+import SyncStatusIndicator from '@/components/admin/SyncStatusIndicator';
 import { useAuth } from '@/hooks/useAuth';
 
 const AdminPanel = () => {
@@ -170,17 +171,16 @@ const AdminPanel = () => {
               {/* Content Header */}
               <div className="mb-6">
                 <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
-                  <CardHeader className="pb-3">
+                  <CardHeader className="pb-2">
                     <CardTitle className="text-right flex items-center justify-between">
                       <span>
                         {menuItems.find(item => item.id === activeTab)?.label || 'لوحة التحكم'}
                       </span>
-                      <div className="flex items-center space-x-2 space-x-reverse text-sm text-gray-600">
-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        <span>متصل</span>
-                      </div>
                     </CardTitle>
                   </CardHeader>
+                  <CardContent className="pt-0 pb-2">
+                    <SyncStatusIndicator />
+                  </CardContent>
                 </Card>
               </div>
 

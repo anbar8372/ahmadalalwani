@@ -1,13 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9zamxmcm5uYnV6YmZ5ZXBqc3ZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE2NzA0NDUsImV4cCI6MjA2NzI0NjQ0NX0.eKXbbuZWlSjd8Drp0aDTMDR3oxpXRPZHFpt1yyU274k';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Missing Supabase environment variables. Using fallback mode.');
+// Configurar URL de Supabase si no está definida
+const finalSupabaseUrl = supabaseUrl || 'https://osjlfrnnbuzbfyepjsve.supabase.co';
+
+if (!supabaseUrl) {
+  console.warn('VITE_SUPABASE_URL no está definido. Usando URL predeterminada.');
 }
 
-export const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
+// Crear cliente de Supabase
+export const supabase = createClient(finalSupabaseUrl, supabaseAnonKey);
 
 // Database types
 export interface NewsItem {
@@ -128,11 +132,126 @@ export const sampleNewsData: Omit<NewsItem, 'created_at' | 'updated_at'>[] = [
 
 // Enhanced news service with better error handling and fallback
 export const newsService = {
+  // Inicializar la sincronización en tiempo real
+  initializeRealtimeSync() {
+    if (!supabase) return;
+    
+    try {
+      // Suscribirse a cambios en la tabla news
+      const subscription = supabase
+        .channel('schema-db-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'news'
+        }, (payload) => {
+          console.log('Cambio en tiempo real recibido:', payload);
+          
+          // Actualizar localStorage y disparar eventos
+          this.broadcastNewsUpdate();
+          
+          // Notificar a la UI
+          window.dispatchEvent(new CustomEvent('newsUpdated', {
+            detail: { 
+              type: payload.eventType,
+              record: payload.new,
+              timestamp: Date.now()
+            }
+          }));
+        })
+        .subscribe((status) => {
+          console.log('Estado de suscripción en tiempo real:', status);
+          
+          if (status === 'SUBSCRIBED') {
+            console.log('Sincronización en tiempo real activada correctamente');
+            
+            // Registrar estado de sincronización
+            localStorage.setItem('realtime-sync-status', JSON.stringify({
+              enabled: true,
+              lastChecked: Date.now(),
+              status: 'connected'
+            }));
+          }
+        });
+        
+      // Devolver la suscripción para poder limpiarla más tarde
+      return subscription;
+    } catch (error) {
+      console.error('Error al inicializar la sincronización en tiempo real:', error);
+      
+      // Registrar error
+      localStorage.setItem('realtime-sync-status', JSON.stringify({
+        enabled: false,
+        lastChecked: Date.now(),
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Error desconocido'
+      }));
+      
+      return null;
+    }
+  },
+  
+  // Verificar estado de sincronización
+  async checkSyncStatus() {
+    try {
+      if (!supabase) throw new Error('Cliente Supabase no disponible');
+      
+      // Comprobar conexión con Supabase
+      const { data, error } = await supabase
+        .from('sync_settings')
+        .select('key, value, last_updated')
+        .eq('key', 'sync_config')
+        .single();
+        
+      if (error) throw error;
+      
+      // Actualizar estado de sincronización
+      localStorage.setItem('realtime-sync-status', JSON.stringify({
+        enabled: data?.value?.enabled || true,
+        lastChecked: Date.now(),
+        status: 'connected',
+        config: data?.value || { interval: 5000, retry_attempts: 3 }
+      }));
+      
+      return {
+        connected: true,
+        config: data?.value
+      };
+    } catch (error) {
+      console.error('Error al verificar estado de sincronización:', error);
+      
+      // Actualizar estado en localStorage
+      const currentStatus = localStorage.getItem('realtime-sync-status');
+      const parsedStatus = currentStatus ? JSON.parse(currentStatus) : {};
+      
+      localStorage.setItem('realtime-sync-status', JSON.stringify({
+        ...parsedStatus,
+        lastChecked: Date.now(),
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Error desconocido'
+      }));
+      
+      return {
+        connected: false,
+        error: error instanceof Error ? error.message : 'Error desconocido'
+      };
+    }
+  },
+
   // Initialize sample data
   async initializeSampleData(): Promise<void> {
     try {
       // First try to save to localStorage as backup
-      localStorage.setItem('website-news', JSON.stringify(sampleNewsData));
+      const timestamp = Date.now();
+      localStorage.setItem('website-news', JSON.stringify(
+        sampleNewsData.map(item => ({
+          ...item,
+          sync_version: 1,
+          last_synced: new Date().toISOString(),
+          sync_status: 'synced'
+        }))
+      ));
+      localStorage.setItem('website-news-last-updated', timestamp.toString());
       console.log('Sample news data saved to localStorage');
 
       // Then try to save to Supabase if available
@@ -152,19 +271,22 @@ export const newsService = {
   // Get all news items with fallback
   async getAllNews(): Promise<NewsItem[]> {
     try {
-      if (supabase) {
-        const { data, error } = await supabase
-          .from('news')
-          .select('*')
-          .order('date', { ascending: false });
+      // Verificar estado de sincronización
+      await this.checkSyncStatus();
+      
+      const { data, error } = await supabase
+        .from('news')
+        .select('*')
+        .order('date', { ascending: false });
 
-        if (error) throw error;
+      if (error) throw error;
 
-        if (data && data.length > 0) {
-          // Save to localStorage as backup
-          localStorage.setItem('website-news', JSON.stringify(data));
-          return data;
-        }
+      if (data && data.length > 0) {
+        // Save to localStorage as backup with timestamp
+        const timestamp = Date.now();
+        localStorage.setItem('website-news', JSON.stringify(data));
+        localStorage.setItem('website-news-last-updated', timestamp.toString());
+        return data;
       }
 
       // Fallback to localStorage
@@ -194,16 +316,14 @@ export const newsService = {
   // Get news by ID with fallback
   async getNewsById(id: string): Promise<NewsItem | null> {
     try {
-      if (supabase) {
-        const { data, error } = await supabase
-          .from('news')
-          .select('*')
-          .eq('id', id)
-          .single();
+      const { data, error } = await supabase
+        .from('news')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-        if (!error && data) {
-          return data;
-        }
+      if (!error && data) {
+        return data;
       }
 
       // Fallback to localStorage
@@ -253,6 +373,9 @@ export const newsService = {
   // Enhanced upsert with localStorage backup
   async upsertNews(newsItem: Omit<NewsItem, 'created_at' | 'updated_at'>): Promise<NewsItem> {
     try {
+      // Verificar estado de sincronización
+      await this.checkSyncStatus();
+      
       // Always save to localStorage first
       const savedNews = localStorage.getItem('website-news');
       let allNews = savedNews ? JSON.parse(savedNews) : [];
@@ -260,6 +383,7 @@ export const newsService = {
       // Update or add the news item
       const existingIndex = allNews.findIndex((item: NewsItem) => item.id === newsItem.id);
       const updatedItem = {
+        ...newsItem,
         ...newsItem,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -272,22 +396,26 @@ export const newsService = {
       }
 
       // Save to localStorage
+      const timestamp = Date.now();
       localStorage.setItem('website-news', JSON.stringify(allNews));
+      localStorage.setItem('website-news-last-updated', timestamp.toString());
       console.log('News saved to localStorage successfully');
 
       // Broadcast immediate update to all tabs and devices
       this.broadcastNewsUpdate();
-      // Try to save to Supabase if available
-      if (supabase) {
-        const { data, error } = await supabase
-          .from('news')
-          .upsert(newsItem)
-          .select()
-          .single();
-
-        if (error) {
-          console.warn('Supabase save failed, but localStorage backup successful:', error);
-        } else {
+      
+      // Guardar en Supabase
+      const { data, error } = await supabase
+        .from('news')
+        .upsert({
+          ...newsItem,
+          sync_version: existingIndex >= 0 ? (allNews[existingIndex].sync_version || 0) + 1 : 1,
+          last_synced: new Date().toISOString(),
+          sync_status: 'synced'
+        })
+        .select();
+      
+      if (!error && data && data.length > 0) {
           console.log('News saved to Supabase successfully');
           return data;
         }
@@ -303,29 +431,31 @@ export const newsService = {
   // Enhanced delete with localStorage backup
   async deleteNews(id: string): Promise<void> {
     try {
+      // Verificar estado de sincronización
+      await this.checkSyncStatus();
+      
       // Delete from localStorage first
       const savedNews = localStorage.getItem('website-news');
       if (savedNews) {
         const allNews = JSON.parse(savedNews);
         const filteredNews = allNews.filter((item: NewsItem) => item.id !== id);
+        const timestamp = Date.now();
         localStorage.setItem('website-news', JSON.stringify(filteredNews));
+        localStorage.setItem('website-news-last-updated', timestamp.toString());
         console.log('News deleted from localStorage successfully');
       }
 
       // Broadcast immediate update to all tabs and devices
       this.broadcastNewsUpdate();
-      // Try to delete from Supabase if available
-      if (supabase) {
-        const { error } = await supabase
-          .from('news')
-          .delete()
-          .eq('id', id);
+      
+      // Eliminar de Supabase
+      const { error } = await supabase
+        .from('news')
+        .delete()
+        .eq('id', id);
 
-        if (error) {
-          console.warn('Supabase delete failed, but localStorage delete successful:', error);
-        } else {
-          console.log('News deleted from Supabase successfully');
-        }
+      if (!error) {
+        console.log('News deleted from Supabase successfully');
       }
     } catch (error) {
       console.error('Error deleting news:', error);
@@ -336,20 +466,22 @@ export const newsService = {
   // Enhanced broadcast function for immediate sync
   broadcastNewsUpdate(): void {
     try {
+      const timestamp = Date.now();
+      
       // Broadcast to other tabs using BroadcastChannel
       const channel = new BroadcastChannel('news-updates');
       channel.postMessage({ 
         type: 'NEWS_UPDATED', 
-        timestamp: Date.now(),
+        timestamp,
         source: 'admin-panel'
       });
       
       // Trigger storage event for cross-tab communication
-      localStorage.setItem('news-update-trigger', Date.now().toString());
+      localStorage.setItem('news-update-trigger', timestamp.toString());
       
       // Also trigger a custom event for immediate UI updates
       window.dispatchEvent(new CustomEvent('newsUpdated', {
-        detail: { timestamp: Date.now() }
+        detail: { timestamp }
       }));
       
       console.log('News update broadcasted successfully');
@@ -360,24 +492,20 @@ export const newsService = {
   // Upload image with fallback
   async uploadImage(file: File, fileName: string): Promise<string> {
     try {
-      if (supabase) {
-        const { data, error } = await supabase.storage
-          .from('news-images')
-          .upload(fileName, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
+      const { data, error } = await supabase.storage
+        .from('news-images')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-        if (error) throw error;
+      if (error) throw error;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('news-images')
-          .getPublicUrl(data.path);
+      const { data: { publicUrl } } = supabase.storage
+        .from('news-images')
+        .getPublicUrl(data.path);
 
-        return publicUrl;
-      } else {
-        throw new Error('Supabase not available');
-      }
+      return publicUrl;
     } catch (error) {
       console.error('Error uploading image:', error);
       throw new Error('فشل في رفع الصورة');
@@ -387,17 +515,137 @@ export const newsService = {
   // Delete image
   async deleteImage(imagePath: string): Promise<void> {
     try {
-      if (supabase) {
-        const { error } = await supabase.storage
-          .from('news-images')
-          .remove([imagePath]);
+      const { error } = await supabase.storage
+        .from('news-images')
+        .remove([imagePath]);
 
-        if (error) {
-          console.error('Error deleting image:', error);
-        }
+      if (error) {
+        console.error('Error deleting image:', error);
       }
     } catch (error) {
       console.error('Error deleting image:', error);
     }
+  },
+  
+  // Sincronizar datos con el servidor
+  async syncWithServer(): Promise<{success: boolean, message: string}> {
+    try {
+      // Verificar estado de sincronización
+      const syncStatus = await this.checkSyncStatus();
+      if (!syncStatus.connected) {
+        throw new Error('No se puede conectar con el servidor para sincronizar');
+      }
+      
+      // Obtener datos locales
+      const savedNews = localStorage.getItem('website-news');
+      const lastUpdated = localStorage.getItem('website-news-last-updated');
+      
+      if (!savedNews) {
+        // No hay datos locales para sincronizar
+        return { success: true, message: 'No hay datos locales para sincronizar' };
+      }
+      
+      // Registrar inicio de sincronización
+      console.log('Iniciando sincronización con el servidor...');
+      
+      // Obtener datos del servidor
+      const { data: serverData, error } = await supabase
+        .from('news')
+        .select('*');
+        
+      if (error) throw error;
+      
+      // Comparar y resolver conflictos
+      const localData = JSON.parse(savedNews);
+      const mergedData = this.mergeData(localData, serverData || []);
+      
+      // Guardar datos fusionados en localStorage
+      const timestamp = Date.now();
+      localStorage.setItem('website-news', JSON.stringify(mergedData));
+      localStorage.setItem('website-news-last-updated', timestamp.toString());
+      
+      // Actualizar servidor con datos fusionados
+      for (const item of mergedData) {
+        // Solo sincronizar elementos modificados localmente
+        if (item.sync_status === 'modified' || !item.sync_status) {
+          await supabase
+            .from('news')
+            .upsert({
+              ...item,
+              sync_version: (item.sync_version || 0) + 1,
+              last_synced: new Date().toISOString(),
+              sync_status: 'synced'
+            });
+        }
+      }
+      
+      // Registrar sincronización exitosa
+      await supabase
+        .from('sync_settings')
+        .upsert({
+          key: 'last_sync',
+          value: {
+            timestamp: Date.now(),
+            status: 'success',
+            items_synced: mergedData.length
+          },
+          updated_by: 'web-client'
+        });
+      
+      // Notificar a todos los clientes
+      this.broadcastNewsUpdate();
+      
+      return { 
+        success: true, 
+        message: `Sincronización completada. ${mergedData.length} elementos sincronizados.` 
+      };
+    } catch (error) {
+      console.error('Error en la sincronización:', error);
+      return { 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Error desconocido durante la sincronización' 
+      };
+    }
+  },
+  
+  // Fusionar datos locales y del servidor
+  mergeData(localData: NewsItem[], serverData: NewsItem[]): NewsItem[] {
+    const mergedMap = new Map<string, NewsItem>();
+    
+    // Primero agregar todos los datos del servidor
+    for (const item of serverData) {
+      mergedMap.set(item.id, {
+        ...item,
+        sync_status: 'synced'
+      });
+    }
+    
+    // Luego revisar datos locales y resolver conflictos
+    for (const localItem of localData) {
+      const serverItem = mergedMap.get(localItem.id);
+      
+      if (!serverItem) {
+        // El elemento solo existe localmente
+        mergedMap.set(localItem.id, {
+          ...localItem,
+          sync_status: 'modified'
+        });
+      } else {
+        // El elemento existe en ambos lados, resolver según versión
+        const localVersion = localItem.sync_version || 0;
+        const serverVersion = serverItem.sync_version || 0;
+        
+        if (localVersion >= serverVersion) {
+          // La versión local es más reciente o igual
+          mergedMap.set(localItem.id, {
+            ...localItem,
+            sync_status: 'modified'
+          });
+        }
+        // Si la versión del servidor es más reciente, mantener la del servidor
+      }
+    }
+    
+    return Array.from(mergedMap.values());
   }
 };
