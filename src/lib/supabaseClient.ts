@@ -1,3 +1,10 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 // Database types
 export interface NewsItem {
   id: string;
@@ -120,16 +127,14 @@ export const newsService = {
   // Initialize sample data
   async initializeSampleData(): Promise<void> {
     try {
-      // Save to localStorage
-      const timestamp = Date.now();
-      localStorage.setItem('website-news', JSON.stringify(
-        sampleNewsData.map(item => ({
-          ...item,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }))
-      ));
-      localStorage.setItem('website-news-last-updated', timestamp.toString());
+      // First try to save to Supabase
+      for (const newsItem of sampleNewsData) {
+        await this.upsertNews(newsItem);
+      }
+      console.log('Sample news data initialized in Supabase successfully');
+      
+      // Also save to localStorage as backup
+      localStorage.setItem('website-news', JSON.stringify(sampleNewsData));
       console.log('Sample news data saved to localStorage');
     } catch (error) {
       console.error('Error initializing sample data:', error);
@@ -138,28 +143,73 @@ export const newsService = {
     }
   },
 
-  // Get all news items
+  // Get all news items with fallback
   async getAllNews(): Promise<NewsItem[]> {
     try {
-      // Get from localStorage
+      const { data, error } = await supabase
+        .from('news')
+        .select('*')
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        // Save to localStorage as backup
+        localStorage.setItem('website-news', JSON.stringify(data));
+        return data;
+      }
+
+      // If no data in Supabase, try to initialize with sample data
+      await this.initializeSampleData();
+      
+      // Try fetching again
+      const { data: refreshedData, error: refreshedError } = await supabase
+        .from('news')
+        .select('*')
+        .order('date', { ascending: false });
+        
+      if (refreshedError) throw refreshedError;
+      
+      if (refreshedData && refreshedData.length > 0) {
+        localStorage.setItem('website-news', JSON.stringify(refreshedData));
+        return refreshedData;
+      }
+
+      // Fallback to localStorage
       const savedNews = localStorage.getItem('website-news');
       if (savedNews) {
         return JSON.parse(savedNews);
       }
 
-      // If no data exists, initialize with sample data
-      await this.initializeSampleData();
       return sampleNewsData;
     } catch (error) {
       console.error('Error fetching news:', error);
+
+      // Fallback to localStorage
+      const savedNews = localStorage.getItem('website-news');
+      if (savedNews) {
+        return JSON.parse(savedNews);
+      }
+
+      // Last resort: return sample data
       return sampleNewsData;
     }
   },
 
-  // Get news by ID
+  // Get news by ID with fallback
   async getNewsById(id: string): Promise<NewsItem | null> {
     try {
-      // Get from localStorage
+      const { data, error } = await supabase
+        .from('news')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (!error && data) {
+        return data;
+      }
+
+      // Fallback to localStorage
       const savedNews = localStorage.getItem('website-news');
       if (savedNews) {
         const allNews = JSON.parse(savedNews);
@@ -169,36 +219,87 @@ export const newsService = {
       return null;
     } catch (error) {
       console.error('Error fetching news by ID:', error);
+
+      // Fallback to localStorage
+      const savedNews = localStorage.getItem('website-news');
+      if (savedNews) {
+        const allNews = JSON.parse(savedNews);
+        return allNews.find((item: NewsItem) => item.id === id) || null;
+      }
+
       return null;
     }
   },
 
-  // Get latest news
+  // Get latest news with fallback
   async getLatestNews(limit: number = 3): Promise<NewsItem[]> {
     try {
+      const { data, error } = await supabase
+        .from('news')
+        .select('*')
+        .order('date', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        return data;
+      }
+
+      // Fallback to getAllNews
       const allNews = await this.getAllNews();
       return allNews.slice(0, limit);
     } catch (error) {
       console.error('Error fetching latest news:', error);
+      
+      // Fallback to localStorage
+      const savedNews = localStorage.getItem('website-news');
+      if (savedNews) {
+        const allNews = JSON.parse(savedNews);
+        return allNews.slice(0, limit);
+      }
+      
       return sampleNewsData.slice(0, limit);
     }
   },
 
-  // Get related news
+  // Get related news with fallback
   async getRelatedNews(excludeId: string, limit: number = 3): Promise<NewsItem[]> {
     try {
+      const { data, error } = await supabase
+        .from('news')
+        .select('*')
+        .neq('id', excludeId)
+        .order('date', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        return data;
+      }
+
+      // Fallback to getAllNews
       const allNews = await this.getAllNews();
       return allNews.filter(item => item.id !== excludeId).slice(0, limit);
     } catch (error) {
       console.error('Error fetching related news:', error);
+      
+      // Fallback to localStorage
+      const savedNews = localStorage.getItem('website-news');
+      if (savedNews) {
+        const allNews = JSON.parse(savedNews);
+        return allNews.filter((item: NewsItem) => item.id !== excludeId).slice(0, limit);
+      }
+      
       return sampleNewsData.filter(item => item.id !== excludeId).slice(0, limit);
     }
   },
 
-  // Upsert news
+  // Enhanced upsert with localStorage backup
   async upsertNews(newsItem: Omit<NewsItem, 'created_at' | 'updated_at'>): Promise<NewsItem> {
     try {
-      // Get from localStorage
+      // Always save to localStorage first as backup
       const savedNews = localStorage.getItem('website-news');
       let allNews = savedNews ? JSON.parse(savedNews) : [];
 
@@ -206,7 +307,9 @@ export const newsService = {
       const existingIndex = allNews.findIndex((item: NewsItem) => item.id === newsItem.id);
       const updatedItem = {
         ...newsItem,
-        created_at: existingIndex >= 0 ? allNews[existingIndex].created_at : new Date().toISOString(),
+        created_at: existingIndex >= 0 && allNews[existingIndex].created_at 
+          ? allNews[existingIndex].created_at 
+          : new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
 
@@ -217,35 +320,58 @@ export const newsService = {
       }
 
       // Save to localStorage
-      const timestamp = Date.now();
       localStorage.setItem('website-news', JSON.stringify(allNews));
-      localStorage.setItem('website-news-last-updated', timestamp.toString());
       console.log('News saved to localStorage successfully');
 
+      // Save to Supabase
+      const { data, error } = await supabase
+        .from('news')
+        .upsert(updatedItem)
+        .select()
+        .single();
+
+      if (error) {
+        console.warn('Supabase save failed, but localStorage backup successful:', error);
+        // Return the locally updated item
+        return updatedItem;
+      }
+
+      console.log('News saved to Supabase successfully');
+      
       // Broadcast immediate update to all tabs and devices
       this.broadcastNewsUpdate();
       
-      return updatedItem;
+      return data;
     } catch (error) {
       console.error('Error upserting news:', error);
       throw new Error('فشل في حفظ الخبر');
     }
   },
 
-  // Delete news
+  // Enhanced delete with localStorage backup
   async deleteNews(id: string): Promise<void> {
     try {
-      // Delete from localStorage
+      // Delete from localStorage first
       const savedNews = localStorage.getItem('website-news');
       if (savedNews) {
         const allNews = JSON.parse(savedNews);
         const filteredNews = allNews.filter((item: NewsItem) => item.id !== id);
-        const timestamp = Date.now();
         localStorage.setItem('website-news', JSON.stringify(filteredNews));
-        localStorage.setItem('website-news-last-updated', timestamp.toString());
         console.log('News deleted from localStorage successfully');
       }
 
+      // Delete from Supabase
+      const { error } = await supabase
+        .from('news')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.warn('Supabase delete failed, but localStorage delete successful:', error);
+      } else {
+        console.log('News deleted from Supabase successfully');
+      }
+      
       // Broadcast immediate update to all tabs and devices
       this.broadcastNewsUpdate();
     } catch (error) {
@@ -254,25 +380,23 @@ export const newsService = {
     }
   },
 
-  // Broadcast news update
+  // Enhanced broadcast function for immediate sync
   broadcastNewsUpdate(): void {
     try {
-      const timestamp = Date.now();
-      
       // Broadcast to other tabs using BroadcastChannel
       const channel = new BroadcastChannel('news-updates');
       channel.postMessage({ 
         type: 'NEWS_UPDATED', 
-        timestamp,
+        timestamp: Date.now(),
         source: 'admin-panel'
       });
       
       // Trigger storage event for cross-tab communication
-      localStorage.setItem('news-update-trigger', timestamp.toString());
+      localStorage.setItem('news-update-trigger', Date.now().toString());
       
       // Also trigger a custom event for immediate UI updates
       window.dispatchEvent(new CustomEvent('newsUpdated', {
-        detail: { timestamp }
+        detail: { timestamp: Date.now() }
       }));
       
       console.log('News update broadcasted successfully');
@@ -281,79 +405,85 @@ export const newsService = {
     }
   },
 
-  // Mock upload image function
+  // Upload image with fallback
   async uploadImage(file: File, fileName: string): Promise<string> {
     try {
-      // Create a mock URL for the image
-      return URL.createObjectURL(file);
+      const { data, error } = await supabase.storage
+        .from('news-images')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('news-images')
+        .getPublicUrl(data.path);
+
+      return publicUrl;
     } catch (error) {
       console.error('Error uploading image:', error);
-      throw new Error('فشل في رفع الصورة');
+      
+      // Fallback to local URL
+      return URL.createObjectURL(file);
     }
   },
 
-  // Mock delete image function
+  // Delete image
   async deleteImage(imagePath: string): Promise<void> {
     try {
-      console.log('Image deleted:', imagePath);
+      // Extract path from URL
+      const path = imagePath.split('/').pop();
+      
+      if (path) {
+        const { error } = await supabase.storage
+          .from('news-images')
+          .remove([path]);
+
+        if (error) {
+          console.error('Error deleting image:', error);
+        }
+      }
     } catch (error) {
       console.error('Error deleting image:', error);
     }
   },
   
-  // Mock sync function
-  async syncWithServer(): Promise<{success: boolean, message: string}> {
-    try {
-      // Simulate successful sync
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      return { 
-        success: true, 
-        message: `تمت المزامنة المحلية بنجاح.` 
-      };
-    } catch (error) {
-      console.error('Error in sync:', error);
-      return { 
-        success: false, 
-        message: error instanceof Error ? error.message : 'خطأ غير معروف أثناء المزامنة' 
-      };
-    }
-  },
-  
-  // Mock check sync status function
-  async checkSyncStatus() {
-    try {
-      // Simulate successful check
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      return {
-        connected: true,
-        config: { interval: 5000, retry_attempts: 3 }
-      };
-    } catch (error) {
-      console.error('Error checking sync status:', error);
-      
-      return {
-        connected: true,
-        error: null
-      };
-    }
-  },
-  
-  // Mock initialize realtime sync function
+  // Initialize realtime sync
   initializeRealtimeSync() {
-    // Simulate successful initialization
-    console.log('Local sync initialized');
-    
-    // Register sync status
-    localStorage.setItem('realtime-sync-status', JSON.stringify({
-      enabled: true,
-      lastChecked: Date.now(),
-      status: 'connected'
-    }));
-    
-    return {
-      unsubscribe: () => console.log('Local sync unsubscribed')
-    };
+    try {
+      // Set up realtime subscription
+      const subscription = supabase
+        .channel('schema-db-changes')
+        .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public',
+          table: 'news'
+        }, (payload) => {
+          console.log('Realtime update received:', payload);
+          
+          // Refresh data
+          this.getAllNews().then(() => {
+            // Broadcast to all tabs
+            this.broadcastNewsUpdate();
+          });
+        })
+        .subscribe();
+      
+      console.log('Realtime sync initialized');
+      
+      return {
+        unsubscribe: () => {
+          subscription.unsubscribe();
+          console.log('Realtime sync unsubscribed');
+        }
+      };
+    } catch (error) {
+      console.error('Error initializing realtime sync:', error);
+      return {
+        unsubscribe: () => console.log('No active subscription to unsubscribe')
+      };
+    }
   }
 };

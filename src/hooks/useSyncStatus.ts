@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { newsService } from '@/lib/supabaseClient';
+import { supabase, newsService } from '@/lib/supabaseClient';
 
 interface SyncStatus {
   connected: boolean;
@@ -10,15 +10,20 @@ interface SyncStatus {
 
 export function useSyncStatus() {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
-    connected: true,
-    lastSynced: new Date(),
-    status: 'connected'
+    connected: false,
+    lastSynced: null,
+    status: 'disconnected'
   });
   const [isSyncing, setIsSyncing] = useState(false);
 
   // Check sync status on load
   useEffect(() => {
     checkSyncStatus();
+    
+    // Set up interval to check status
+    const interval = setInterval(checkSyncStatus, 60000); // Check every minute
+    
+    return () => clearInterval(interval);
   }, []);
 
   // Listen for sync events
@@ -47,9 +52,25 @@ export function useSyncStatus() {
     };
   }, []);
 
+  // Initialize realtime sync
+  useEffect(() => {
+    const subscription = newsService.initializeRealtimeSync();
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   // Check sync status
   const checkSyncStatus = async () => {
     try {
+      // Check Supabase connection
+      const { error } = await supabase.from('news').select('count', { count: 'exact', head: true });
+      
+      if (error) {
+        throw error;
+      }
+      
       // Update status
       setSyncStatus({
         connected: true,
@@ -66,6 +87,21 @@ export function useSyncStatus() {
       }));
     } catch (error) {
       console.error('Error checking sync status:', error);
+      
+      setSyncStatus({
+        connected: false,
+        lastSynced: null,
+        status: 'error',
+        error: error instanceof Error ? error.message : 'خطأ غير معروف'
+      });
+      
+      localStorage.setItem('realtime-sync-status', JSON.stringify({
+        connected: false,
+        lastSynced: null,
+        status: 'error',
+        error: error instanceof Error ? error.message : 'خطأ غير معروف',
+        timestamp: Date.now()
+      }));
     }
   };
 
@@ -84,8 +120,18 @@ export function useSyncStatus() {
         detail: { type: 'sync_started', timestamp: Date.now() }
       }));
       
-      // Simulate sync delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Get all news from Supabase
+      const { data, error } = await supabase
+        .from('news')
+        .select('*')
+        .order('date', { ascending: false });
+        
+      if (error) throw error;
+      
+      // Update localStorage
+      if (data) {
+        localStorage.setItem('website-news', JSON.stringify(data));
+      }
       
       // Broadcast news update
       newsService.broadcastNewsUpdate();
@@ -109,6 +155,13 @@ export function useSyncStatus() {
     } catch (error) {
       console.error('Error syncing:', error);
       
+      setSyncStatus({
+        connected: false,
+        lastSynced: null,
+        status: 'error',
+        error: error instanceof Error ? error.message : 'خطأ غير معروف'
+      });
+      
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'خطأ غير معروف' 
@@ -125,8 +178,3 @@ export function useSyncStatus() {
     checkSyncStatus
   };
 }
-
-export const toast = {
-  success: () => {},
-  error: () => {}
-};

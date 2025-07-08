@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw, Database, HardDrive } from 'lucide-react';
 
 interface ConnectionErrorHandlerProps {
   error: string;
@@ -17,31 +17,31 @@ const ConnectionErrorHandler = ({
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   
   return (
-    <Card className="border-green-200 bg-green-50">
+    <Card className="border-red-200 bg-red-50">
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2 space-x-reverse text-green-800">
-          <AlertCircle className="w-6 h-6 text-green-600" />
-          <span>تم التحويل إلى وضع التخزين المحلي</span>
+        <CardTitle className="flex items-center space-x-2 space-x-reverse text-red-800">
+          <AlertCircle className="w-6 h-6 text-red-600" />
+          <span>خطأ في الاتصال</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-green-700">
-          تم إزالة الاعتماد على قاعدة البيانات بنجاح. يعمل الموقع الآن باستخدام التخزين المحلي فقط.
+        <p className="text-sm text-red-700">
+          حدث خطأ أثناء الاتصال بقاعدة البيانات. سيتم استخدام التخزين المحلي كبديل مؤقت.
         </p>
         
-        <div className="bg-white p-3 rounded border border-green-200">
-          <h4 className="font-medium text-green-800 mb-2">ملاحظة:</h4>
-          <p className="text-sm text-gray-700">جميع البيانات محفوظة محلياً في متصفحك. يمكنك الاستمرار في استخدام الموقع بشكل طبيعي.</p>
+        <div className="bg-white p-3 rounded border border-red-200">
+          <h4 className="font-medium text-red-800 mb-2">رسالة الخطأ:</h4>
+          <p className="text-sm text-gray-700">{error}</p>
         </div>
         
         <div className="flex flex-wrap gap-2">
           <Button 
             onClick={onRetry}
             disabled={isRetrying}
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+            className="flex-1"
           >
             <RefreshCw className={`w-4 h-4 ml-2 ${isRetrying ? 'animate-spin' : ''}`} />
-            {isRetrying ? 'جاري التحديث...' : 'تحديث الصفحة'}
+            {isRetrying ? 'جاري إعادة الاتصال...' : 'إعادة المحاولة'}
           </Button>
           
           <Button 
@@ -49,17 +49,41 @@ const ConnectionErrorHandler = ({
             onClick={() => setShowDiagnostics(!showDiagnostics)}
             className="flex-1"
           >
-            {showDiagnostics ? 'إخفاء التفاصيل' : 'عرض التفاصيل'}
+            {showDiagnostics ? 'إخفاء التشخيص' : 'عرض التشخيص'}
           </Button>
         </div>
         
         {showDiagnostics && (
-          <div className="mt-3">
+          <div className="mt-3 space-y-3">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-red-100">
+              <div className="flex items-center space-x-3 space-x-reverse">
+                <Database className="w-5 h-5 text-red-600" />
+                <div>
+                  <p className="font-medium">حالة قاعدة البيانات</p>
+                  <p className="text-sm text-red-700">
+                    غير متصل
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-3 rounded-lg bg-green-100">
+              <div className="flex items-center space-x-3 space-x-reverse">
+                <HardDrive className="w-5 h-5 text-green-600" />
+                <div>
+                  <p className="font-medium">حالة التخزين المحلي</p>
+                  <p className="text-sm text-green-700">
+                    متصل ويعمل بشكل صحيح
+                  </p>
+                </div>
+              </div>
+            </div>
+            
             <div className="p-2 bg-gray-50 rounded border text-xs font-mono text-gray-700 max-h-40 overflow-y-auto">
-              <p>وضع التشغيل: التخزين المحلي</p>
-              <p>حالة البيانات: محفوظة محلياً</p>
-              <p>قاعدة البيانات: غير متصلة (تم إزالتها)</p>
-              <p>التاريخ: {new Date().toLocaleString('ar-IQ')}</p>
+              <p>وقت الخطأ: {new Date().toLocaleString('ar-IQ')}</p>
+              <p>نوع الخطأ: خطأ اتصال بقاعدة البيانات</p>
+              <p>الوضع الحالي: استخدام التخزين المحلي</p>
+              <p>الإجراء المقترح: التحقق من اتصال الإنترنت وإعدادات قاعدة البيانات</p>
             </div>
           </div>
         )}
